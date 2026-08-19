@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { Wallet, Swords, Plus, Flame, TrendingUp, ShieldCheck, Trophy, RotateCcw, Activity, WifiOff } from 'lucide-react';
+import confetti from 'canvas-confetti';
+import { Wallet, Swords, Plus, Flame, TrendingUp, ShieldCheck, Trophy, RotateCcw, Activity, WifiOff, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const SERVER_URL = 'https://diceduel-server.onrender.com';
@@ -39,6 +40,14 @@ export default function LobbyPage() {
     winner: null,
   });
 
+  const triggerConfetti = () => {
+    confetti({
+      particleCount: 80,
+      spread: 70,
+      origin: { y: 0.6 },
+    });
+  };
+
   useEffect(() => {
     socket = io(SERVER_URL);
 
@@ -50,7 +59,7 @@ export default function LobbyPage() {
     });
 
     socket.on('game_started', (data: { opponent: string; p1Score: number; p2Score: number; winner: string }) => {
-      if (!isRollingRef.current) return; // Zaten yedek botla sonuçlandıysa yoksay
+      if (!isRollingRef.current) return;
 
       isRollingRef.current = false;
       setIsRolling(false);
@@ -62,6 +71,7 @@ export default function LobbyPage() {
       });
 
       if (data.winner === 'Sen') {
+        triggerConfetti();
         setBalance((prev) => prev + currentBetRef.current * 2 * 0.97);
       }
     });
@@ -84,8 +94,7 @@ export default function LobbyPage() {
     }
   };
 
-  const handleCreateRoom = () => {
-    const amount = parseFloat(betInput);
+  const handleStartDuel = (amount: number) => {
     if (isNaN(amount) || amount <= 0 || amount > balance) return;
 
     currentBetRef.current = amount;
@@ -93,9 +102,8 @@ export default function LobbyPage() {
     setActiveGame(true);
     setIsRolling(true);
     isRollingRef.current = true;
-    setGameResult({ opponent: 'Rakip Aranıyor...', p1Score: null, p2Score: null, winner: null });
+    setGameResult({ opponent: 'Rakip Eşleşiyor...', p1Score: null, p2Score: null, winner: null });
 
-    // 1. Sunucuya İstek At
     if (isServerConnected) {
       socket.emit('create_room', {
         creator: account ? `${account.substring(0, 6)}...` : 'Sen',
@@ -103,7 +111,6 @@ export default function LobbyPage() {
       });
     }
 
-    // 2. Hibrit Güvenlik Kalkanı: Sunucu 5 saniye içinde cevap vermezse Yerel Bot devreye girer
     setTimeout(() => {
       if (isRollingRef.current) {
         isRollingRef.current = false;
@@ -117,24 +124,25 @@ export default function LobbyPage() {
         setGameResult({ opponent: 'Hibrit Bot', p1Score, p2Score, winner });
         
         if (winner === 'Sen') {
+          triggerConfetti();
           setBalance((prev) => prev + amount * 2 * 0.97);
         }
       }
-    }, 5000); // Maksimum 5 saniye bekle
+    }, 4500);
   };
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 font-sans">
       <div className="max-w-4xl mx-auto space-y-6">
         
-        <header className="flex flex-wrap items-center justify-between gap-4 p-4 bg-slate-900 border border-slate-800 rounded-2xl">
+        <header className="flex flex-wrap items-center justify-between gap-4 p-4 bg-slate-900 border border-slate-800 rounded-2xl shadow-lg">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-indigo-600/20 border border-indigo-500/40 rounded-xl flex items-center justify-center text-indigo-400 font-black text-xl">🎲</div>
             <div>
               <h1 className="font-bold text-base leading-none">DiceDuel P2P</h1>
               <div className={`flex items-center gap-1.5 mt-1 text-[11px] ${isServerConnected ? 'text-emerald-400' : 'text-rose-400'}`}>
                 {isServerConnected ? <Activity className="w-3 h-3 animate-pulse" /> : <WifiOff className="w-3 h-3" />}
-                <span>{isServerConnected ? 'Canlı Sunucu Bağlı' : 'Sunucu Uyanıyor...'}</span>
+                <span>{isServerConnected ? 'Canlı Lobi Akışı Aktif' : 'Sunucu Uyanıyor...'}</span>
               </div>
             </div>
           </div>
@@ -158,7 +166,7 @@ export default function LobbyPage() {
                 <ShieldCheck className="w-4 h-4" />
                 <span>Provably Fair RNG</span>
               </div>
-              <div className="text-sm font-semibold text-slate-300">Ödül: <span className="text-amber-400 font-bold">{(parseFloat(betInput) * 2 * 0.97).toFixed(2)} USDT</span></div>
+              <div className="text-sm font-semibold text-slate-300">Ödül: <span className="text-amber-400 font-bold">{(currentBetRef.current * 2 * 0.97).toFixed(2)} USDT</span></div>
             </div>
 
             <div className="grid grid-cols-2 gap-4 w-full relative mb-8">
@@ -198,7 +206,7 @@ export default function LobbyPage() {
               <div>
                 <input type="number" value={betInput} onChange={(e) => setBetInput(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm font-bold text-white focus:outline-none" />
               </div>
-              <button onClick={handleCreateRoom} className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm rounded-xl transition shadow-lg shadow-indigo-600/20 active:scale-95">
+              <button onClick={() => handleStartDuel(parseFloat(betInput))} className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm rounded-xl transition shadow-lg shadow-indigo-600/20 active:scale-95">
                 Meydan Oku
               </button>
             </div>
@@ -206,6 +214,7 @@ export default function LobbyPage() {
             <div className="md:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
               <div className="flex justify-between items-center">
                 <h2 className="font-bold text-sm flex items-center gap-2 text-slate-200"><Flame className="w-4 h-4 text-rose-400" /> Canlı Odalar</h2>
+                <span className="text-[11px] text-indigo-400 flex items-center gap-1"><Sparkles className="w-3 h-3" /> Canlı Akış</span>
               </div>
               <div className="space-y-2.5">
                 {rooms.map((r) => (
@@ -213,7 +222,7 @@ export default function LobbyPage() {
                     <span className="text-xs font-semibold text-slate-300">{r.creator}</span>
                     <div className="flex items-center gap-4">
                       <span className="text-xs font-bold text-amber-400">{r.betAmount} USDT</span>
-                      <button onClick={() => { setBetInput(r.betAmount.toString()); handleCreateRoom(); }} className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 active:scale-95 transition">
+                      <button onClick={() => handleStartDuel(r.betAmount)} className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 active:scale-95 transition">
                         <Swords className="w-3.5 h-3.5" /> Zar At
                       </button>
                     </div>
