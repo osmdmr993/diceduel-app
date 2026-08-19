@@ -8,7 +8,7 @@ import {
   Trophy, RotateCcw, Activity, WifiOff, Sparkles, 
   ArrowDownCircle, ArrowUpCircle, X, CheckCircle2, LogOut,
   Coins, PieChart, Percent, FileCode2, Volume2, VolumeX,
-  History, Copy, Check, ExternalLink, HelpCircle
+  History, Copy, Check, ExternalLink, HelpCircle, Share2, Send
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -54,7 +54,7 @@ export default function LobbyPage() {
     { id: 'm-3', winner: 'AlphaSeeker', loser: 'DegenTrader', p1Score: 78, p2Score: 54, payout: 38.80, time: '5 dk önce' },
   ]);
 
-  // Ses Motoru State'leri
+  // Ses Motoru
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const rollSoundIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -188,6 +188,19 @@ export default function LobbyPage() {
     setTimeout(() => setCopiedAddress(false), 2000);
   };
 
+  // Sosyal Medya Paylaşım Bağlantıları
+  const shareOnTwitter = (winAmount: number) => {
+    const text = encodeURIComponent(`🎲 DiceDuel'da az önce ${winAmount.toFixed(2)} USDT kazandım! 🚀 Provably Fair Web3 Zar Arenası. Hadi zar atalım:`);
+    const url = encodeURIComponent('https://diceduel.fun');
+    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
+  };
+
+  const shareOnTelegram = (winAmount: number) => {
+    const text = encodeURIComponent(`🎲 DiceDuel P2P arenasında ${winAmount.toFixed(2)} USDT kazandım!`);
+    const url = encodeURIComponent('https://diceduel.fun');
+    window.open(`https://t.me/share/url?url=${url}&text=${text}`, '_blank');
+  };
+
   const pushMatchRecord = (winner: string, loser: string, p1Score: number, p2Score: number, bet: number) => {
     const payout = +(bet * 2 * 0.97).toFixed(2);
     setMatchHistory((prev) => [
@@ -283,7 +296,7 @@ export default function LobbyPage() {
       }
     }
 
-    alert(`${type.toUpperCase()} eklentisi veya Web3 tarayıcısı algılanamadı. Test amaçlı Hızlı Demo cüzdanı bağlanıyor.`);
+    alert(`${type.toUpperCase()} eklentisi algılanamadı. Hızlı Demo cüzdanı bağlanıyor.`);
     const randomHex = Array.from({ length: 40 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
     setAccount(`0x${randomHex}`);
     setIsDemoWallet(true);
@@ -396,6 +409,8 @@ export default function LobbyPage() {
     setTimeout(() => setStakeSuccessMsg(null), 1500);
   };
 
+  const currentWinPayout = +(currentBetRef.current * 2 * 0.97).toFixed(2);
+
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 font-sans">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -479,7 +494,7 @@ export default function LobbyPage() {
                 <ShieldCheck className="w-4 h-4" />
                 <span>Provably Fair RNG</span>
               </div>
-              <div className="text-sm font-semibold text-slate-300">Ödül: <span className="text-amber-400 font-bold">{(currentBetRef.current * 2 * 0.97).toFixed(2)} USDT</span></div>
+              <div className="text-sm font-semibold text-slate-300">Ödül: <span className="text-amber-400 font-bold">{currentWinPayout.toFixed(2)} USDT</span></div>
             </div>
 
             <div className="grid grid-cols-2 gap-4 w-full relative mb-8">
@@ -506,7 +521,31 @@ export default function LobbyPage() {
                   <Trophy className="w-5 h-5 text-amber-400" />
                   <span>Kazanan: {gameResult.winner}!</span>
                 </div>
-                <button onClick={() => setActiveGame(false)} className="flex items-center gap-2 mt-2 px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-semibold rounded-xl transition border border-slate-700 active:scale-95">
+
+                {/* ZAFER ANINDA SOSYAL MEDYADA PAYLAŞ BUTONLARI */}
+                {gameResult.winner === 'Sen' && (
+                  <div className="w-full bg-slate-950/80 border border-emerald-800/40 p-3.5 rounded-2xl my-2 flex flex-col items-center gap-2.5">
+                    <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Zaferini Arkadaşlarınla Paylaş:
+                    </span>
+                    <div className="flex items-center gap-2 w-full max-w-xs">
+                      <button 
+                        onClick={() => shareOnTwitter(currentWinPayout)}
+                        className="flex-1 py-2 px-3 bg-black hover:bg-slate-900 border border-slate-700 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-2 transition active:scale-95"
+                      >
+                        <span className="text-sm font-black">𝕏</span> X'te Paylaş
+                      </button>
+                      <button 
+                        onClick={() => shareOnTelegram(currentWinPayout)}
+                        className="flex-1 py-2 px-3 bg-sky-600 hover:bg-sky-500 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-2 transition active:scale-95"
+                      >
+                        <Send className="w-3.5 h-3.5" /> Telegram
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <button onClick={() => setActiveGame(false)} className="flex items-center gap-2 mt-1 px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-semibold rounded-xl transition border border-slate-700 active:scale-95">
                   <RotateCcw className="w-4 h-4" /> Lobiye Dön
                 </button>
               </motion.div>
@@ -600,7 +639,7 @@ export default function LobbyPage() {
           </div>
         </footer>
 
-        {/* GELİŞMİŞ ÇOKLU CÜZDAN SEÇİM MODALI */}
+        {/* CÜZDAN SEÇİM MODALI */}
         <AnimatePresence>
           {isWalletModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
@@ -613,10 +652,8 @@ export default function LobbyPage() {
                 <p className="text-xs text-slate-400 mb-4">Borsa veya Web3 cüzdanınızı seçerek anında bağlanın.</p>
 
                 <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
-                  
                   <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-1">Popüler Borsa Cüzdanları</div>
                   
-                  {/* Binance */}
                   <button 
                     onClick={() => handleSelectWallet('binance')}
                     className="w-full flex items-center justify-between p-3 bg-slate-950 hover:bg-amber-950/20 border border-slate-800 hover:border-amber-500/50 rounded-2xl transition group"
@@ -631,7 +668,6 @@ export default function LobbyPage() {
                     <span className="text-[10px] bg-amber-950/60 text-amber-300 px-2 py-0.5 rounded border border-amber-800/40">Popüler</span>
                   </button>
 
-                  {/* OKX */}
                   <button 
                     onClick={() => handleSelectWallet('okx')}
                     className="w-full flex items-center justify-between p-3 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-slate-600 rounded-2xl transition group"
@@ -645,7 +681,6 @@ export default function LobbyPage() {
                     </div>
                   </button>
 
-                  {/* Bybit / Bitget */}
                   <button 
                     onClick={() => handleSelectWallet('bybit')}
                     className="w-full flex items-center justify-between p-3 bg-slate-950 hover:bg-orange-950/20 border border-slate-800 hover:border-orange-500/50 rounded-2xl transition group"
@@ -661,7 +696,6 @@ export default function LobbyPage() {
 
                   <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider pt-2 mb-1">Bağımsız Web3 Cüzdanları</div>
 
-                  {/* MetaMask */}
                   <button 
                     onClick={() => handleSelectWallet('metamask')}
                     className="w-full flex items-center justify-between p-3 bg-slate-950 hover:bg-orange-950/20 border border-slate-800 hover:border-orange-500/50 rounded-2xl transition group"
@@ -675,7 +709,6 @@ export default function LobbyPage() {
                     </div>
                   </button>
 
-                  {/* Trust Wallet */}
                   <button 
                     onClick={() => handleSelectWallet('trust')}
                     className="w-full flex items-center justify-between p-3 bg-slate-950 hover:bg-sky-950/20 border border-slate-800 hover:border-sky-500/50 rounded-2xl transition group"
@@ -684,12 +717,11 @@ export default function LobbyPage() {
                       <div className="w-8 h-8 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-black text-sm">🛡️</div>
                       <div className="text-left">
                         <div className="text-xs font-bold text-slate-200 group-hover:text-sky-400">Trust Wallet</div>
-                        <div className="text-[10px] text-slate-500">Binance Resmi Mobil Cüzdanı</div>
+                        <div className="text-[10px] text-slate-500">Mobil & Tarayıcı Cüzdanı</div>
                       </div>
                     </div>
                   </button>
 
-                  {/* WalletConnect (Genel Cüzdanlar) */}
                   <button 
                     onClick={() => handleSelectWallet('walletconnect')}
                     className="w-full flex items-center justify-between p-3 bg-slate-950 hover:bg-blue-950/20 border border-slate-800 hover:border-blue-500/50 rounded-2xl transition group"
@@ -704,7 +736,6 @@ export default function LobbyPage() {
                     <span className="text-[10px] bg-blue-950/60 text-blue-300 px-2 py-0.5 rounded border border-blue-800/40">Evrensel</span>
                   </button>
 
-                  {/* Hızlı Demo */}
                   <button 
                     onClick={() => handleSelectWallet('demo')}
                     className="w-full flex items-center justify-between p-3 bg-slate-950 hover:bg-indigo-950/20 border border-slate-800 hover:border-indigo-500/50 rounded-2xl transition group"
@@ -718,14 +749,13 @@ export default function LobbyPage() {
                     </div>
                     <span className="text-[10px] bg-indigo-950/60 text-indigo-300 px-2 py-0.5 rounded border border-indigo-800/40">Kolay</span>
                   </button>
-
                 </div>
               </motion.div>
             </div>
           )}
         </AnimatePresence>
 
-        {/* 1. MODAL: Kasa Yönetimi (Borsadan USDT Aktarım Rehberi Dahil) */}
+        {/* 1. MODAL: Kasa Yönetimi */}
         <AnimatePresence>
           {isModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
@@ -738,7 +768,6 @@ export default function LobbyPage() {
                   <button onClick={() => setModalTab('withdraw')} className={`flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold transition ${modalTab === 'withdraw' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}><ArrowUpCircle className="w-4 h-4" /> USDT Çek</button>
                 </div>
 
-                {/* Borsadan Aktarım Bilgi Kartı */}
                 {account && (
                   <div className="p-3 bg-slate-950 border border-slate-800 rounded-2xl mb-4 text-xs space-y-2">
                     <div className="flex justify-between items-center text-slate-400">
@@ -752,7 +781,7 @@ export default function LobbyPage() {
                       {account}
                     </div>
                     <p className="text-[10px] text-slate-500 leading-tight">
-                      Binance/OKX/Bybit hesabınızdan bu adrese <span className="text-amber-400 font-bold">BEP-20 (BSC)</span> ağıyla USDT çekerek doğrudan kasaya aktarabilirsiniz.
+                      Binance/OKX/Bybit hesabınızdan bu adrese <span className="text-amber-400 font-bold">BEP-20 (BSC)</span> ağıyla USDT çekerek kasaya aktarabilirsiniz.
                     </p>
                   </div>
                 )}
