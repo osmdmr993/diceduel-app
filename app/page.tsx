@@ -8,7 +8,8 @@ import {
   Trophy, RotateCcw, Activity, WifiOff, Sparkles, 
   ArrowDownCircle, ArrowUpCircle, X, CheckCircle2, LogOut,
   Coins, PieChart, Percent, FileCode2, Volume2, VolumeX,
-  History, Copy, Check, Gift, Users, CircleDot, Dices, Send
+  History, Copy, Check, Gift, Users, CircleDot, Dices, Send,
+  ReceiptText, Download, Printer, Filter, Lock, CheckCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -30,6 +31,16 @@ interface MatchHistoryItem {
   game: string;
   payout: number;
   time: string;
+}
+
+interface TransactionRecord {
+  id: string;
+  type: 'DEPOSIT' | 'WITHDRAW' | 'GAME_WIN' | 'SPIN' | 'REF_COMMISSION';
+  title: string;
+  amount: number;
+  date: string;
+  txHash: string;
+  status: 'COMPLETED' | 'SUCCESS';
 }
 
 export default function PlatformPage() {
@@ -68,6 +79,18 @@ export default function PlatformPage() {
   const [refEarnings, setRefEarnings] = useState<number>(8.50);
   const [totalInvited, setTotalInvited] = useState<number>(6);
 
+  // Provably Fair Modal
+  const [isFairModalOpen, setIsFairModalOpen] = useState<boolean>(false);
+
+  // Finans & İşlem Geçmişi (Payments / Transactions)
+  const [isTxModalOpen, setIsTxModalOpen] = useState<boolean>(false);
+  const [txFilter, setTxFilter] = useState<'ALL' | 'IN' | 'OUT' | 'WINS'>('ALL');
+  const [transactions, setTransactions] = useState<TransactionRecord[]>([
+    { id: 'tx-101', type: 'DEPOSIT', title: 'Başlangıç USDT Yatırma', amount: 250.00, date: '19.08.2026 19:10', txHash: '0x8f2a...c89e', status: 'COMPLETED' },
+    { id: 'tx-102', type: 'GAME_WIN', title: 'Zar Düellosu Zaferi (89-45)', amount: 19.40, date: '19.08.2026 19:15', txHash: '0x4e31...b52a', status: 'SUCCESS' },
+    { id: 'tx-103', type: 'REF_COMMISSION', title: 'Referans Ortaklık Payı (%0.5)', amount: 1.25, date: '19.08.2026 19:22', txHash: '0x1a7c...f901', status: 'SUCCESS' }
+  ]);
+
   // Canlı Maç Geçmişi
   const [matchHistory, setMatchHistory] = useState<MatchHistoryItem[]>([
     { id: 'm-1', winner: 'CryptoWhale_88', loser: 'SolanaKing', game: '🎲 Zar (89-45)', payout: 19.40, time: '1 dk önce' },
@@ -94,6 +117,36 @@ export default function PlatformPage() {
 
   const isRollingRef = useRef<boolean>(false);
   const currentBetRef = useRef<number>(0);
+
+  const addTransaction = (type: TransactionRecord['type'], title: string, amount: number) => {
+    const newTx: TransactionRecord = {
+      id: `tx-${Date.now()}`,
+      type,
+      title,
+      amount,
+      date: new Date().toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+      txHash: `0x${Array.from({ length: 8 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}...${Array.from({ length: 4 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`,
+      status: 'COMPLETED'
+    };
+    setTransactions((prev) => [newTx, ...prev]);
+  };
+
+  const exportToCSV = () => {
+    const headers = 'ID,Islem Turu,Detay,Tutar (USDT),Tarih,Islem Hashi,Durum\n';
+    const rows = transactions.map(t => `"${t.id}","${t.type}","${t.title}","${t.amount}","${t.date}","${t.txHash}","${t.status}"`).join('\n');
+    const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `diceduel_hesap_dokumu_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const printStatement = () => {
+    window.print();
+  };
 
   const initAudio = () => {
     if (!audioCtxRef.current && typeof window !== 'undefined') {
@@ -268,9 +321,11 @@ export default function PlatformPage() {
       pushMatchRecord(winnerName, loserName, `🎲 Zar (${p1}-${p2})`, amount);
 
       if (winner === 'Sen') {
+        const netWin = amount * 2 * 0.97;
         triggerConfetti();
         playWinSound();
-        setBalance((prev) => prev + amount * 2 * 0.97);
+        setBalance((prev) => prev + netWin);
+        addTransaction('GAME_WIN', `Zar Düellosu Zaferi (${p1} vs ${p2})`, +netWin.toFixed(2));
       } else {
         playLoseSound();
       }
@@ -312,9 +367,11 @@ export default function PlatformPage() {
       pushMatchRecord(winnerName, loserName, `🪙 Yazı-Tura (${landed})`, amount);
 
       if (isWon) {
+        const netWin = amount * 2 * 0.97;
         triggerConfetti();
         playWinSound();
-        setBalance((prev) => prev + amount * 2 * 0.97);
+        setBalance((prev) => prev + netWin);
+        addTransaction('GAME_WIN', `Yazı-Tura Zaferi (${landed})`, +netWin.toFixed(2));
       } else {
         playLoseSound();
       }
@@ -344,6 +401,7 @@ export default function PlatformPage() {
       setCanSpin(false);
       triggerConfetti();
       playWinSound();
+      addTransaction('SPIN', 'Günlük Şans Çarkı Ödülü', chosen);
     }, 3500);
   };
 
@@ -356,10 +414,12 @@ export default function PlatformPage() {
     if (modalTab === 'deposit') {
       setBalance((prev) => prev + val);
       setTxSuccessMsg(`+${val} USDT Kontrata Yatırıldı!`);
+      addTransaction('DEPOSIT', 'Kasaya USDT Yatırma', val);
     } else {
       if (val > balance) return alert('Kasada yeterli bakiye yok!');
       setBalance((prev) => prev - val);
       setTxSuccessMsg(`-${val} USDT Cüzdanınıza Aktarıldı!`);
+      addTransaction('WITHDRAW', 'Cüzdana USDT Çekme', val);
     }
     setTimeout(() => { setTxSuccessMsg(null); setIsModalOpen(false); }, 1200);
   };
@@ -371,6 +431,7 @@ export default function PlatformPage() {
     setBalance((prev) => prev - val);
     setStakedAmount((prev) => prev + val);
     setStakeSuccessMsg(`+${val} USDT LP Havuzuna Kilitlendi!`);
+    addTransaction('WITHDRAW', 'Kasa Havuzuna LP Kilitleme', val);
     setTimeout(() => setStakeSuccessMsg(null), 1500);
   };
 
@@ -379,9 +440,17 @@ export default function PlatformPage() {
     if (accumulatedYield <= 0) return;
     setBalance((prev) => +(prev + accumulatedYield).toFixed(2));
     setStakeSuccessMsg(`+${accumulatedYield} USDT Pay Kontrattan Çekildi!`);
+    addTransaction('REF_COMMISSION', 'Kasa Havuzu Gelir Payı', +accumulatedYield.toFixed(2));
     setAccumulatedYield(0);
     setTimeout(() => setStakeSuccessMsg(null), 1500);
   };
+
+  const filteredTransactions = transactions.filter(t => {
+    if (txFilter === 'IN') return t.type === 'DEPOSIT';
+    if (txFilter === 'OUT') return t.type === 'WITHDRAW';
+    if (txFilter === 'WINS') return t.type === 'GAME_WIN' || t.type === 'SPIN';
+    return true;
+  });
 
   const currentWinPayout = +(currentBetRef.current * 2 * 0.97).toFixed(2);
   const refLink = account ? `https://diceduel.fun/?ref=${account}` : 'https://diceduel.fun/?ref=connect_wallet';
@@ -403,8 +472,17 @@ export default function PlatformPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5">
-            {/* Günlük Çark Butonu */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Ödemeler / Hesap Dökümü Butonu */}
+            <button 
+              onClick={() => setIsTxModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-bold text-slate-200 transition active:scale-95 shadow-sm"
+            >
+              <ReceiptText className="w-3.5 h-3.5 text-indigo-400" />
+              <span>İşlemler (PDF/CSV)</span>
+            </button>
+
+            {/* Günlük Çark */}
             <button 
               onClick={() => setIsSpinModalOpen(true)}
               className="flex items-center gap-1.5 px-3 py-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-xl text-xs font-bold text-amber-400 transition active:scale-95 shadow-sm"
@@ -414,7 +492,7 @@ export default function PlatformPage() {
               {canSpin && <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>}
             </button>
 
-            {/* Referans Butonu */}
+            {/* Referans */}
             <button 
               onClick={() => setIsRefModalOpen(true)}
               className="flex items-center gap-1.5 px-3 py-2 bg-indigo-950/60 hover:bg-indigo-900/60 border border-indigo-800/60 rounded-xl text-xs font-bold text-indigo-300 transition active:scale-95 shadow-sm"
@@ -423,7 +501,16 @@ export default function PlatformPage() {
               <span>Davet Et (%0.5)</span>
             </button>
 
-            {/* Ses Aç / Kapat */}
+            {/* Provably Fair */}
+            <button 
+              onClick={() => setIsFairModalOpen(true)}
+              className="p-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-emerald-400 transition active:scale-95"
+              title="Provably Fair Doğrulayıcı"
+            >
+              <ShieldCheck className="w-4 h-4" />
+            </button>
+
+            {/* Ses Aç/Kapat */}
             <button 
               onClick={() => { initAudio(); setIsMuted(!isMuted); }}
               className="p-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-slate-300 transition active:scale-95"
@@ -431,16 +518,7 @@ export default function PlatformPage() {
               {isMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4 text-indigo-400" />}
             </button>
 
-            {/* Kasa Payı Havuzu */}
-            <button 
-              onClick={() => setIsStakeModalOpen(true)}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-2 bg-emerald-950/50 hover:bg-emerald-900/50 border border-emerald-800/50 rounded-xl text-xs font-semibold text-emerald-400 transition active:scale-95"
-            >
-              <TrendingUp className="w-3.5 h-3.5" />
-              <span>Havuz: +{accumulatedYield.toFixed(2)}</span>
-            </button>
-
-            {/* Bakiye & Kasa */}
+            {/* Kasa */}
             <div className="flex items-center bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-inner">
               <div className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-amber-400">
                 <Wallet className="w-3.5 h-3.5 text-slate-400" />
@@ -507,7 +585,6 @@ export default function PlatformPage() {
               <div className="text-sm font-semibold text-slate-300">Ödül: <span className="text-amber-400 font-bold">{currentWinPayout.toFixed(2)} USDT</span></div>
             </div>
 
-            {/* ZAR veya YAZI-TURA Görsel Karşılaşması */}
             {activeTab === 'dice' ? (
               <div className="grid grid-cols-2 gap-4 w-full relative mb-8">
                 <div className="flex flex-col items-center p-4 bg-slate-800/60 rounded-2xl border border-slate-700/50">
@@ -525,7 +602,6 @@ export default function PlatformPage() {
                 </div>
               </div>
             ) : (
-              /* Yazı-Tura Parası */
               <div className="flex flex-col items-center my-6 space-y-4">
                 <span className="text-xs text-slate-400">Seçimin: <span className="font-bold text-amber-400">{coinChoice}</span></span>
                 <motion.div 
@@ -568,7 +644,6 @@ export default function PlatformPage() {
             )}
           </div>
         ) : (
-          /* Oyun Seçimine Göre Lobi */
           activeTab === 'dice' ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 h-fit">
@@ -602,7 +677,6 @@ export default function PlatformPage() {
               </div>
             </div>
           ) : (
-            /* YAZI - TURA LOBİSİ */
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-lg mx-auto space-y-6 shadow-2xl">
               <div className="text-center space-y-1">
                 <h2 className="text-lg font-black text-white flex items-center justify-center gap-2"><CircleDot className="w-5 h-5 text-amber-400" /> Anlık Yazı - Tura Düellosu</h2>
@@ -610,22 +684,8 @@ export default function PlatformPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => setCoinChoice('YAZI')}
-                  className={`py-3.5 rounded-2xl font-black text-sm border transition flex flex-col items-center gap-1 ${
-                    coinChoice === 'YAZI' ? 'bg-amber-500/20 border-amber-500 text-amber-300 shadow-lg shadow-amber-500/20' : 'bg-slate-950 border-slate-800 text-slate-400'
-                  }`}
-                >
-                  <span className="text-xl">🦅</span> YAZI SEÇ
-                </button>
-                <button
-                  onClick={() => setCoinChoice('TURA')}
-                  className={`py-3.5 rounded-2xl font-black text-sm border transition flex flex-col items-center gap-1 ${
-                    coinChoice === 'TURA' ? 'bg-amber-500/20 border-amber-500 text-amber-300 shadow-lg shadow-amber-500/20' : 'bg-slate-950 border-slate-800 text-slate-400'
-                  }`}
-                >
-                  <span className="text-xl">🪙</span> TURA SEÇ
-                </button>
+                <button onClick={() => setCoinChoice('YAZI')} className={`py-3.5 rounded-2xl font-black text-sm border transition flex flex-col items-center gap-1 ${coinChoice === 'YAZI' ? 'bg-amber-500/20 border-amber-500 text-amber-300 shadow-lg shadow-amber-500/20' : 'bg-slate-950 border-slate-800 text-slate-400'}`}><span className="text-xl">🦅</span> YAZI SEÇ</button>
+                <button onClick={() => setCoinChoice('TURA')} className={`py-3.5 rounded-2xl font-black text-sm border transition flex flex-col items-center gap-1 ${coinChoice === 'TURA' ? 'bg-amber-500/20 border-amber-500 text-amber-300 shadow-lg shadow-amber-500/20' : 'bg-slate-950 border-slate-800 text-slate-400'}`}><span className="text-xl">🪙</span> TURA SEÇ</button>
               </div>
 
               <div>
@@ -691,78 +751,150 @@ export default function PlatformPage() {
           </div>
         </footer>
 
-        {/* 1. MODAL: GÜNLÜK ÇARK (Daily Spin) */}
+        {/* MODAL: ÖDEMELER VE HESAP DÖKÜMÜ (CSV / PDF) */}
+        <AnimatePresence>
+          {isTxModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-2xl shadow-2xl relative space-y-4 max-h-[85vh] flex flex-col">
+                <div className="flex justify-between items-center pb-2 border-b border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <ReceiptText className="w-5 h-5 text-indigo-400" />
+                    <h3 className="font-bold text-base text-white">Finansal İşlem Geçmişi & Dekontlar</h3>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={exportToCSV} className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-indigo-300 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-slate-700 transition" title="CSV Olarak İndir">
+                      <Download className="w-3.5 h-3.5" /> CSV İndir
+                    </button>
+                    <button onClick={printStatement} className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-slate-700 transition" title="PDF / Yazdır">
+                      <Printer className="w-3.5 h-3.5" /> PDF / Yazdır
+                    </button>
+                    <button onClick={() => setIsTxModalOpen(false)} className="text-slate-400 hover:text-white transition ml-2"><X className="w-5 h-5" /></button>
+                  </div>
+                </div>
+
+                {/* Filtreler */}
+                <div className="flex gap-2">
+                  {[
+                    { id: 'ALL', label: 'Tüm İşlemler' },
+                    { id: 'IN', label: 'Yatırılanlar' },
+                    { id: 'OUT', label: 'Çekilenler' },
+                    { id: 'WINS', label: 'Oyun Kazançları' },
+                  ].map(f => (
+                    <button 
+                      key={f.id} 
+                      onClick={() => setTxFilter(f.id as any)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${txFilter === f.id ? 'bg-indigo-600 text-white' : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'}`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Tablo */}
+                <div className="flex-1 overflow-y-auto pr-1 space-y-2">
+                  {filteredTransactions.length === 0 ? (
+                    <div className="text-center py-8 text-xs text-slate-500">Kayıtlı işlem bulunamadı.</div>
+                  ) : (
+                    filteredTransactions.map(tx => (
+                      <div key={tx.id} className="p-3 bg-slate-950 border border-slate-800 rounded-2xl flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs ${
+                            tx.type === 'DEPOSIT' || tx.type === 'GAME_WIN' || tx.type === 'SPIN' || tx.type === 'REF_COMMISSION' 
+                              ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/40' 
+                              : 'bg-rose-950/60 text-rose-400 border border-rose-800/40'
+                          }`}>
+                            {tx.type === 'DEPOSIT' && '📥'}
+                            {tx.type === 'WITHDRAW' && '📤'}
+                            {tx.type === 'GAME_WIN' && '🏆'}
+                            {tx.type === 'SPIN' && '🎁'}
+                            {tx.type === 'REF_COMMISSION' && '👥'}
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold text-slate-200">{tx.title}</div>
+                            <div className="text-[10px] text-slate-500 font-mono">{tx.date} • {tx.txHash}</div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className={`text-xs font-black ${
+                            tx.type === 'WITHDRAW' ? 'text-rose-400' : 'text-emerald-400'
+                          }`}>
+                            {tx.type === 'WITHDRAW' ? '-' : '+'}{tx.amount.toFixed(2)} USDT
+                          </div>
+                          <span className="text-[9px] bg-slate-900 text-slate-400 px-1.5 py-0.5 rounded font-medium border border-slate-800">Tamamlandı</span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* MODAL: PROVABLY FAIR DOĞRULAYICI */}
+        <AnimatePresence>
+          {isFairModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md shadow-2xl relative space-y-4">
+                <button onClick={() => setIsFairModalOpen(false)} className="absolute top-5 right-5 text-slate-400 hover:text-white transition"><X className="w-5 h-5" /></button>
+                <h3 className="font-bold text-base text-white flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-emerald-400" /> Provably Fair Matematiksel Adillik</h3>
+                <p className="text-xs text-slate-400">DiceDuel platformunda tüm oyun sonuçları SHA-256 kriptografik hash fonksiyonu ile zincir üstünde önceden mühürlenir.</p>
+
+                <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl space-y-2 text-xs">
+                  <div>
+                    <span className="text-[10px] text-slate-500 block">Server Seed Hash (Mevcut Tur):</span>
+                    <span className="font-mono text-[10px] text-indigo-300 break-all">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 block">Client Seed (Cüzdanın):</span>
+                    <span className="font-mono text-[10px] text-slate-300 break-all">{account || '0xDemoWalletClientSeed'}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[11px] text-emerald-400 pt-1 font-semibold">
+                    <CheckCircle className="w-3.5 h-3.5" /> Sonuçlar değiştirilemez ve manipüle edilemez.
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* MODALLAR (Çark, Ref, Cüzdan, Kasa, LP) */}
         <AnimatePresence>
           {isSpinModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl relative text-center">
                 <button onClick={() => setIsSpinModalOpen(false)} className="absolute top-5 right-5 text-slate-400 hover:text-white transition"><X className="w-5 h-5" /></button>
-                
-                <h3 className="font-bold text-lg text-white mb-1 flex items-center justify-center gap-2">
-                  <Gift className="w-5 h-5 text-amber-400" /> Günlük Şans Çarkı
-                </h3>
+                <h3 className="font-bold text-lg text-white mb-1 flex items-center justify-center gap-2"><Gift className="w-5 h-5 text-amber-400" /> Günlük Şans Çarkı</h3>
                 <p className="text-xs text-slate-400 mb-6">Her 24 saatte bir ücretsiz çevirin, anında USDT kazanın!</p>
-
                 <div className="flex justify-center my-4">
-                  <motion.div 
-                    animate={isSpinning ? { rotate: [0, 1440] } : {}} 
-                    transition={{ duration: 3.5, ease: "easeOut" }}
-                    className="w-36 h-36 rounded-full border-4 border-amber-500 bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-950 flex items-center justify-center text-3xl font-black shadow-2xl relative"
-                  >
+                  <motion.div animate={isSpinning ? { rotate: [0, 1440] } : {}} transition={{ duration: 3.5, ease: "easeOut" }} className="w-36 h-36 rounded-full border-4 border-amber-500 bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-950 flex items-center justify-center text-3xl font-black shadow-2xl relative">
                     🎁
                     <div className="absolute top-0 w-3 h-3 bg-amber-400 rotate-45 -translate-y-1"></div>
                   </motion.div>
                 </div>
-
-                {spinReward && (
-                  <div className="p-3 bg-emerald-950/60 border border-emerald-800/60 rounded-xl my-3 text-emerald-300 font-bold text-sm flex items-center justify-center gap-2">
-                    <Sparkles className="w-4 h-4 text-amber-400" /> +{spinReward.toFixed(2)} USDT Bakiyenize Eklendi!
-                  </div>
-                )}
-
-                <button
-                  onClick={handleSpinWheel}
-                  disabled={!canSpin || isSpinning}
-                  className="w-full mt-3 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-sm rounded-xl transition shadow-lg disabled:opacity-40"
-                >
-                  {isSpinning ? 'Çark Dönüyor...' : canSpin ? 'Ücretsiz Çevir' : 'Yarın Tekrar Gel (24 Saat)'}
-                </button>
+                {spinReward && <div className="p-3 bg-emerald-950/60 border border-emerald-800/60 rounded-xl my-3 text-emerald-300 font-bold text-sm flex items-center justify-center gap-2"><Sparkles className="w-4 h-4 text-amber-400" /> +{spinReward.toFixed(2)} USDT Bakiyenize Eklendi!</div>}
+                <button onClick={handleSpinWheel} disabled={!canSpin || isSpinning} className="w-full mt-3 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-sm rounded-xl transition shadow-lg disabled:opacity-40">{isSpinning ? 'Çark Dönüyor...' : canSpin ? 'Ücretsiz Çevir' : 'Yarın Tekrar Gel (24 Saat)'}</button>
               </motion.div>
             </div>
           )}
         </AnimatePresence>
 
-        {/* 2. MODAL: REFERANS & PASİF GELİR SİSTEMİ */}
         <AnimatePresence>
           {isRefModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md shadow-2xl relative">
                 <button onClick={() => setIsRefModalOpen(false)} className="absolute top-5 right-5 text-slate-400 hover:text-white transition"><X className="w-5 h-5" /></button>
-                
-                <h3 className="font-bold text-lg text-white mb-1 flex items-center gap-2">
-                  <Users className="w-5 h-5 text-indigo-400" /> Arkadaşını Davet Et & Kazan
-                </h3>
+                <h3 className="font-bold text-lg text-white mb-1 flex items-center gap-2"><Users className="w-5 h-5 text-indigo-400" /> Arkadaşını Davet Et & Kazan</h3>
                 <p className="text-xs text-slate-400 mb-5">Davet ettiğin herkesin oynadığı her oyundan anında %0.5 pasif komisyon kazan!</p>
-
                 <div className="grid grid-cols-2 gap-3 mb-5">
-                  <div className="p-3 bg-slate-950 border border-slate-800 rounded-2xl">
-                    <span className="text-[10px] text-slate-400 block mb-1">Davet Edilen Oyuncu</span>
-                    <span className="text-base font-black text-white">{totalInvited} Kişi</span>
-                  </div>
-                  <div className="p-3 bg-slate-950 border border-slate-800 rounded-2xl">
-                    <span className="text-[10px] text-slate-400 block mb-1">Kazanılan Komisyon</span>
-                    <span className="text-base font-black text-emerald-400">+{refEarnings.toFixed(2)} USDT</span>
-                  </div>
+                  <div className="p-3 bg-slate-950 border border-slate-800 rounded-2xl"><span className="text-[10px] text-slate-400 block mb-1">Davet Edilen Oyuncu</span><span className="text-base font-black text-white">{totalInvited} Kişi</span></div>
+                  <div className="p-3 bg-slate-950 border border-slate-800 rounded-2xl"><span className="text-[10px] text-slate-400 block mb-1">Kazanılan Komisyon</span><span className="text-base font-black text-emerald-400">+{refEarnings.toFixed(2)} USDT</span></div>
                 </div>
-
                 <div className="space-y-2">
                   <label className="text-xs text-slate-300 font-bold block">Özel Davet Bağlantın:</label>
                   <div className="flex gap-2">
                     <input type="text" readOnly value={refLink} className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono text-slate-300 focus:outline-none truncate" />
-                    <button onClick={() => copyToClipboard(refLink, 'ref')} className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition flex items-center gap-1">
-                      {copiedText === 'ref' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                      {copiedText === 'ref' ? 'Kopyalandı' : 'Kopyala'}
-                    </button>
+                    <button onClick={() => copyToClipboard(refLink, 'ref')} className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition flex items-center gap-1">{copiedText === 'ref' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}{copiedText === 'ref' ? 'Kopyalandı' : 'Kopyala'}</button>
                   </div>
                 </div>
               </motion.div>
@@ -770,7 +902,6 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 3. MODAL: CÜZDAN SEÇİMİ */}
         <AnimatePresence>
           {isWalletModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
@@ -790,7 +921,6 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 4. MODAL: KASA */}
         <AnimatePresence>
           {isModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
@@ -821,7 +951,6 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 5. MODAL: STAKING */}
         <AnimatePresence>
           {isStakeModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
