@@ -8,7 +8,7 @@ import {
   Trophy, RotateCcw, Activity, WifiOff, Sparkles, 
   ArrowDownCircle, ArrowUpCircle, X, CheckCircle2, LogOut,
   Coins, PieChart, Percent, FileCode2, Volume2, VolumeX,
-  History, UserCheck
+  History, Check
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -35,7 +35,10 @@ interface MatchHistoryItem {
 
 export default function LobbyPage() {
   const [account, setAccount] = useState<string | null>(null);
+  const [walletType, setWalletType] = useState<string | null>(null);
   const [isDemoWallet, setIsDemoWallet] = useState<boolean>(false);
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState<boolean>(false);
+
   const [balance, setBalance] = useState<number>(250.0);
   const [betInput, setBetInput] = useState<string>('5');
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -179,7 +182,6 @@ export default function LobbyPage() {
     });
   };
 
-  // Yeni Maç Kaydını Listeye Ekleme
   const pushMatchRecord = (winner: string, loser: string, p1Score: number, p2Score: number, bet: number) => {
     const payout = +(bet * 2 * 0.97).toFixed(2);
     setMatchHistory((prev) => [
@@ -192,7 +194,7 @@ export default function LobbyPage() {
         payout,
         time: 'Az önce',
       },
-      ...prev.slice(0, 5), // En son 6 maçı tut
+      ...prev.slice(0, 5),
     ]);
   };
 
@@ -241,35 +243,65 @@ export default function LobbyPage() {
     };
   }, [isMuted, account]);
 
-  const connectWallet = async () => {
+  // Çoklu Cüzdan Seçim Fonksiyonu
+  const handleSelectWallet = async (type: 'metamask' | 'binance' | 'trust' | 'demo') => {
     initAudio();
-    if (account) {
-      setAccount(null);
-      setIsDemoWallet(false);
-      return;
-    }
+    setIsWalletModalOpen(false);
 
-    if (typeof window !== 'undefined' && (window as any).ethereum) {
-      try {
-        const accounts = await (window as any).ethereum.request({ method: 'eth_requestAccounts' });
-        if (accounts.length > 0) {
-          setAccount(accounts[0]);
-          setIsDemoWallet(false);
-        }
-      } catch (error) {
-        console.error('Cüzdan hatası:', error);
-      }
-    } else {
+    if (type === 'demo') {
       const randomHex = Array.from({ length: 40 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
       setAccount(`0x${randomHex}`);
       setIsDemoWallet(true);
+      setWalletType('Demo');
+      return;
     }
+
+    if (type === 'binance') {
+      const bProvider = (window as any).BinanceChain || (window as any).ethereum;
+      if (bProvider) {
+        try {
+          const accounts = await bProvider.request({ method: 'eth_requestAccounts' });
+          if (accounts && accounts.length > 0) {
+            setAccount(accounts[0]);
+            setIsDemoWallet(false);
+            setWalletType('Binance');
+            return;
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+
+    if (type === 'metamask' || type === 'trust') {
+      if (typeof window !== 'undefined' && (window as any).ethereum) {
+        try {
+          const accounts = await (window as any).ethereum.request({ method: 'eth_requestAccounts' });
+          if (accounts && accounts.length > 0) {
+            setAccount(accounts[0]);
+            setIsDemoWallet(false);
+            setWalletType(type === 'metamask' ? 'MetaMask' : 'Trust');
+            return;
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+
+    // Eklenti bulunamazsa uyarıp Demo açar
+    alert(`${type.toUpperCase()} eklentisi bulunamadı. Test amaçlı Demo Web3 cüzdanı bağlanıyor.`);
+    const randomHex = Array.from({ length: 40 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+    setAccount(`0x${randomHex}`);
+    setIsDemoWallet(true);
+    setWalletType('Demo');
   };
 
   const disconnectWallet = (e: React.MouseEvent) => {
     e.stopPropagation();
     setAccount(null);
     setIsDemoWallet(false);
+    setWalletType(null);
   };
 
   const handleStartDuel = (amount: number) => {
@@ -426,7 +458,7 @@ export default function LobbyPage() {
               <div className="flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold text-slate-200 shadow-lg">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                 <span>{account.substring(0, 6)}...{account.substring(account.length - 4)}</span>
-                {isDemoWallet && <span className="text-[10px] bg-indigo-900/80 text-indigo-300 px-1.5 py-0.5 rounded font-mono">Demo</span>}
+                <span className="text-[10px] bg-indigo-900/80 text-indigo-300 px-1.5 py-0.5 rounded font-mono">{walletType || 'Web3'}</span>
                 <button 
                   onClick={disconnectWallet}
                   title="Bağlantıyı Kes"
@@ -437,7 +469,7 @@ export default function LobbyPage() {
               </div>
             ) : (
               <button 
-                onClick={connectWallet} 
+                onClick={() => setIsWalletModalOpen(true)} 
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-indigo-600/20 active:scale-95"
               >
                 Cüzdan Bağla
@@ -488,7 +520,6 @@ export default function LobbyPage() {
             )}
           </div>
         ) : (
-          /* Lobi Ana Izgarası */
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 h-fit">
               <h2 className="font-bold text-sm flex items-center gap-2 text-slate-200"><Plus className="w-4 h-4 text-indigo-400" /> Oda Aç</h2>
@@ -522,7 +553,7 @@ export default function LobbyPage() {
           </div>
         )}
 
-        {/* CANLI MAÇ GEÇMİŞİ & KAZANANLAR ŞERİDİ (Live Feed) */}
+        {/* CANLI MAÇ GEÇMİŞİ & KAZANANLAR ŞERİDİ */}
         <section className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400 flex items-center gap-2">
@@ -563,7 +594,7 @@ export default function LobbyPage() {
           </div>
         </section>
 
-        {/* Akıllı Sözleşme Doğrulama Rozeti (Footer) */}
+        {/* Akıllı Sözleşme Doğrulama Rozeti */}
         <footer className="flex flex-wrap items-center justify-between gap-3 p-4 bg-slate-900/60 border border-slate-800/80 rounded-2xl text-xs text-slate-400">
           <div className="flex items-center gap-2">
             <FileCode2 className="w-4 h-4 text-indigo-400" />
@@ -576,7 +607,71 @@ export default function LobbyPage() {
           </div>
         </footer>
 
-        {/* 1. MODAL: Kasa Yönetimi (Deposit/Withdraw) */}
+        {/* CÜZDAN SEÇİM MODALI (MetaMask, Binance, Trust, Demo) */}
+        <AnimatePresence>
+          {isWalletModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl relative">
+                <button onClick={() => setIsWalletModalOpen(false)} className="absolute top-5 right-5 text-slate-400 hover:text-white transition"><X className="w-5 h-5" /></button>
+                
+                <h3 className="font-bold text-lg text-white mb-1 flex items-center gap-2">
+                  <Wallet className="w-5 h-5 text-indigo-400" /> Cüzdan Bağla
+                </h3>
+                <p className="text-xs text-slate-400 mb-5">Oynamak için tercih ettiğiniz Web3 cüzdanını seçin.</p>
+
+                <div className="space-y-2.5">
+                  {/* Binance Web3 Wallet */}
+                  <button 
+                    onClick={() => handleSelectWallet('binance')}
+                    className="w-full flex items-center justify-between p-3.5 bg-slate-950 hover:bg-amber-950/20 border border-slate-800 hover:border-amber-500/50 rounded-2xl transition group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-black text-sm">🟡</div>
+                      <span className="text-xs font-bold text-slate-200 group-hover:text-amber-400">Binance Web3 Wallet</span>
+                    </div>
+                    <span className="text-[10px] bg-amber-950/60 text-amber-300 px-2 py-0.5 rounded border border-amber-800/40">Popüler</span>
+                  </button>
+
+                  {/* MetaMask */}
+                  <button 
+                    onClick={() => handleSelectWallet('metamask')}
+                    className="w-full flex items-center justify-between p-3.5 bg-slate-950 hover:bg-orange-950/20 border border-slate-800 hover:border-orange-500/50 rounded-2xl transition group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center font-black text-sm">🦊</div>
+                      <span className="text-xs font-bold text-slate-200 group-hover:text-orange-400">MetaMask</span>
+                    </div>
+                  </button>
+
+                  {/* Trust Wallet */}
+                  <button 
+                    onClick={() => handleSelectWallet('trust')}
+                    className="w-full flex items-center justify-between p-3.5 bg-slate-950 hover:bg-sky-950/20 border border-slate-800 hover:border-sky-500/50 rounded-2xl transition group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-black text-sm">🛡️</div>
+                      <span className="text-xs font-bold text-slate-200 group-hover:text-sky-400">Trust Wallet</span>
+                    </div>
+                  </button>
+
+                  {/* Demo Cüzdan */}
+                  <button 
+                    onClick={() => handleSelectWallet('demo')}
+                    className="w-full flex items-center justify-between p-3.5 bg-slate-950 hover:bg-indigo-950/20 border border-slate-800 hover:border-indigo-500/50 rounded-2xl transition group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-black text-sm">⚡</div>
+                      <span className="text-xs font-bold text-slate-200 group-hover:text-indigo-400">Hızlı Demo Cüzdan</span>
+                    </div>
+                    <span className="text-[10px] bg-indigo-950/60 text-indigo-300 px-2 py-0.5 rounded border border-indigo-800/40">Eklentisiz</span>
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* 1. MODAL: Kasa Yönetimi */}
         <AnimatePresence>
           {isModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
