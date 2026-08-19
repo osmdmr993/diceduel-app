@@ -7,7 +7,8 @@ import {
   Wallet, Swords, Plus, Flame, TrendingUp, ShieldCheck, 
   Trophy, RotateCcw, Activity, WifiOff, Sparkles, 
   ArrowDownCircle, ArrowUpCircle, X, CheckCircle2, LogOut,
-  Coins, PieChart, Percent, FileCode2, Volume2, VolumeX
+  Coins, PieChart, Percent, FileCode2, Volume2, VolumeX,
+  History, UserCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -22,6 +23,16 @@ interface Room {
   betAmount: number;
 }
 
+interface MatchHistoryItem {
+  id: string;
+  winner: string;
+  loser: string;
+  p1Score: number;
+  p2Score: number;
+  payout: number;
+  time: string;
+}
+
 export default function LobbyPage() {
   const [account, setAccount] = useState<string | null>(null);
   const [isDemoWallet, setIsDemoWallet] = useState<boolean>(false);
@@ -32,6 +43,13 @@ export default function LobbyPage() {
   const [isRolling, setIsRolling] = useState<boolean>(false);
   const [isServerConnected, setIsServerConnected] = useState<boolean>(false);
   
+  // Canlı Maç Geçmişi Listesi
+  const [matchHistory, setMatchHistory] = useState<MatchHistoryItem[]>([
+    { id: 'm-1', winner: 'CryptoWhale_88', loser: 'SolanaKing', p1Score: 89, p2Score: 45, payout: 19.40, time: '1 dk önce' },
+    { id: 'm-2', winner: 'LuckyStrike', loser: 'MoonBuster', p1Score: 92, p2Score: 68, payout: 9.70, time: '3 dk önce' },
+    { id: 'm-3', winner: 'AlphaSeeker', loser: 'DegenTrader', p1Score: 78, p2Score: 54, payout: 38.80, time: '5 dk önce' },
+  ]);
+
   // Ses Ayarı State'i
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -65,7 +83,7 @@ export default function LobbyPage() {
     winner: null,
   });
 
-  // --- SES MOTORU (Web Audio API Synthesizer) ---
+  // --- SES MOTORU ---
   const initAudio = () => {
     if (!audioCtxRef.current && typeof window !== 'undefined') {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
@@ -76,24 +94,19 @@ export default function LobbyPage() {
     }
   };
 
-  // 1. Zar Tıkırtı Sesi (Mekanik Çarpma)
   const playDiceClickSound = () => {
     if (isMuted || !audioCtxRef.current) return;
     try {
       const ctx = audioCtxRef.current;
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(160 + Math.random() * 80, ctx.currentTime);
       osc.frequency.exponentialRampToValueAtTime(30, ctx.currentTime + 0.06);
-
       gain.gain.setValueAtTime(0.25, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.06);
-
       osc.connect(gain);
       gain.connect(ctx.destination);
-
       osc.start();
       osc.stop(ctx.currentTime + 0.06);
     } catch (e) {
@@ -101,24 +114,20 @@ export default function LobbyPage() {
     }
   };
 
-  // 2. Zafer Jingle'ı (Renkli 8-Bit Melodi)
   const playWinSound = () => {
     if (isMuted || !audioCtxRef.current) return;
     try {
       const ctx = audioCtxRef.current;
-      const notes = [261.63, 329.63, 392.00, 523.25, 659.25]; // C4, E4, G4, C5, E5
+      const notes = [261.63, 329.63, 392.00, 523.25, 659.25];
       notes.forEach((freq, index) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';
         osc.frequency.setValueAtTime(freq, ctx.currentTime + index * 0.1);
-
         gain.gain.setValueAtTime(0.3, ctx.currentTime + index * 0.1);
         gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + index * 0.1 + 0.25);
-
         osc.connect(gain);
         gain.connect(ctx.destination);
-
         osc.start(ctx.currentTime + index * 0.1);
         osc.stop(ctx.currentTime + index * 0.1 + 0.25);
       });
@@ -127,7 +136,6 @@ export default function LobbyPage() {
     }
   };
 
-  // 3. Yenilgi Tonu
   const playLoseSound = () => {
     if (isMuted || !audioCtxRef.current) return;
     try {
@@ -137,13 +145,10 @@ export default function LobbyPage() {
       osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(180, ctx.currentTime);
       osc.frequency.linearRampToValueAtTime(80, ctx.currentTime + 0.4);
-
       gain.gain.setValueAtTime(0.2, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
-
       osc.connect(gain);
       gain.connect(ctx.destination);
-
       osc.start();
       osc.stop(ctx.currentTime + 0.4);
     } catch (e) {
@@ -174,6 +179,23 @@ export default function LobbyPage() {
     });
   };
 
+  // Yeni Maç Kaydını Listeye Ekleme
+  const pushMatchRecord = (winner: string, loser: string, p1Score: number, p2Score: number, bet: number) => {
+    const payout = +(bet * 2 * 0.97).toFixed(2);
+    setMatchHistory((prev) => [
+      {
+        id: `match-${Date.now()}`,
+        winner,
+        loser,
+        p1Score,
+        p2Score,
+        payout,
+        time: 'Az önce',
+      },
+      ...prev.slice(0, 5), // En son 6 maçı tut
+    ]);
+  };
+
   useEffect(() => {
     socket = io(SERVER_URL);
 
@@ -200,6 +222,10 @@ export default function LobbyPage() {
 
       setAccumulatedYield((prev) => +(prev + 0.08).toFixed(2));
 
+      const winnerName = data.winner === 'Sen' ? (account ? `${account.substring(0, 6)}...` : 'Sen') : data.opponent;
+      const loserName = data.winner === 'Sen' ? data.opponent : (account ? `${account.substring(0, 6)}...` : 'Sen');
+      pushMatchRecord(winnerName, loserName, data.p1Score, data.p2Score, currentBetRef.current);
+
       if (data.winner === 'Sen') {
         triggerConfetti();
         playWinSound();
@@ -213,7 +239,7 @@ export default function LobbyPage() {
       socket.disconnect();
       stopRollingSound();
     };
-  }, [isMuted]);
+  }, [isMuted, account]);
 
   const connectWallet = async () => {
     initAudio();
@@ -280,6 +306,10 @@ export default function LobbyPage() {
         setGameResult({ opponent: 'Hibrit Bot', p1Score, p2Score, winner });
         setAccumulatedYield((prev) => +(prev + 0.08).toFixed(2));
         
+        const winnerName = winner === 'Sen' ? (account ? `${account.substring(0, 6)}...` : 'Sen') : 'Hibrit Bot';
+        const loserName = winner === 'Sen' ? 'Hibrit Bot' : (account ? `${account.substring(0, 6)}...` : 'Sen');
+        pushMatchRecord(winnerName, loserName, p1Score, p2Score, amount);
+
         if (winner === 'Sen') {
           triggerConfetti();
           playWinSound();
@@ -359,7 +389,6 @@ export default function LobbyPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Ses Aç / Kapat Butonu */}
             <button 
               onClick={() => {
                 initAudio();
@@ -371,7 +400,6 @@ export default function LobbyPage() {
               {isMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4 text-indigo-400" />}
             </button>
 
-            {/* Kasa Payı Havuz Butonu */}
             <button 
               onClick={() => setIsStakeModalOpen(true)}
               className="flex items-center gap-1.5 px-3 py-2 bg-emerald-950/50 hover:bg-emerald-900/50 border border-emerald-800/50 rounded-xl text-xs font-semibold text-emerald-400 transition active:scale-95 shadow-sm"
@@ -381,7 +409,6 @@ export default function LobbyPage() {
               <span className="text-[10px] bg-emerald-800/60 px-1 py-0.5 rounded text-emerald-200 ml-1">Havuz</span>
             </button>
 
-            {/* Bakiye ve Kasa Butonu */}
             <div className="flex items-center bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-inner">
               <div className="flex items-center gap-2 px-3 py-2 text-sm font-bold text-amber-400">
                 <Wallet className="w-4 h-4 text-slate-400" />
@@ -395,7 +422,6 @@ export default function LobbyPage() {
               </button>
             </div>
 
-            {/* Cüzdan Durumu */}
             {account ? (
               <div className="flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold text-slate-200 shadow-lg">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -462,6 +488,7 @@ export default function LobbyPage() {
             )}
           </div>
         ) : (
+          /* Lobi Ana Izgarası */
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 h-fit">
               <h2 className="font-bold text-sm flex items-center gap-2 text-slate-200"><Plus className="w-4 h-4 text-indigo-400" /> Oda Aç</h2>
@@ -494,6 +521,47 @@ export default function LobbyPage() {
             </div>
           </div>
         )}
+
+        {/* CANLI MAÇ GEÇMİŞİ & KAZANANLAR ŞERİDİ (Live Feed) */}
+        <section className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400 flex items-center gap-2">
+              <History className="w-4 h-4 text-indigo-400" /> Son Biten Düellolar & Kazananlar
+            </h3>
+            <span className="text-[11px] text-emerald-400 flex items-center gap-1 font-semibold">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> Canlı Dağıtım
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+            <AnimatePresence>
+              {matchHistory.map((m) => (
+                <motion.div
+                  key={m.id}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="p-3 bg-slate-950 border border-slate-800/80 rounded-xl flex items-center justify-between shadow-sm"
+                >
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-1 text-xs font-bold text-slate-200">
+                      <Trophy className="w-3.5 h-3.5 text-amber-400" />
+                      <span className="truncate max-w-[90px]">{m.winner}</span>
+                    </div>
+                    <div className="text-[10px] text-slate-500">
+                      vs {m.loser} ({m.p1Score}-{m.p2Score})
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <div className="text-xs font-black text-emerald-400">+{m.payout} USDT</div>
+                    <div className="text-[10px] text-slate-500">{m.time}</div>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        </section>
 
         {/* Akıllı Sözleşme Doğrulama Rozeti (Footer) */}
         <footer className="flex flex-wrap items-center justify-between gap-3 p-4 bg-slate-900/60 border border-slate-800/80 rounded-2xl text-xs text-slate-400">
