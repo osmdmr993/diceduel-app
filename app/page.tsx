@@ -6,7 +6,8 @@ import confetti from 'canvas-confetti';
 import { 
   Wallet, Swords, Plus, Flame, TrendingUp, ShieldCheck, 
   Trophy, RotateCcw, Activity, WifiOff, Sparkles, 
-  ArrowDownCircle, ArrowUpCircle, X, CheckCircle2, LogOut
+  ArrowDownCircle, ArrowUpCircle, X, CheckCircle2, LogOut,
+  Coins, PieChart, Percent
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -23,18 +24,24 @@ export default function LobbyPage() {
   const [account, setAccount] = useState<string | null>(null);
   const [isDemoWallet, setIsDemoWallet] = useState<boolean>(false);
   const [balance, setBalance] = useState<number>(250.0);
-  const [stakeReward] = useState<number>(12.45);
   const [betInput, setBetInput] = useState<string>('5');
   const [rooms, setRooms] = useState<Room[]>([]);
   const [activeGame, setActiveGame] = useState<boolean>(false);
   const [isRolling, setIsRolling] = useState<boolean>(false);
   const [isServerConnected, setIsServerConnected] = useState<boolean>(false);
   
-  // Modal State'leri
+  // Kasa / Yatır-Çek Modalı
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [modalTab, setModalTab] = useState<'deposit' | 'withdraw'>('deposit');
   const [modalAmount, setModalAmount] = useState<string>('50');
   const [txSuccessMsg, setTxSuccessMsg] = useState<string | null>(null);
+
+  // Staking / Kasa Payı Havuzu State'leri
+  const [isStakeModalOpen, setIsStakeModalOpen] = useState<boolean>(false);
+  const [stakedAmount, setStakedAmount] = useState<number>(100.0); // Havuzda kilitli USDT
+  const [accumulatedYield, setAccumulatedYield] = useState<number>(12.45); // Kazanılan Pasif Komisyon Payı
+  const [stakeInput, setStakeInput] = useState<string>('25');
+  const [stakeSuccessMsg, setStakeSuccessMsg] = useState<string | null>(null);
 
   const isRollingRef = useRef<boolean>(false);
   const currentBetRef = useRef<number>(0);
@@ -81,6 +88,9 @@ export default function LobbyPage() {
         winner: data.winner,
       });
 
+      // Her biten oyundan Kasa Payı Havuzuna komisyon aksın (+0.08 USDT)
+      setAccumulatedYield((prev) => +(prev + 0.08).toFixed(2));
+
       if (data.winner === 'Sen') {
         triggerConfetti();
         setBalance((prev) => prev + currentBetRef.current * 2 * 0.97);
@@ -92,8 +102,13 @@ export default function LobbyPage() {
     };
   }, []);
 
-  // Cüzdan Bağlama
   const connectWallet = async () => {
+    if (account) {
+      setAccount(null);
+      setIsDemoWallet(false);
+      return;
+    }
+
     if (typeof window !== 'undefined' && (window as any).ethereum) {
       try {
         const accounts = await (window as any).ethereum.request({ method: 'eth_requestAccounts' });
@@ -105,14 +120,12 @@ export default function LobbyPage() {
         console.error('Cüzdan hatası:', error);
       }
     } else {
-      // Demo Cüzdan Üret
       const randomHex = Array.from({ length: 40 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
       setAccount(`0x${randomHex}`);
       setIsDemoWallet(true);
     }
   };
 
-  // Cüzdan Bağlantısını Kesme
   const disconnectWallet = (e: React.MouseEvent) => {
     e.stopPropagation();
     setAccount(null);
@@ -147,6 +160,7 @@ export default function LobbyPage() {
         const winner = p1Score > p2Score ? 'Sen' : 'Hibrit Bot';
 
         setGameResult({ opponent: 'Hibrit Bot', p1Score, p2Score, winner });
+        setAccumulatedYield((prev) => +(prev + 0.08).toFixed(2));
         
         if (winner === 'Sen') {
           triggerConfetti();
@@ -184,6 +198,27 @@ export default function LobbyPage() {
     }, 1200);
   };
 
+  // Staking Havuzuna Ekleme / Kazancı Talep Etme (Claim)
+  const handleStakeAdd = () => {
+    const val = parseFloat(stakeInput);
+    if (isNaN(val) || val <= 0 || val > balance) {
+      alert('Yetersiz bakiye!');
+      return;
+    }
+    setBalance((prev) => prev - val);
+    setStakedAmount((prev) => prev + val);
+    setStakeSuccessMsg(`+${val} USDT Havuz Ortaklığına Eklendi!`);
+    setTimeout(() => setStakeSuccessMsg(null), 1500);
+  };
+
+  const handleClaimYield = () => {
+    if (accumulatedYield <= 0) return;
+    setBalance((prev) => +(prev + accumulatedYield).toFixed(2));
+    setStakeSuccessMsg(`+${accumulatedYield} USDT Kazanç Bakiyeye Aktarıldı!`);
+    setAccumulatedYield(0);
+    setTimeout(() => setStakeSuccessMsg(null), 1500);
+  };
+
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 font-sans">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -202,10 +237,15 @@ export default function LobbyPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-2 bg-emerald-950/40 border border-emerald-800/40 rounded-xl text-xs font-semibold text-emerald-400">
+            {/* Tıklanabilir Kasa Payı (Staking) Butonu */}
+            <button 
+              onClick={() => setIsStakeModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-2 bg-emerald-950/50 hover:bg-emerald-900/50 border border-emerald-800/50 rounded-xl text-xs font-semibold text-emerald-400 transition active:scale-95 shadow-sm"
+            >
               <TrendingUp className="w-3.5 h-3.5" />
-              <span>Kasa Payı: +{stakeReward} USDT</span>
-            </div>
+              <span>Kasa Payı: +{accumulatedYield.toFixed(2)} USDT</span>
+              <span className="text-[10px] bg-emerald-800/60 px-1 py-0.5 rounded text-emerald-200 ml-1">Havuz</span>
+            </button>
 
             {/* Bakiye ve Kasa Butonu */}
             <div className="flex items-center bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-inner">
@@ -321,79 +361,103 @@ export default function LobbyPage() {
           </div>
         )}
 
-        {/* Bakiye Kasası Modalı */}
+        {/* 1. MODAL: Kasa Yönetimi (Deposit/Withdraw) */}
         <AnimatePresence>
           {isModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md shadow-2xl relative"
-              >
-                <button 
-                  onClick={() => setIsModalOpen(false)}
-                  className="absolute top-5 right-5 text-slate-400 hover:text-white transition"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-
-                <h3 className="font-bold text-lg text-white mb-4 flex items-center gap-2">
-                  <Wallet className="w-5 h-5 text-indigo-400" /> Kasa Yönetimi
-                </h3>
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md shadow-2xl relative">
+                <button onClick={() => setIsModalOpen(false)} className="absolute top-5 right-5 text-slate-400 hover:text-white transition"><X className="w-5 h-5" /></button>
+                <h3 className="font-bold text-lg text-white mb-4 flex items-center gap-2"><Wallet className="w-5 h-5 text-indigo-400" /> Kasa Yönetimi</h3>
 
                 <div className="grid grid-cols-2 gap-2 bg-slate-950 p-1.5 rounded-2xl mb-5 border border-slate-800">
-                  <button 
-                    onClick={() => setModalTab('deposit')}
-                    className={`flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold transition ${modalTab === 'deposit' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
-                  >
-                    <ArrowDownCircle className="w-4 h-4" /> USDT Yatır
-                  </button>
-                  <button 
-                    onClick={() => setModalTab('withdraw')}
-                    className={`flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold transition ${modalTab === 'withdraw' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
-                  >
-                    <ArrowUpCircle className="w-4 h-4" /> USDT Çek
-                  </button>
+                  <button onClick={() => setModalTab('deposit')} className={`flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold transition ${modalTab === 'deposit' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}><ArrowDownCircle className="w-4 h-4" /> USDT Yatır</button>
+                  <button onClick={() => setModalTab('withdraw')} className={`flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold transition ${modalTab === 'withdraw' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}><ArrowUpCircle className="w-4 h-4" /> USDT Çek</button>
                 </div>
 
                 <div className="space-y-4">
                   <div>
                     <label className="text-xs text-slate-400 block mb-1.5 font-medium">Tutar (USDT)</label>
-                    <input 
-                      type="number"
-                      value={modalAmount}
-                      onChange={(e) => setModalAmount(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-base font-bold text-white focus:outline-none focus:border-indigo-500"
-                    />
+                    <input type="number" value={modalAmount} onChange={(e) => setModalAmount(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-base font-bold text-white focus:outline-none focus:border-indigo-500" />
                   </div>
 
                   <div className="flex gap-2">
                     {['10', '50', '100', '250'].map((preset) => (
-                      <button
-                        key={preset}
-                        onClick={() => setModalAmount(preset)}
-                        className="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 rounded-lg transition"
-                      >
-                        +{preset}
-                      </button>
+                      <button key={preset} onClick={() => setModalAmount(preset)} className="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 rounded-lg transition">+{preset}</button>
                     ))}
                   </div>
 
                   {txSuccessMsg && (
-                    <div className="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 p-3 rounded-xl">
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>{txSuccessMsg}</span>
-                    </div>
+                    <div className="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 p-3 rounded-xl"><CheckCircle2 className="w-4 h-4" /><span>{txSuccessMsg}</span></div>
                   )}
 
-                  <button
-                    onClick={handleBalanceTransaction}
-                    className={`w-full py-3 rounded-xl font-bold text-sm text-white shadow-lg transition active:scale-95 ${modalTab === 'deposit' ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/20' : 'bg-rose-600 hover:bg-rose-500 shadow-rose-600/20'}`}
-                  >
+                  <button onClick={handleBalanceTransaction} className={`w-full py-3 rounded-xl font-bold text-sm text-white shadow-lg transition active:scale-95 ${modalTab === 'deposit' ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/20' : 'bg-rose-600 hover:bg-rose-500 shadow-rose-600/20'}`}>
                     {modalTab === 'deposit' ? 'Cüzdandan Kasaya Aktar' : 'Kasadan Cüzdana Çek'}
                   </button>
                 </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* 2. MODAL: Staking & Kasa Payı (House Liquidity Pool) Modalı */}
+        <AnimatePresence>
+          {isStakeModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md shadow-2xl relative">
+                <button onClick={() => setIsStakeModalOpen(false)} className="absolute top-5 right-5 text-slate-400 hover:text-white transition"><X className="w-5 h-5" /></button>
+                
+                <h3 className="font-bold text-lg text-white mb-1 flex items-center gap-2">
+                  <Coins className="w-5 h-5 text-emerald-400" /> Kasa Payı Havuzu (LP)
+                </h3>
+                <p className="text-xs text-slate-400 mb-5">Her düellodan kesilen %3 komisyon havuz ortaklarına dağıtılır.</p>
+
+                {/* İstatistik Kutuları */}
+                <div className="grid grid-cols-2 gap-3 mb-5">
+                  <div className="p-3.5 bg-slate-950 border border-slate-800 rounded-2xl">
+                    <span className="text-[11px] text-slate-400 flex items-center gap-1 mb-1"><PieChart className="w-3.5 h-3.5 text-indigo-400" /> Kilitli USDT</span>
+                    <span className="text-base font-black text-indigo-300">{stakedAmount.toFixed(2)} USDT</span>
+                  </div>
+
+                  <div className="p-3.5 bg-slate-950 border border-slate-800 rounded-2xl">
+                    <span className="text-[11px] text-slate-400 flex items-center gap-1 mb-1"><Percent className="w-3.5 h-3.5 text-emerald-400" /> Biriken Pay</span>
+                    <span className="text-base font-black text-emerald-400">+{accumulatedYield.toFixed(2)} USDT</span>
+                  </div>
+                </div>
+
+                {/* Kazancı Talep Et (Claim) Butonu */}
+                <button 
+                  onClick={handleClaimYield}
+                  disabled={accumulatedYield <= 0}
+                  className="w-full mb-5 py-2.5 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition disabled:opacity-40"
+                >
+                  <Sparkles className="w-4 h-4 text-emerald-400" /> Biriken Payı Cüzdana Aktar
+                </button>
+
+                {/* Havuz Ortaklığı Ekleme */}
+                <div className="space-y-3 pt-3 border-t border-slate-800">
+                  <label className="text-xs text-slate-300 font-bold block">Havuz Ortaklığını Artır</label>
+                  <div className="flex gap-2">
+                    <input 
+                      type="number" 
+                      value={stakeInput} 
+                      onChange={(e) => setStakeInput(e.target.value)}
+                      className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm font-bold text-white focus:outline-none"
+                    />
+                    <button 
+                      onClick={handleStakeAdd}
+                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition shadow active:scale-95"
+                    >
+                      Ortak Ol
+                    </button>
+                  </div>
+                </div>
+
+                {stakeSuccessMsg && (
+                  <div className="mt-4 flex items-center gap-2 text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 p-3 rounded-xl">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>{stakeSuccessMsg}</span>
+                  </div>
+                )}
               </motion.div>
             </div>
           )}
