@@ -7,7 +7,7 @@ import {
   Wallet, Swords, Plus, Flame, TrendingUp, ShieldCheck, 
   Trophy, RotateCcw, Activity, WifiOff, Sparkles, 
   ArrowDownCircle, ArrowUpCircle, X, CheckCircle2, LogOut,
-  Coins, PieChart, Percent, ExternalLink, FileCode2
+  Coins, PieChart, Percent, FileCode2, Volume2, VolumeX
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -32,6 +32,11 @@ export default function LobbyPage() {
   const [isRolling, setIsRolling] = useState<boolean>(false);
   const [isServerConnected, setIsServerConnected] = useState<boolean>(false);
   
+  // Ses Ayarı State'i
+  const [isMuted, setIsMuted] = useState<boolean>(false);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const rollSoundIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   // Kasa / Yatır-Çek Modalı
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [modalTab, setModalTab] = useState<'deposit' | 'withdraw'>('deposit');
@@ -60,10 +65,111 @@ export default function LobbyPage() {
     winner: null,
   });
 
+  // --- SES MOTORU (Web Audio API Synthesizer) ---
+  const initAudio = () => {
+    if (!audioCtxRef.current && typeof window !== 'undefined') {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      audioCtxRef.current = new AudioCtx();
+    }
+    if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
+      audioCtxRef.current.resume();
+    }
+  };
+
+  // 1. Zar Tıkırtı Sesi (Mekanik Çarpma)
+  const playDiceClickSound = () => {
+    if (isMuted || !audioCtxRef.current) return;
+    try {
+      const ctx = audioCtxRef.current;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(160 + Math.random() * 80, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(30, ctx.currentTime + 0.06);
+
+      gain.gain.setValueAtTime(0.25, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.06);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start();
+      osc.stop(ctx.currentTime + 0.06);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // 2. Zafer Jingle'ı (Renkli 8-Bit Melodi)
+  const playWinSound = () => {
+    if (isMuted || !audioCtxRef.current) return;
+    try {
+      const ctx = audioCtxRef.current;
+      const notes = [261.63, 329.63, 392.00, 523.25, 659.25]; // C4, E4, G4, C5, E5
+      notes.forEach((freq, index) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + index * 0.1);
+
+        gain.gain.setValueAtTime(0.3, ctx.currentTime + index * 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + index * 0.1 + 0.25);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(ctx.currentTime + index * 0.1);
+        osc.stop(ctx.currentTime + index * 0.1 + 0.25);
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // 3. Yenilgi Tonu
+  const playLoseSound = () => {
+    if (isMuted || !audioCtxRef.current) return;
+    try {
+      const ctx = audioCtxRef.current;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(180, ctx.currentTime);
+      osc.frequency.linearRampToValueAtTime(80, ctx.currentTime + 0.4);
+
+      gain.gain.setValueAtTime(0.2, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start();
+      osc.stop(ctx.currentTime + 0.4);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const startRollingSound = () => {
+    initAudio();
+    if (rollSoundIntervalRef.current) clearInterval(rollSoundIntervalRef.current);
+    rollSoundIntervalRef.current = setInterval(() => {
+      playDiceClickSound();
+    }, 110);
+  };
+
+  const stopRollingSound = () => {
+    if (rollSoundIntervalRef.current) {
+      clearInterval(rollSoundIntervalRef.current);
+      rollSoundIntervalRef.current = null;
+    }
+  };
+
   const triggerConfetti = () => {
     confetti({
-      particleCount: 80,
-      spread: 70,
+      particleCount: 90,
+      spread: 75,
       origin: { y: 0.6 },
     });
   };
@@ -83,6 +189,8 @@ export default function LobbyPage() {
 
       isRollingRef.current = false;
       setIsRolling(false);
+      stopRollingSound();
+
       setGameResult({
         opponent: data.opponent,
         p1Score: data.p1Score,
@@ -94,16 +202,21 @@ export default function LobbyPage() {
 
       if (data.winner === 'Sen') {
         triggerConfetti();
+        playWinSound();
         setBalance((prev) => prev + currentBetRef.current * 2 * 0.97);
+      } else {
+        playLoseSound();
       }
     });
 
     return () => {
       socket.disconnect();
+      stopRollingSound();
     };
-  }, []);
+  }, [isMuted]);
 
   const connectWallet = async () => {
+    initAudio();
     if (account) {
       setAccount(null);
       setIsDemoWallet(false);
@@ -134,6 +247,7 @@ export default function LobbyPage() {
   };
 
   const handleStartDuel = (amount: number) => {
+    initAudio();
     if (isNaN(amount) || amount <= 0 || amount > balance) return;
 
     currentBetRef.current = amount;
@@ -141,6 +255,8 @@ export default function LobbyPage() {
     setActiveGame(true);
     setIsRolling(true);
     isRollingRef.current = true;
+    startRollingSound();
+
     setGameResult({ opponent: 'Rakip Eşleşiyor...', p1Score: null, p2Score: null, winner: null });
 
     if (isServerConnected) {
@@ -154,6 +270,7 @@ export default function LobbyPage() {
       if (isRollingRef.current) {
         isRollingRef.current = false;
         setIsRolling(false);
+        stopRollingSound();
         
         const p1Score = Math.floor(Math.random() * 100) + 1;
         let p2Score = Math.floor(Math.random() * 100) + 1;
@@ -165,13 +282,17 @@ export default function LobbyPage() {
         
         if (winner === 'Sen') {
           triggerConfetti();
+          playWinSound();
           setBalance((prev) => prev + amount * 2 * 0.97);
+        } else {
+          playLoseSound();
         }
       }
     }, 4500);
   };
 
   const handleBalanceTransaction = () => {
+    initAudio();
     const val = parseFloat(modalAmount);
     if (isNaN(val) || val <= 0) return;
 
@@ -199,6 +320,7 @@ export default function LobbyPage() {
   };
 
   const handleStakeAdd = () => {
+    initAudio();
     const val = parseFloat(stakeInput);
     if (isNaN(val) || val <= 0 || val > balance) {
       alert('Yetersiz bakiye!');
@@ -211,6 +333,7 @@ export default function LobbyPage() {
   };
 
   const handleClaimYield = () => {
+    initAudio();
     if (accumulatedYield <= 0) return;
     setBalance((prev) => +(prev + accumulatedYield).toFixed(2));
     setStakeSuccessMsg(`+${accumulatedYield} USDT Pay Kontrattan Çekildi!`);
@@ -236,6 +359,19 @@ export default function LobbyPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Ses Aç / Kapat Butonu */}
+            <button 
+              onClick={() => {
+                initAudio();
+                setIsMuted(!isMuted);
+              }}
+              title={isMuted ? 'Sesi Aç' : 'Sesi Kapat'}
+              className="p-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-slate-300 transition active:scale-95 shadow-sm"
+            >
+              {isMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4 text-indigo-400" />}
+            </button>
+
+            {/* Kasa Payı Havuz Butonu */}
             <button 
               onClick={() => setIsStakeModalOpen(true)}
               className="flex items-center gap-1.5 px-3 py-2 bg-emerald-950/50 hover:bg-emerald-900/50 border border-emerald-800/50 rounded-xl text-xs font-semibold text-emerald-400 transition active:scale-95 shadow-sm"
@@ -245,6 +381,7 @@ export default function LobbyPage() {
               <span className="text-[10px] bg-emerald-800/60 px-1 py-0.5 rounded text-emerald-200 ml-1">Havuz</span>
             </button>
 
+            {/* Bakiye ve Kasa Butonu */}
             <div className="flex items-center bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-inner">
               <div className="flex items-center gap-2 px-3 py-2 text-sm font-bold text-amber-400">
                 <Wallet className="w-4 h-4 text-slate-400" />
@@ -258,6 +395,7 @@ export default function LobbyPage() {
               </button>
             </div>
 
+            {/* Cüzdan Durumu */}
             {account ? (
               <div className="flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold text-slate-200 shadow-lg">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
