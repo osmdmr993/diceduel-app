@@ -1,10 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useAccount, useBalance } from 'wagmi';
 import { Wallet, Swords, Plus, Flame, TrendingUp, ShieldCheck, Trophy, RotateCcw } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function LobbyPage() {
+  const { address, isConnected } = useAccount();
+  const { data: balanceData } = useBalance({ address });
+
   const [balance, setBalance] = useState<number>(250.0);
   const [stakeReward] = useState<number>(12.45);
   const [betInput, setBetInput] = useState<string>('5');
@@ -56,14 +61,21 @@ export default function LobbyPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-950/40 border border-emerald-800/40 rounded-xl text-xs font-semibold text-emerald-400">
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-2 bg-emerald-950/40 border border-emerald-800/40 rounded-xl text-xs font-semibold text-emerald-400">
               <TrendingUp className="w-3.5 h-3.5" />
               <span>Kasa Payı: +{stakeReward} USDT</span>
             </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-sm font-bold text-amber-400">
-              <Wallet className="w-4 h-4 text-slate-400" />
-              <span>{balance.toFixed(2)} USDT</span>
-            </div>
+
+            {/* Bağlı Cüzdan Bakiyesi */}
+            {isConnected && balanceData && (
+              <div className="flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-sm font-bold text-amber-400">
+                <Wallet className="w-4 h-4 text-slate-400" />
+                <span>{parseFloat(balanceData.formatted).toFixed(4)} {balanceData.symbol}</span>
+              </div>
+            )}
+
+            {/* RainbowKit Cüzdan Bağlantı Butonu */}
+            <ConnectButton showBalance={false} chainStatus="icon" accountStatus="avatar" />
           </div>
         </header>
 
