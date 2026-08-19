@@ -3,8 +3,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import confetti from 'canvas-confetti';
-import { Wallet, Swords, Plus, Flame, TrendingUp, ShieldCheck, Trophy, RotateCcw, Activity, WifiOff, Sparkles } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { 
+  Wallet, Swords, Plus, Flame, TrendingUp, ShieldCheck, 
+  Trophy, RotateCcw, Activity, WifiOff, Sparkles, 
+  ArrowDownCircle, ArrowUpCircle, X, CheckCircle2 
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const SERVER_URL = 'https://diceduel-server.onrender.com';
 let socket: Socket;
@@ -25,6 +29,12 @@ export default function LobbyPage() {
   const [isRolling, setIsRolling] = useState<boolean>(false);
   const [isServerConnected, setIsServerConnected] = useState<boolean>(false);
   
+  // Modal State'leri
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [modalTab, setModalTab] = useState<'deposit' | 'withdraw'>('deposit');
+  const [modalAmount, setModalAmount] = useState<string>('50');
+  const [txSuccessMsg, setTxSuccessMsg] = useState<string | null>(null);
+
   const isRollingRef = useRef<boolean>(false);
   const currentBetRef = useRef<number>(0);
 
@@ -131,10 +141,39 @@ export default function LobbyPage() {
     }, 4500);
   };
 
+  // Yatırma / Çekme İşlemi
+  const handleBalanceTransaction = () => {
+    const val = parseFloat(modalAmount);
+    if (isNaN(val) || val <= 0) return;
+
+    if (!account) {
+      alert('Lütfen önce cüzdanınızı bağlayın!');
+      return;
+    }
+
+    if (modalTab === 'deposit') {
+      setBalance((prev) => prev + val);
+      setTxSuccessMsg(`+${val} USDT Kasaya Yatırıldı!`);
+    } else {
+      if (val > balance) {
+        alert('Yetersiz bakiye!');
+        return;
+      }
+      setBalance((prev) => prev - val);
+      setTxSuccessMsg(`-${val} USDT Cüzdana Çekildi!`);
+    }
+
+    setTimeout(() => {
+      setTxSuccessMsg(null);
+      setIsModalOpen(false);
+    }, 1500);
+  };
+
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 font-sans">
       <div className="max-w-4xl mx-auto space-y-6">
         
+        {/* Üst Bar */}
         <header className="flex flex-wrap items-center justify-between gap-4 p-4 bg-slate-900 border border-slate-800 rounded-2xl shadow-lg">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-indigo-600/20 border border-indigo-500/40 rounded-xl flex items-center justify-center text-indigo-400 font-black text-xl">🎲</div>
@@ -148,17 +187,32 @@ export default function LobbyPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-sm font-bold text-amber-400">
-              <Wallet className="w-4 h-4 text-slate-400" />
-              <span>{balance.toFixed(2)} USDT</span>
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-2 bg-emerald-950/40 border border-emerald-800/40 rounded-xl text-xs font-semibold text-emerald-400">
+              <TrendingUp className="w-3.5 h-3.5" />
+              <span>Kasa Payı: +{stakeReward} USDT</span>
+            </div>
+
+            {/* Bakiye ve Kasa Butonu */}
+            <div className="flex items-center bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-inner">
+              <div className="flex items-center gap-2 px-3 py-2 text-sm font-bold text-amber-400">
+                <Wallet className="w-4 h-4 text-slate-400" />
+                <span>{balance.toFixed(2)} USDT</span>
+              </div>
+              <button 
+                onClick={() => setIsModalOpen(true)}
+                className="px-2.5 py-2 bg-slate-700 hover:bg-slate-600 text-xs font-bold text-slate-200 border-l border-slate-600 transition"
+              >
+                Kasa ⚡
+              </button>
             </div>
 
             <button onClick={connectWallet} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-indigo-600/20 active:scale-95">
-              {account ? `${account.substring(0, 6)}...` : 'Cüzdan Bağla'}
+              {account ? `${account.substring(0, 6)}...${account.substring(account.length - 4)}` : 'Cüzdan Bağla'}
             </button>
           </div>
         </header>
 
+        {/* Oyun Arenası */}
         {activeGame ? (
           <div className="flex flex-col items-center justify-center p-6 bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-xl mx-auto shadow-2xl">
             <div className="flex justify-between w-full items-center mb-8 px-2">
@@ -200,6 +254,7 @@ export default function LobbyPage() {
             )}
           </div>
         ) : (
+          /* Lobi */
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 h-fit">
               <h2 className="font-bold text-sm flex items-center gap-2 text-slate-200"><Plus className="w-4 h-4 text-indigo-400" /> Oda Aç</h2>
@@ -232,6 +287,87 @@ export default function LobbyPage() {
             </div>
           </div>
         )}
+
+        {/* Bakiye Kasası (Deposit / Withdraw) Modalı */}
+        <AnimatePresence>
+          {isModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md shadow-2xl relative"
+              >
+                <button 
+                  onClick={() => setIsModalOpen(false)}
+                  className="absolute top-5 right-5 text-slate-400 hover:text-white transition"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+
+                <h3 className="font-bold text-lg text-white mb-4 flex items-center gap-2">
+                  <Wallet className="w-5 h-5 text-indigo-400" /> Kasa Yönetimi
+                </h3>
+
+                {/* Sekmeler */}
+                <div className="grid grid-cols-2 gap-2 bg-slate-950 p-1.5 rounded-2xl mb-5 border border-slate-800">
+                  <button 
+                    onClick={() => setModalTab('deposit')}
+                    className={`flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold transition ${modalTab === 'deposit' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                  >
+                    <ArrowDownCircle className="w-4 h-4" /> USDT Yatır
+                  </button>
+                  <button 
+                    onClick={() => setModalTab('withdraw')}
+                    className={`flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold transition ${modalTab === 'withdraw' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                  >
+                    <ArrowUpCircle className="w-4 h-4" /> USDT Çek
+                  </button>
+                </div>
+
+                {/* Tutar Girişi */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-xs text-slate-400 block mb-1.5 font-medium">Tutar (USDT)</label>
+                    <input 
+                      type="number"
+                      value={modalAmount}
+                      onChange={(e) => setModalAmount(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-base font-bold text-white focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+
+                  <div className="flex gap-2">
+                    {['10', '50', '100', '250'].map((preset) => (
+                      <button
+                        key={preset}
+                        onClick={() => setModalAmount(preset)}
+                        className="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 rounded-lg transition"
+                      >
+                        +{preset}
+                      </button>
+                    ))}
+                  </div>
+
+                  {txSuccessMsg && (
+                    <div className="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 p-3 rounded-xl">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>{txSuccessMsg}</span>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleBalanceTransaction}
+                    className={`w-full py-3 rounded-xl font-bold text-sm text-white shadow-lg transition active:scale-95 ${modalTab === 'deposit' ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/20' : 'bg-rose-600 hover:bg-rose-500 shadow-rose-600/20'}`}
+                  >
+                    {modalTab === 'deposit' ? 'Cüzdandan Kasaya Aktar' : 'Kasadan Cüzdana Çek'}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
       </div>
     </main>
   );
