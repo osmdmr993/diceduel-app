@@ -6,7 +6,7 @@ import confetti from 'canvas-confetti';
 import { 
   Wallet, Swords, Plus, Flame, TrendingUp, ShieldCheck, 
   Trophy, RotateCcw, Activity, WifiOff, Sparkles, 
-  ArrowDownCircle, ArrowUpCircle, X, CheckCircle2 
+  ArrowDownCircle, ArrowUpCircle, X, CheckCircle2, LogOut
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -21,6 +21,7 @@ interface Room {
 
 export default function LobbyPage() {
   const [account, setAccount] = useState<string | null>(null);
+  const [isDemoWallet, setIsDemoWallet] = useState<boolean>(false);
   const [balance, setBalance] = useState<number>(250.0);
   const [stakeReward] = useState<number>(12.45);
   const [betInput, setBetInput] = useState<string>('5');
@@ -91,16 +92,30 @@ export default function LobbyPage() {
     };
   }, []);
 
+  // Akıllı Cüzdan Bağlantısı (MetaMask varsa bağlar, yoksa Test Cüzdanı açar)
   const connectWallet = async () => {
+    if (account) {
+      // Bağlıysa bağlantıyı kes
+      setAccount(null);
+      setIsDemoWallet(false);
+      return;
+    }
+
     if (typeof window !== 'undefined' && (window as any).ethereum) {
       try {
         const accounts = await (window as any).ethereum.request({ method: 'eth_requestAccounts' });
-        if (accounts.length > 0) setAccount(accounts[0]);
+        if (accounts.length > 0) {
+          setAccount(accounts[0]);
+          setIsDemoWallet(false);
+        }
       } catch (error) {
         console.error('Cüzdan hatası:', error);
       }
     } else {
-      alert('Lütfen MetaMask yükleyin.');
+      // MetaMask yoksa otomatik Demo Test Cüzdanı bağla
+      const randomHex = Array.from({ length: 40 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+      setAccount(`0x${randomHex}`);
+      setIsDemoWallet(true);
     }
   };
 
@@ -147,26 +162,26 @@ export default function LobbyPage() {
     if (isNaN(val) || val <= 0) return;
 
     if (!account) {
-      alert('Lütfen önce cüzdanınızı bağlayın!');
+      alert('Lütfen önce sağ üstten cüzdanınızı bağlayın!');
       return;
     }
 
     if (modalTab === 'deposit') {
       setBalance((prev) => prev + val);
-      setTxSuccessMsg(`+${val} USDT Kasaya Yatırıldı!`);
+      setTxSuccessMsg(`+${val} USDT Kasaya Başarıyla Eklendi!`);
     } else {
       if (val > balance) {
-        alert('Yetersiz bakiye!');
+        alert('Kasada yeterli bakiye bulunmuyor!');
         return;
       }
       setBalance((prev) => prev - val);
-      setTxSuccessMsg(`-${val} USDT Cüzdana Çekildi!`);
+      setTxSuccessMsg(`-${val} USDT Cüzdan Adresinize Gönderildi!`);
     }
 
     setTimeout(() => {
       setTxSuccessMsg(null);
       setIsModalOpen(false);
-    }, 1500);
+    }, 1200);
   };
 
   return (
@@ -200,14 +215,31 @@ export default function LobbyPage() {
               </div>
               <button 
                 onClick={() => setIsModalOpen(true)}
-                className="px-2.5 py-2 bg-slate-700 hover:bg-slate-600 text-xs font-bold text-slate-200 border-l border-slate-600 transition"
+                className="px-2.5 py-2 bg-slate-700 hover:bg-slate-600 text-xs font-bold text-slate-200 border-l border-slate-600 transition active:scale-95"
               >
                 Kasa ⚡
               </button>
             </div>
 
-            <button onClick={connectWallet} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-indigo-600/20 active:scale-95">
-              {account ? `${account.substring(0, 6)}...${account.substring(account.length - 4)}` : 'Cüzdan Bağla'}
+            {/* Cüzdan Bağlantı Butonu */}
+            <button 
+              onClick={connectWallet} 
+              className={`flex items-center gap-1.5 px-3.5 py-2 font-bold text-xs rounded-xl transition shadow-lg active:scale-95 ${
+                account 
+                  ? 'bg-slate-800 hover:bg-rose-950/60 border border-slate-700 text-slate-200 hover:text-rose-400 hover:border-rose-800/60' 
+                  : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20'
+              }`}
+            >
+              {account ? (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                  <span>{account.substring(0, 6)}...{account.substring(account.length - 4)}</span>
+                  {isDemoWallet && <span className="text-[10px] bg-indigo-900/60 text-indigo-300 px-1 py-0.5 rounded ml-1">Demo</span>}
+                  <LogOut className="w-3 h-3 ml-1 opacity-60" />
+                </>
+              ) : (
+                'Cüzdan Bağla'
+              )}
             </button>
           </div>
         </header>
@@ -254,7 +286,6 @@ export default function LobbyPage() {
             )}
           </div>
         ) : (
-          /* Lobi */
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 h-fit">
               <h2 className="font-bold text-sm flex items-center gap-2 text-slate-200"><Plus className="w-4 h-4 text-indigo-400" /> Oda Aç</h2>
@@ -288,7 +319,7 @@ export default function LobbyPage() {
           </div>
         )}
 
-        {/* Bakiye Kasası (Deposit / Withdraw) Modalı */}
+        {/* Bakiye Kasası Modalı */}
         <AnimatePresence>
           {isModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
@@ -309,7 +340,6 @@ export default function LobbyPage() {
                   <Wallet className="w-5 h-5 text-indigo-400" /> Kasa Yönetimi
                 </h3>
 
-                {/* Sekmeler */}
                 <div className="grid grid-cols-2 gap-2 bg-slate-950 p-1.5 rounded-2xl mb-5 border border-slate-800">
                   <button 
                     onClick={() => setModalTab('deposit')}
@@ -325,7 +355,6 @@ export default function LobbyPage() {
                   </button>
                 </div>
 
-                {/* Tutar Girişi */}
                 <div className="space-y-4">
                   <div>
                     <label className="text-xs text-slate-400 block mb-1.5 font-medium">Tutar (USDT)</label>
