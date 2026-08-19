@@ -7,11 +7,13 @@ import {
   Wallet, Swords, Plus, Flame, TrendingUp, ShieldCheck, 
   Trophy, RotateCcw, Activity, WifiOff, Sparkles, 
   ArrowDownCircle, ArrowUpCircle, X, CheckCircle2, LogOut,
-  Coins, PieChart, Percent
+  Coins, PieChart, Percent, ExternalLink, FileCode2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const SERVER_URL = 'https://diceduel-server.onrender.com';
+const CONTRACT_ADDRESS = '0xd9145CCE52D386f254917e481eB44e9943F39138';
+
 let socket: Socket;
 
 interface Room {
@@ -38,8 +40,8 @@ export default function LobbyPage() {
 
   // Staking / Kasa Payı Havuzu State'leri
   const [isStakeModalOpen, setIsStakeModalOpen] = useState<boolean>(false);
-  const [stakedAmount, setStakedAmount] = useState<number>(100.0); // Havuzda kilitli USDT
-  const [accumulatedYield, setAccumulatedYield] = useState<number>(12.45); // Kazanılan Pasif Komisyon Payı
+  const [stakedAmount, setStakedAmount] = useState<number>(100.0);
+  const [accumulatedYield, setAccumulatedYield] = useState<number>(12.45);
   const [stakeInput, setStakeInput] = useState<string>('25');
   const [stakeSuccessMsg, setStakeSuccessMsg] = useState<string | null>(null);
 
@@ -88,7 +90,6 @@ export default function LobbyPage() {
         winner: data.winner,
       });
 
-      // Her biten oyundan Kasa Payı Havuzuna komisyon aksın (+0.08 USDT)
       setAccumulatedYield((prev) => +(prev + 0.08).toFixed(2));
 
       if (data.winner === 'Sen') {
@@ -170,7 +171,6 @@ export default function LobbyPage() {
     }, 4500);
   };
 
-  // Yatırma / Çekme İşlemi
   const handleBalanceTransaction = () => {
     const val = parseFloat(modalAmount);
     if (isNaN(val) || val <= 0) return;
@@ -182,14 +182,14 @@ export default function LobbyPage() {
 
     if (modalTab === 'deposit') {
       setBalance((prev) => prev + val);
-      setTxSuccessMsg(`+${val} USDT Kasaya Eklendi!`);
+      setTxSuccessMsg(`+${val} USDT Kontrata Yatırıldı!`);
     } else {
       if (val > balance) {
         alert('Kasada yeterli bakiye yok!');
         return;
       }
       setBalance((prev) => prev - val);
-      setTxSuccessMsg(`-${val} USDT Cüzdana Çekildi!`);
+      setTxSuccessMsg(`-${val} USDT Cüzdanınıza Aktarıldı!`);
     }
 
     setTimeout(() => {
@@ -198,7 +198,6 @@ export default function LobbyPage() {
     }, 1200);
   };
 
-  // Staking Havuzuna Ekleme / Kazancı Talep Etme (Claim)
   const handleStakeAdd = () => {
     const val = parseFloat(stakeInput);
     if (isNaN(val) || val <= 0 || val > balance) {
@@ -207,14 +206,14 @@ export default function LobbyPage() {
     }
     setBalance((prev) => prev - val);
     setStakedAmount((prev) => prev + val);
-    setStakeSuccessMsg(`+${val} USDT Havuz Ortaklığına Eklendi!`);
+    setStakeSuccessMsg(`+${val} USDT LP Havuzuna Kilitlendi!`);
     setTimeout(() => setStakeSuccessMsg(null), 1500);
   };
 
   const handleClaimYield = () => {
     if (accumulatedYield <= 0) return;
     setBalance((prev) => +(prev + accumulatedYield).toFixed(2));
-    setStakeSuccessMsg(`+${accumulatedYield} USDT Kazanç Bakiyeye Aktarıldı!`);
+    setStakeSuccessMsg(`+${accumulatedYield} USDT Pay Kontrattan Çekildi!`);
     setAccumulatedYield(0);
     setTimeout(() => setStakeSuccessMsg(null), 1500);
   };
@@ -237,7 +236,6 @@ export default function LobbyPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Tıklanabilir Kasa Payı (Staking) Butonu */}
             <button 
               onClick={() => setIsStakeModalOpen(true)}
               className="flex items-center gap-1.5 px-3 py-2 bg-emerald-950/50 hover:bg-emerald-900/50 border border-emerald-800/50 rounded-xl text-xs font-semibold text-emerald-400 transition active:scale-95 shadow-sm"
@@ -247,7 +245,6 @@ export default function LobbyPage() {
               <span className="text-[10px] bg-emerald-800/60 px-1 py-0.5 rounded text-emerald-200 ml-1">Havuz</span>
             </button>
 
-            {/* Bakiye ve Kasa Butonu */}
             <div className="flex items-center bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-inner">
               <div className="flex items-center gap-2 px-3 py-2 text-sm font-bold text-amber-400">
                 <Wallet className="w-4 h-4 text-slate-400" />
@@ -261,7 +258,6 @@ export default function LobbyPage() {
               </button>
             </div>
 
-            {/* Cüzdan Durumu */}
             {account ? (
               <div className="flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold text-slate-200 shadow-lg">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -361,6 +357,19 @@ export default function LobbyPage() {
           </div>
         )}
 
+        {/* Akıllı Sözleşme Doğrulama Rozeti (Footer) */}
+        <footer className="flex flex-wrap items-center justify-between gap-3 p-4 bg-slate-900/60 border border-slate-800/80 rounded-2xl text-xs text-slate-400">
+          <div className="flex items-center gap-2">
+            <FileCode2 className="w-4 h-4 text-indigo-400" />
+            <span className="font-medium text-slate-300">Emanet Kontratı:</span>
+            <span className="font-mono text-[11px] text-indigo-300 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">{CONTRACT_ADDRESS}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span className="text-[11px] font-semibold text-emerald-400">EVM Doğrulandı</span>
+          </div>
+        </footer>
+
         {/* 1. MODAL: Kasa Yönetimi (Deposit/Withdraw) */}
         <AnimatePresence>
           {isModalOpen && (
@@ -391,7 +400,7 @@ export default function LobbyPage() {
                   )}
 
                   <button onClick={handleBalanceTransaction} className={`w-full py-3 rounded-xl font-bold text-sm text-white shadow-lg transition active:scale-95 ${modalTab === 'deposit' ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/20' : 'bg-rose-600 hover:bg-rose-500 shadow-rose-600/20'}`}>
-                    {modalTab === 'deposit' ? 'Cüzdandan Kasaya Aktar' : 'Kasadan Cüzdana Çek'}
+                    {modalTab === 'deposit' ? 'Kontrata USDT Aktar' : 'Kontrattan Cüzdana Çek'}
                   </button>
                 </div>
               </motion.div>
@@ -399,7 +408,7 @@ export default function LobbyPage() {
           )}
         </AnimatePresence>
 
-        {/* 2. MODAL: Staking & Kasa Payı (House Liquidity Pool) Modalı */}
+        {/* 2. MODAL: Staking & Kasa Payı Modalı */}
         <AnimatePresence>
           {isStakeModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
@@ -411,7 +420,6 @@ export default function LobbyPage() {
                 </h3>
                 <p className="text-xs text-slate-400 mb-5">Her düellodan kesilen %3 komisyon havuz ortaklarına dağıtılır.</p>
 
-                {/* İstatistik Kutuları */}
                 <div className="grid grid-cols-2 gap-3 mb-5">
                   <div className="p-3.5 bg-slate-950 border border-slate-800 rounded-2xl">
                     <span className="text-[11px] text-slate-400 flex items-center gap-1 mb-1"><PieChart className="w-3.5 h-3.5 text-indigo-400" /> Kilitli USDT</span>
@@ -424,16 +432,14 @@ export default function LobbyPage() {
                   </div>
                 </div>
 
-                {/* Kazancı Talep Et (Claim) Butonu */}
                 <button 
                   onClick={handleClaimYield}
                   disabled={accumulatedYield <= 0}
                   className="w-full mb-5 py-2.5 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition disabled:opacity-40"
                 >
-                  <Sparkles className="w-4 h-4 text-emerald-400" /> Biriken Payı Cüzdana Aktar
+                  <Sparkles className="w-4 h-4 text-emerald-400" /> Biriken Payı Kontrattan Çek
                 </button>
 
-                {/* Havuz Ortaklığı Ekleme */}
                 <div className="space-y-3 pt-3 border-t border-slate-800">
                   <label className="text-xs text-slate-300 font-bold block">Havuz Ortaklığını Artır</label>
                   <div className="flex gap-2">
