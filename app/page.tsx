@@ -92,15 +92,8 @@ export default function LobbyPage() {
     };
   }, []);
 
-  // Akıllı Cüzdan Bağlantısı (MetaMask varsa bağlar, yoksa Test Cüzdanı açar)
+  // Cüzdan Bağlama
   const connectWallet = async () => {
-    if (account) {
-      // Bağlıysa bağlantıyı kes
-      setAccount(null);
-      setIsDemoWallet(false);
-      return;
-    }
-
     if (typeof window !== 'undefined' && (window as any).ethereum) {
       try {
         const accounts = await (window as any).ethereum.request({ method: 'eth_requestAccounts' });
@@ -112,11 +105,18 @@ export default function LobbyPage() {
         console.error('Cüzdan hatası:', error);
       }
     } else {
-      // MetaMask yoksa otomatik Demo Test Cüzdanı bağla
+      // Demo Cüzdan Üret
       const randomHex = Array.from({ length: 40 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
       setAccount(`0x${randomHex}`);
       setIsDemoWallet(true);
     }
+  };
+
+  // Cüzdan Bağlantısını Kesme
+  const disconnectWallet = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setAccount(null);
+    setIsDemoWallet(false);
   };
 
   const handleStartDuel = (amount: number) => {
@@ -162,20 +162,20 @@ export default function LobbyPage() {
     if (isNaN(val) || val <= 0) return;
 
     if (!account) {
-      alert('Lütfen önce sağ üstten cüzdanınızı bağlayın!');
+      alert('Lütfen önce cüzdanınızı bağlayın!');
       return;
     }
 
     if (modalTab === 'deposit') {
       setBalance((prev) => prev + val);
-      setTxSuccessMsg(`+${val} USDT Kasaya Başarıyla Eklendi!`);
+      setTxSuccessMsg(`+${val} USDT Kasaya Eklendi!`);
     } else {
       if (val > balance) {
-        alert('Kasada yeterli bakiye bulunmuyor!');
+        alert('Kasada yeterli bakiye yok!');
         return;
       }
       setBalance((prev) => prev - val);
-      setTxSuccessMsg(`-${val} USDT Cüzdan Adresinize Gönderildi!`);
+      setTxSuccessMsg(`-${val} USDT Cüzdana Çekildi!`);
     }
 
     setTimeout(() => {
@@ -221,26 +221,28 @@ export default function LobbyPage() {
               </button>
             </div>
 
-            {/* Cüzdan Bağlantı Butonu */}
-            <button 
-              onClick={connectWallet} 
-              className={`flex items-center gap-1.5 px-3.5 py-2 font-bold text-xs rounded-xl transition shadow-lg active:scale-95 ${
-                account 
-                  ? 'bg-slate-800 hover:bg-rose-950/60 border border-slate-700 text-slate-200 hover:text-rose-400 hover:border-rose-800/60' 
-                  : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20'
-              }`}
-            >
-              {account ? (
-                <>
-                  <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                  <span>{account.substring(0, 6)}...{account.substring(account.length - 4)}</span>
-                  {isDemoWallet && <span className="text-[10px] bg-indigo-900/60 text-indigo-300 px-1 py-0.5 rounded ml-1">Demo</span>}
-                  <LogOut className="w-3 h-3 ml-1 opacity-60" />
-                </>
-              ) : (
-                'Cüzdan Bağla'
-              )}
-            </button>
+            {/* Cüzdan Durumu */}
+            {account ? (
+              <div className="flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold text-slate-200 shadow-lg">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>{account.substring(0, 6)}...{account.substring(account.length - 4)}</span>
+                {isDemoWallet && <span className="text-[10px] bg-indigo-900/80 text-indigo-300 px-1.5 py-0.5 rounded font-mono">Demo</span>}
+                <button 
+                  onClick={disconnectWallet}
+                  title="Bağlantıyı Kes"
+                  className="p-1 hover:bg-rose-900/50 hover:text-rose-400 text-slate-400 rounded-lg transition ml-1"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <button 
+                onClick={connectWallet} 
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-indigo-600/20 active:scale-95"
+              >
+                Cüzdan Bağla
+              </button>
+            )}
           </div>
         </header>
 
