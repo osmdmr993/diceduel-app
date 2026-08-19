@@ -1,21 +1,35 @@
 'use client';
 
-import React, { useState } from 'react';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { useAccount, useBalance } from 'wagmi';
+import React, { useState, useEffect } from 'react';
 import { Wallet, Swords, Plus, Flame, TrendingUp, ShieldCheck, Trophy, RotateCcw } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function LobbyPage() {
-  const { address, isConnected } = useAccount();
-  const { data: balanceData } = useBalance({ address });
-
+  const [account, setAccount] = useState<string | null>(null);
   const [balance, setBalance] = useState<number>(250.0);
   const [stakeReward] = useState<number>(12.45);
   const [betInput, setBetInput] = useState<string>('5');
   const [activeGame, setActiveGame] = useState<boolean>(false);
   const [isRolling, setIsRolling] = useState<boolean>(false);
   const [scores, setScores] = useState<{ p1: number | null; p2: number | null }>({ p1: null, p2: null });
+
+  // Tarayıcıdaki Web3 Cüzdanını (MetaMask vb.) Doğrudan Bağlama
+  const connectWallet = async () => {
+    if (typeof window !== 'undefined' && (window as any).ethereum) {
+      try {
+        const accounts = await (window as any).ethereum.request({
+          method: 'eth_requestAccounts',
+        });
+        if (accounts.length > 0) {
+          setAccount(accounts[0]);
+        }
+      } catch (error) {
+        console.error('Cüzdan bağlantı hatası:', error);
+      }
+    } else {
+      alert('Lütfen MetaMask veya uyumlu bir Web3 cüzdanı yükleyin.');
+    }
+  };
 
   const rooms = [
     { id: '1', creator: 'CryptoWhale_88', betAmount: 10 },
@@ -66,16 +80,18 @@ export default function LobbyPage() {
               <span>Kasa Payı: +{stakeReward} USDT</span>
             </div>
 
-            {/* Bağlı Cüzdan Bakiyesi */}
-            {isConnected && balanceData && (
-              <div className="flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-sm font-bold text-amber-400">
-                <Wallet className="w-4 h-4 text-slate-400" />
-                <span>{parseFloat(balanceData.formatted).toFixed(4)} {balanceData.symbol}</span>
-              </div>
-            )}
+            <div className="flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-sm font-bold text-amber-400">
+              <Wallet className="w-4 h-4 text-slate-400" />
+              <span>{balance.toFixed(2)} USDT</span>
+            </div>
 
-            {/* RainbowKit Cüzdan Bağlantı Butonu */}
-            <ConnectButton showBalance={false} chainStatus="icon" accountStatus="avatar" />
+            {/* Yerleşik Güvenli Cüzdan Butonu */}
+            <button
+              onClick={connectWallet}
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-indigo-600/20 active:scale-95"
+            >
+              {account ? `${account.substring(0, 6)}...${account.substring(account.length - 4)}` : 'Cüzdan Bağla'}
+            </button>
           </div>
         </header>
 
