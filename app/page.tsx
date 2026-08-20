@@ -12,7 +12,7 @@ import {
   History, Gift, CircleDot, Dices, Send,
   ReceiptText, Download, Printer,
   MessageCircle, Info, ChevronDown, Loader2, Clock, Lock, Unlock, ExternalLink, 
-  Volume2, VolumeX, Crown, AlertTriangle, Medal, ShieldAlert
+  Volume2, VolumeX, Crown, AlertTriangle, Medal, Bomb, Gem, Play
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -25,7 +25,6 @@ const CONTRACT_ADDRESS = '0xC9c586A92465C7254C3e19FebAAeD9D5c61f974f';
 const BSC_CHAIN_ID = 56;
 const BSC_CHAIN_ID_HEX = '0x38';
 
-// GÜVENLİ KURUCU TAM ADRESİ
 const OFFICIAL_OWNER_ADDRESS = '0x26e2b6b55db56fbafe1e6a10ce7183e8b09f1bf3';
 
 const MIN_BET = 0.5;
@@ -61,11 +60,12 @@ const PLATFORM_ABI = [
 
 let socket: Socket;
 
-// Güvenlik: Checksum & Tamper Doğrulayıcı
 const generateTamperProofHash = (addr: string, bal: number): string => {
   const payload = `${addr.toLowerCase()}_${bal.toFixed(2)}_dd_salt_2026_sec`;
   return ethers.keccak256(ethers.toUtf8Bytes(payload));
 };
+
+const MINES_MULTIPLIERS = [1.14, 1.32, 1.55, 1.85, 2.25, 2.78, 3.50, 4.50, 6.00, 8.50];
 
 const TRANSLATIONS: Record<string, any> = {
   tr: {
@@ -77,7 +77,9 @@ const TRANSLATIONS: Record<string, any> = {
     vault: 'Kasa ⚡',
     connectWallet: 'Cüzdan Bağla',
     tabDice: '🎲 ZAR DÜELLOSU',
-    tabCoin: '🪙 YAZI - TURA DÜELLOSU',
+    tabCoin: '🪙 YAZI - TURA',
+    tabRoulette: '🔴⚫ RULET',
+    tabMines: '💣 MAYIN TARLASI',
     openRoom: 'Zar Odası Aç',
     challenge: 'Meydan Oku',
     liveRooms: 'Canlı Zar Odaları',
@@ -111,7 +113,10 @@ const TRANSLATIONS: Record<string, any> = {
     linkCopied: 'Link Kopyalandı!',
     shareTelegramWin: '🚀 Zaferini Telegram\'da Paylaş',
     adminPanel: 'Yönetici Kasası',
-    wrongNetwork: 'Lütfen cüzdanınızı BSC (BNB Chain) Ağına geçirin!'
+    wrongNetwork: 'Lütfen cüzdanınızı BSC (BNB Chain) Ağına geçirin!',
+    cashout: 'Nakit Çek',
+    startMines: 'Mayın Tarlasını Başlat',
+    spinRoulette: 'Rulet Çarkını Çevir'
   },
   en: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -122,7 +127,9 @@ const TRANSLATIONS: Record<string, any> = {
     vault: 'Vault ⚡',
     connectWallet: 'Connect Wallet',
     tabDice: '🎲 DICE DUEL',
-    tabCoin: '🪙 COIN FLIP DUEL',
+    tabCoin: '🪙 COIN FLIP',
+    tabRoulette: '🔴⚫ ROULETTE',
+    tabMines: '💣 MINES',
     openRoom: 'Create Room',
     challenge: 'Challenge',
     liveRooms: 'Live Rooms',
@@ -156,7 +163,10 @@ const TRANSLATIONS: Record<string, any> = {
     linkCopied: 'Link Copied!',
     shareTelegramWin: '🚀 Brag on Telegram',
     adminPanel: 'House Admin',
-    wrongNetwork: 'Please switch network to BSC (BNB Chain)!'
+    wrongNetwork: 'Please switch network to BSC (BNB Chain)!',
+    cashout: 'Cash Out',
+    startMines: 'Start Mines Game',
+    spinRoulette: 'Spin Roulette Wheel'
   },
   ru: {
     hubTitle: 'DiceDuel Игровая Арена',
@@ -167,7 +177,9 @@ const TRANSLATIONS: Record<string, any> = {
     vault: 'Касса ⚡',
     connectWallet: 'Кошелек',
     tabDice: '🎲 ДУЭЛЬ КОСТЕЙ',
-    tabCoin: '🪙 ОРЕЛ И РЕШКА ДУЭЛЬ',
+    tabCoin: '🪙 ОРЕЛ И РЕШКА',
+    tabRoulette: '🔴⚫ РУЛЕТКА',
+    tabMines: '💣 МИНЫ',
     openRoom: 'Создать',
     challenge: 'Вызов',
     liveRooms: 'Комнаты',
@@ -201,7 +213,10 @@ const TRANSLATIONS: Record<string, any> = {
     linkCopied: 'Ссылка скопирована!',
     shareTelegramWin: '🚀 Поделиться в Telegram',
     adminPanel: 'Админ Касса',
-    wrongNetwork: 'Пожалуйста, переключитесь на сеть BSC (BNB Chain)!'
+    wrongNetwork: 'Пожалуйста, переключитесь на сеть BSC (BNB Chain)!',
+    cashout: 'Забрать',
+    startMines: 'Начать Мины',
+    spinRoulette: 'Крутить Рулетку'
   }
 };
 
@@ -249,7 +264,8 @@ export default function PlatformPage() {
   const [isLangMenuOpen, setIsLangMenuOpen] = useState<boolean>(false);
   const t = TRANSLATIONS[lang] || TRANSLATIONS.tr;
 
-  const [activeTab, setActiveTab] = useState<'dice' | 'coinflip'>('dice');
+  // 4 Oyunlu Sekme Sistemi
+  const [activeTab, setActiveTab] = useState<'dice' | 'coinflip' | 'roulette' | 'mines'>('dice');
   const [account, setAccount] = useState<string | null>(null);
   const [isDemoWallet, setIsDemoWallet] = useState<boolean>(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState<boolean>(false);
@@ -273,7 +289,7 @@ export default function PlatformPage() {
   
   const [isTxPending, setIsTxPending] = useState<boolean>(false);
 
-  // Oyun Durumları
+  // Genel Oyun Durumları
   const [activeGame, setActiveGame] = useState<boolean>(false);
   const [isRolling, setIsRolling] = useState<boolean>(false);
   const [isWaitingMatch, setIsWaitingMatch] = useState<boolean>(false);
@@ -282,6 +298,18 @@ export default function PlatformPage() {
 
   const [coinChoice, setCoinChoice] = useState<'YAZI' | 'TURA'>('YAZI');
   const [coinResult, setCoinResult] = useState<'YAZI' | 'TURA' | null>(null);
+  
+  // Rulet Durumu
+  const [rouletteChoice, setRouletteChoice] = useState<'RED' | 'BLACK' | 'GREEN'>('RED');
+  const [rouletteResult, setRouletteResult] = useState<string | null>(null);
+
+  // Mayın Tarlası Durumu (Mines)
+  const [minesActive, setMinesActive] = useState<boolean>(false);
+  const [minesField, setMinesField] = useState<Array<{ id: number; revealed: boolean; isMine: boolean }>>([]);
+  const [revealedCount, setRevealedCount] = useState<number>(0);
+  const [minesBetAmount, setMinesBetAmount] = useState<number>(1.0);
+  const [minesGameOver, setMinesGameOver] = useState<boolean>(false);
+
   const [gameResult, setGameResult] = useState<{
     opponent: string;
     p1Score: any;
@@ -344,7 +372,6 @@ export default function PlatformPage() {
     } catch (e) {}
   };
 
-  // GÜVENLİ & MÜHÜRLÜ KALICI BAKİYE GÜNCELLEYİCİ
   const updatePersistentBalance = (newBal: number, userAddr?: string) => {
     const targetAddr = userAddr || account;
     setBalance(newBal);
@@ -356,7 +383,6 @@ export default function PlatformPage() {
     }
   };
 
-  // GÜVENLİ LP STAKING GÜNCELLEYİCİ
   const updatePersistentStake = (newStake: number, newYield?: number, userAddr?: string) => {
     const targetAddr = userAddr || account || 'guest';
     setStakedAmount(newStake);
@@ -369,7 +395,6 @@ export default function PlatformPage() {
     }
   };
 
-  // KALICI İŞLEM GEÇMİŞİ
   const addTransaction = (type: TransactionRecord['type'], title: string, amount: number, txHash?: string, userAddr?: string) => {
     const targetAddr = userAddr || account || 'guest';
     const newTx: TransactionRecord = {
@@ -391,7 +416,6 @@ export default function PlatformPage() {
     });
   };
 
-  // KALICI MAÇ GEÇMİŞİ
   const pushMatchRecord = (winner: string, loser: string, gameDesc: string, bet: number) => {
     const payout = +(bet * 2 * 0.97).toFixed(2);
     const newItem: MatchHistoryItem = {
@@ -412,7 +436,6 @@ export default function PlatformPage() {
     });
   };
 
-  // 24 Saatlik Çark Kilidi
   const checkSpinCooldown = useCallback((userAddr?: string) => {
     const targetAddr = userAddr || account || 'guest';
     if (typeof window === 'undefined') return;
@@ -434,7 +457,6 @@ export default function PlatformPage() {
     setSpinCooldownText('');
   }, [account]);
 
-  // Otomatik BSC Ağı Değiştirme
   const switchToBSCNetwork = async () => {
     const win = window as any;
     const providerObj = win.ethereum || win.BinanceChain || win.okxwallet;
@@ -465,7 +487,6 @@ export default function PlatformPage() {
     }
   };
 
-  // Blokzincir ve Bakiye Doğrulama
   const syncBlockchainBalances = useCallback(async (userAddress: string) => {
     if (!userAddress || userAddress.length < 10) return;
     try {
@@ -482,16 +503,13 @@ export default function PlatformPage() {
         setIsWrongNetwork(false);
       }
 
-      // BNB Gas Bakiyesi
       const rawBNB = await browserProvider.getBalance(userAddress);
       setWalletBNB(+parseFloat(ethers.formatEther(rawBNB)).toFixed(4));
       
-      // BEP-20 USDT Bakiyesi
       const usdtContract = new ethers.Contract(BSC_USDT_ADDRESS, ERC20_ABI, browserProvider);
       const rawWalletBal = await usdtContract.balanceOf(userAddress);
       setWalletUSDT(+parseFloat(ethers.formatUnits(rawWalletBal, 18)).toFixed(2));
 
-      // Güvenli Kurucu Yetki Denetimi
       const platformContract = new ethers.Contract(CONTRACT_ADDRESS, PLATFORM_ABI, browserProvider);
       try {
         const ownerAddr = await platformContract.owner();
@@ -506,7 +524,6 @@ export default function PlatformPage() {
         }
       }
 
-      // Güvenlik Kalkanlı Bakiye Okuma (Anti-Tamper Proof)
       const savedBal = localStorage.getItem(`dd_bal_${userAddress.toLowerCase()}`);
       const savedProof = localStorage.getItem(`dd_proof_${userAddress.toLowerCase()}`);
 
@@ -518,14 +535,12 @@ export default function PlatformPage() {
         if (savedProof === expectedProof) {
           setBalance(parseFloat(savedBal));
         } else {
-          // Manipülasyon tespit edildi: Kontrat bakiyesine sıfırla
           updatePersistentBalance(fetchedBal, userAddress);
         }
       } else {
         updatePersistentBalance(fetchedBal, userAddress);
       }
 
-      // LP Staking
       const savedStake = localStorage.getItem(`dd_stake_${userAddress.toLowerCase()}`);
       if (savedStake !== null && !isNaN(parseFloat(savedStake))) {
         setStakedAmount(parseFloat(savedStake));
@@ -539,7 +554,6 @@ export default function PlatformPage() {
         setStakeDuration(savedTier as any);
       }
 
-      // İşlem Geçmişi
       const savedTxs = localStorage.getItem(`dd_txs_${userAddress.toLowerCase()}`);
       if (savedTxs) {
         try { setTransactions(JSON.parse(savedTxs)); } catch (e) {}
@@ -551,7 +565,6 @@ export default function PlatformPage() {
     }
   }, [checkSpinCooldown]);
 
-  // Sayfa İlk Yüklendiğinde
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedLang = localStorage.getItem('dd_lang');
@@ -564,7 +577,9 @@ export default function PlatformPage() {
       }
 
       const savedTab = localStorage.getItem('dd_tab');
-      if (savedTab === 'dice' || savedTab === 'coinflip') setActiveTab(savedTab);
+      if (savedTab && ['dice', 'coinflip', 'roulette', 'mines'].includes(savedTab)) {
+        setActiveTab(savedTab as any);
+      }
 
       const savedMute = localStorage.getItem('dd_mute');
       if (savedMute !== null) setIsMuted(savedMute === 'true');
@@ -585,7 +600,7 @@ export default function PlatformPage() {
         setMatchHistory([
           { id: 'm-1', winner: 'KriptoPasa_34', loser: 'SolanaKing', game: '🎲 Zar (88-42)', payout: 1.94, time: '2m ago' },
           { id: 'm-2', winner: 'Bogatyr_Crypto', loser: 'DegenKing_07', game: '🪙 Yazı-Tura (YAZI)', payout: 3.88, time: '4m ago' },
-          { id: 'm-3', winner: 'LuckyStrike', loser: 'AnadoluKaplani', game: '🎲 Zar (94-71)', payout: 9.70, time: '6m ago' }
+          { id: 'm-3', winner: 'LuckyStrike', loser: 'AnadoluKaplani', game: '🔴 Rulet (KIRMIZI)', payout: 9.70, time: '6m ago' }
         ]);
       }
 
@@ -609,7 +624,6 @@ export default function PlatformPage() {
     }
   }, [syncBlockchainBalances, checkSpinCooldown]);
 
-  // CANLI LOBİ SİMÜLASYONU
   useEffect(() => {
     const interval = setInterval(() => {
       const b1 = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
@@ -618,18 +632,22 @@ export default function PlatformPage() {
 
       const bets = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 5.0];
       const randomBet = bets[Math.floor(Math.random() * bets.length)];
-      const isDice = Math.random() > 0.5;
+      const randGame = Math.random();
 
-      if (isDice) {
+      if (randGame < 0.4) {
         const s1 = Math.floor(Math.random() * 40) + 60;
         const s2 = Math.floor(Math.random() * 50) + 1;
         pushMatchRecord(b1, b2, `🎲 Zar (${s1}-${s2})`, randomBet);
-      } else {
+      } else if (randGame < 0.7) {
         const face = Math.random() > 0.5 ? 'YAZI' : 'TURA';
         pushMatchRecord(b1, b2, `🪙 Yazı-Tura (${face})`, randomBet);
+      } else if (randGame < 0.9) {
+        const color = Math.random() > 0.5 ? 'KIRMIZI' : 'SİYAH';
+        pushMatchRecord(b1, b2, `🔴 Rulet (${color})`, randomBet);
+      } else {
+        pushMatchRecord(b1, 'Mayın', `💣 Mayın (1.85x)`, randomBet);
       }
 
-      // LP Havuzuna Kâr Payı Ekle
       setStakedAmount((currStake) => {
         if (currStake > 0) {
           setAccumulatedYield((prevYield) => {
@@ -736,7 +754,7 @@ export default function PlatformPage() {
     if (typeof window !== 'undefined') localStorage.setItem('dd_mute', n.toString());
   };
 
-  const changeTab = (tType: 'dice' | 'coinflip') => {
+  const changeTab = (tType: 'dice' | 'coinflip' | 'roulette' | 'mines') => {
     setActiveTab(tType);
     if (typeof window !== 'undefined') localStorage.setItem('dd_tab', tType);
     triggerTelegramHaptic('light');
@@ -834,7 +852,6 @@ export default function PlatformPage() {
       return;
     }
 
-    // BNB Gas Koruma Denetimi
     if (walletBNB < 0.0008) {
       return alert(`⚠️ Yetersiz BNB Gas Bakiyesi!\n\nİşlemi gerçekleştirmek için cüzdanınızda en az 0.001 BNB (~$0.60) gas ücreti bulunmalıdır.\nMevcut BNB Bakiyeniz: ${walletBNB} BNB`);
     }
@@ -901,7 +918,7 @@ export default function PlatformPage() {
     }
   };
 
-  // %60 KASA / %40 OYUNCU ZAR MOTORU
+  // 1. ZAR DÜELLOSU MOTORU
   const executeDiceDuel = (amount: number, opponentName: string) => {
     setIsWaitingMatch(false);
     setIsRolling(true);
@@ -918,26 +935,11 @@ export default function PlatformPage() {
       setIsRolling(false);
 
       const isPlayerWin = Math.random() < 0.40;
-
-      let p1 = 0;
-      let p2 = 0;
-
-      if (isPlayerWin) {
-        p1 = Math.floor(Math.random() * 40) + 60;
-        p2 = Math.floor(Math.random() * 50) + 1;
-      } else {
-        p1 = Math.floor(Math.random() * 50) + 1;
-        p2 = Math.floor(Math.random() * 40) + 60;
-      }
+      let p1 = isPlayerWin ? Math.floor(Math.random() * 40) + 60 : Math.floor(Math.random() * 50) + 1;
+      let p2 = isPlayerWin ? Math.floor(Math.random() * 50) + 1 : Math.floor(Math.random() * 40) + 60;
 
       const winnerDisplayName = isPlayerWin ? (lang === 'tr' ? 'Sen' : 'You') : opponentName;
-
-      setGameResult({ 
-        opponent: opponentName, 
-        p1Score: p1, 
-        p2Score: p2, 
-        winner: winnerDisplayName 
-      });
+      setGameResult({ opponent: opponentName, p1Score: p1, p2Score: p2, winner: winnerDisplayName });
 
       if (stakedAmount > 0) {
         const newY = +(accumulatedYield + (amount * 0.015)).toFixed(2);
@@ -961,7 +963,6 @@ export default function PlatformPage() {
     }, 4000);
   };
 
-  // ODA AÇMA & 20-45 SANİYE DİNAMİK EŞLEŞME MOTORU (ZAR)
   const handleOpenRoom = () => {
     const amount = parseFloat(betInput);
     if (isNaN(amount) || amount < MIN_BET) return alert(`Minimum bahis ${MIN_BET} USDT olmalıdır!`);
@@ -999,7 +1000,6 @@ export default function PlatformPage() {
     }, 1000);
   };
 
-  // MEVCUT ODAYA KATILMA (ZAR)
   const handleJoinRoom = (room: Room) => {
     if (room.betAmount > balance) return alert('Yetersiz bakiye! Lütfen kasaya USDT yatırın.');
 
@@ -1013,7 +1013,7 @@ export default function PlatformPage() {
     executeDiceDuel(room.betAmount, room.creator);
   };
 
-  // %60 KASA / %40 OYUNCU YAZI-TURA MOTORU
+  // 2. YAZI - TURA MOTORU
   const executeCoinFlipDuel = (amount: number, opponentName: string) => {
     setIsWaitingMatch(false);
     setIsRolling(true);
@@ -1029,13 +1029,7 @@ export default function PlatformPage() {
       setIsRolling(false);
 
       const isPlayerWin = Math.random() < 0.40;
-      let landed: 'YAZI' | 'TURA';
-
-      if (isPlayerWin) {
-        landed = coinChoice;
-      } else {
-        landed = coinChoice === 'YAZI' ? 'TURA' : 'YAZI';
-      }
+      let landed: 'YAZI' | 'TURA' = isPlayerWin ? coinChoice : (coinChoice === 'YAZI' ? 'TURA' : 'YAZI');
 
       setCoinResult(landed);
       const winnerName = isPlayerWin ? (lang === 'tr' ? 'Sen' : 'You') : opponentName;
@@ -1063,7 +1057,6 @@ export default function PlatformPage() {
     }, 3500);
   };
 
-  // YAZI - TURA DÜELLOSU BAŞLATMA
   const handleStartCoinFlipDuel = () => {
     const amount = parseFloat(betInput);
     if (isNaN(amount) || amount < MIN_BET) return alert(`Minimum bahis ${MIN_BET} USDT olmalıdır!`);
@@ -1097,6 +1090,150 @@ export default function PlatformPage() {
         executeCoinFlipDuel(amount, randomBot);
       }
     }, 1000);
+  };
+
+  // 3. KIRMIZI / SİYAH RULET MOTORU
+  const handleStartRoulette = () => {
+    const amount = parseFloat(betInput);
+    if (isNaN(amount) || amount < MIN_BET) return alert(`Minimum bahis ${MIN_BET} USDT olmalıdır!`);
+    if (amount > MAX_PLAYER_BET) return alert(`Maksimum bahis sınırı ${MAX_PLAYER_BET} USDT'dir!`);
+    if (amount > balance) return alert('Yetersiz bakiye! Lütfen kasaya USDT yatırın.');
+
+    initAudio();
+    triggerTelegramHaptic('heavy');
+    currentBetRef.current = amount;
+    const nBal = +(balance - amount).toFixed(2);
+    updatePersistentBalance(nBal);
+
+    setActiveGame(true);
+    setIsRolling(true);
+    setRouletteResult(null);
+
+    if (rollSoundIntervalRef.current) clearInterval(rollSoundIntervalRef.current);
+    rollSoundIntervalRef.current = setInterval(playClickSound, 100);
+
+    const houseName = lang === 'tr' ? 'Kasa' : 'House';
+    setGameResult({ opponent: houseName, p1Score: rouletteChoice, p2Score: null, winner: null });
+
+    setTimeout(() => {
+      if (rollSoundIntervalRef.current) clearInterval(rollSoundIntervalRef.current);
+      setIsRolling(false);
+
+      const isPlayerWin = Math.random() < 0.40;
+      let landedColor: 'RED' | 'BLACK' | 'GREEN';
+
+      if (isPlayerWin) {
+        landedColor = rouletteChoice;
+      } else {
+        const randFail = Math.random();
+        if (randFail < 0.15) landedColor = 'GREEN'; // %15 Kasa Yeşili (0/00)
+        else landedColor = rouletteChoice === 'RED' ? 'BLACK' : 'RED';
+      }
+
+      setRouletteResult(landedColor);
+      const winnerName = isPlayerWin ? (lang === 'tr' ? 'Sen' : 'You') : houseName;
+      setGameResult({ opponent: houseName, p1Score: rouletteChoice, p2Score: landedColor, winner: winnerName });
+
+      if (stakedAmount > 0) {
+        const newY = +(accumulatedYield + (amount * 0.015)).toFixed(2);
+        updatePersistentStake(stakedAmount, newY);
+      }
+
+      const winnerPlayer = isPlayerWin ? (account ? `${account.substring(0, 6)}...` : 'You') : houseName;
+      const loserPlayer = isPlayerWin ? houseName : (account ? `${account.substring(0, 6)}...` : 'You');
+      pushMatchRecord(winnerPlayer, loserPlayer, `🔴 Rulet (${landedColor})`, amount);
+
+      if (isPlayerWin) {
+        const netWin = amount * 2 * 0.97;
+        triggerConfetti();
+        playWinSound();
+        const newTotalBal = +(balance + netWin).toFixed(2);
+        updatePersistentBalance(newTotalBal);
+        addTransaction('GAME_WIN', `Rulet Kazancı (${landedColor})`, +netWin.toFixed(2));
+      } else {
+        playLoseSound();
+      }
+    }, 3800);
+  };
+
+  // 4. MAYIN TARLASI MOTORU (MINES)
+  const handleStartMines = () => {
+    const amount = parseFloat(betInput);
+    if (isNaN(amount) || amount < MIN_BET) return alert(`Minimum bahis ${MIN_BET} USDT olmalıdır!`);
+    if (amount > MAX_PLAYER_BET) return alert(`Maksimum bahis sınırı ${MAX_PLAYER_BET} USDT'dir!`);
+    if (amount > balance) return alert('Yetersiz bakiye! Lütfen kasaya USDT yatırın.');
+
+    initAudio();
+    triggerTelegramHaptic('heavy');
+    setMinesBetAmount(amount);
+    const nBal = +(balance - amount).toFixed(2);
+    updatePersistentBalance(nBal);
+
+    // 25 Kutu, 3 Gizli Mayın
+    const mineIndexes = new Set<number>();
+    while (mineIndexes.size < 3) {
+      mineIndexes.add(Math.floor(Math.random() * 25));
+    }
+
+    const newGrid = Array.from({ length: 25 }, (_, i) => ({
+      id: i,
+      revealed: false,
+      isMine: mineIndexes.has(i)
+    }));
+
+    setMinesField(newGrid);
+    setRevealedCount(0);
+    setMinesActive(true);
+    setMinesGameOver(false);
+  };
+
+  const handleRevealTile = (index: number) => {
+    if (!minesActive || minesGameOver || minesField[index].revealed) return;
+
+    initAudio();
+    const tile = minesField[index];
+    
+    // Mayına Basıldı (Kayıp)
+    if (tile.isMine) {
+      playLoseSound();
+      setMinesGameOver(true);
+      setMinesActive(false);
+      setMinesField((prev) => prev.map((t) => ({ ...t, revealed: true })));
+      pushMatchRecord('Kasa', account ? `${account.substring(0, 6)}...` : 'You', `💣 Mayına Basıldı`, minesBetAmount);
+      return;
+    }
+
+    // Güvenli Elmas Açıldı
+    playClickSound();
+    const nextRevealedCount = revealedCount + 1;
+    setRevealedCount(nextRevealedCount);
+
+    setMinesField((prev) => prev.map((t, idx) => (idx === index ? { ...t, revealed: true } : t)));
+
+    // Otomatik Kasa LP Payı
+    if (stakedAmount > 0) {
+      const newY = +(accumulatedYield + (minesBetAmount * 0.015)).toFixed(2);
+      updatePersistentStake(stakedAmount, newY);
+    }
+  };
+
+  const handleCashoutMines = () => {
+    if (!minesActive || revealedCount === 0) return;
+
+    const multiplier = MINES_MULTIPLIERS[Math.min(revealedCount - 1, MINES_MULTIPLIERS.length - 1)];
+    const winPayout = +(minesBetAmount * multiplier).toFixed(2);
+
+    triggerConfetti();
+    playWinSound();
+    const nBal = +(balance + winPayout).toFixed(2);
+    updatePersistentBalance(nBal);
+
+    addTransaction('GAME_WIN', `Mayın Nakit Çek (${multiplier}x)`, winPayout);
+    pushMatchRecord(account ? `${account.substring(0, 6)}...` : 'You', 'Mayın', `💣 Mayın (${multiplier}x)`, minesBetAmount);
+
+    setMinesActive(false);
+    setMinesGameOver(true);
+    setMinesField((prev) => prev.map((t) => ({ ...t, revealed: true })));
   };
 
   // 24 SAAT KORUMALI & 5 KADEMELİ GÜNLÜK ÇARK
@@ -1210,7 +1347,6 @@ export default function PlatformPage() {
     setTimeout(() => setStakeSuccessMsg(null), 1500);
   };
 
-  // KURUCU ADMIN KASA ÇEKİMİ (GÜVENLİ)
   const handleAdminWithdraw = async () => {
     const val = parseFloat(adminWithdrawAmount);
     if (isNaN(val) || val <= 0) return;
@@ -1238,10 +1374,9 @@ export default function PlatformPage() {
     }
   };
 
-  // Telegram Viral Zafer Paylaşımı
   const handleShareTelegramVictory = (winAmount: number) => {
     const refLink = `https://diceduel.fun?ref=${account || '0x26e2'}`;
-    const text = `🎲 DiceDuel'de ${winAmount.toFixed(2)} USDT kazandım! 🚀 Sen de zarlarını kap ve düelloya katıl:`;
+    const text = `🎲 DiceDuel'de ${winAmount.toFixed(2)} USDT kazandım! 🚀 Sen de katıl:`;
     const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent(text)}`;
     window.open(shareUrl, '_blank');
   };
@@ -1276,6 +1411,8 @@ export default function PlatformPage() {
   });
 
   const currentWinPayout = +(currentBetRef.current * 2 * 0.97).toFixed(2);
+  const currentMinesMultiplier = revealedCount > 0 ? MINES_MULTIPLIERS[Math.min(revealedCount - 1, MINES_MULTIPLIERS.length - 1)] : 1.0;
+  const currentMinesPayout = +(minesBetAmount * currentMinesMultiplier).toFixed(2);
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100 p-3 md:p-8 font-sans select-none">
@@ -1308,16 +1445,13 @@ export default function PlatformPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {/* Ses Aç / Kapat */}
             <button 
               onClick={toggleMute}
               className="p-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-slate-300 transition active:scale-95 shadow-sm"
-              title={isMuted ? 'Sesi Aç' : 'Sesi Kapat'}
             >
               {isMuted ? <VolumeX className="w-3.5 h-3.5 text-rose-400" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-400" />}
             </button>
 
-            {/* Dil Menüsü */}
             <div className="relative">
               <button 
                 onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
@@ -1351,7 +1485,6 @@ export default function PlatformPage() {
               </AnimatePresence>
             </div>
 
-            {/* Sadece Doğrulanmış Kurucuya Özel Admin Paneli */}
             {isContractOwner && (
               <button 
                 onClick={() => setIsAdminModalOpen(true)}
@@ -1362,7 +1495,6 @@ export default function PlatformPage() {
               </button>
             )}
 
-            {/* Arkadaşını Davet Et (%0.5) */}
             <button 
               onClick={() => { setIsReferralModalOpen(true); triggerTelegramHaptic('medium'); }}
               className="flex items-center gap-1.5 px-2.5 py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-xl text-xs font-bold text-purple-300 transition active:scale-95 shadow-sm"
@@ -1371,7 +1503,6 @@ export default function PlatformPage() {
               <span className="hidden sm:inline">{t.inviteBtn}</span>
             </button>
 
-            {/* Kasa Ortaklığı (LP Staking) */}
             <button 
               onClick={() => { setIsStakeModalOpen(true); triggerTelegramHaptic('medium'); }}
               className="flex items-center gap-1.5 px-2.5 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-xl text-xs font-bold text-emerald-400 transition active:scale-95 shadow-sm"
@@ -1382,7 +1513,6 @@ export default function PlatformPage() {
               {accumulatedYield > 0 && <span className="text-[10px] font-black text-amber-400">+{accumulatedYield.toFixed(2)}</span>}
             </button>
 
-            {/* Raporlar (İşlemler) */}
             <button 
               onClick={() => { setIsTxModalOpen(true); triggerTelegramHaptic('medium'); }}
               className="flex items-center gap-1.5 px-2.5 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-bold text-slate-200 transition active:scale-95 shadow-sm"
@@ -1391,7 +1521,6 @@ export default function PlatformPage() {
               <span className="hidden sm:inline">{t.txBtn}</span>
             </button>
 
-            {/* 24 Saat Korumalı Günlük Çark */}
             <button 
               onClick={() => { setIsSpinModalOpen(true); triggerTelegramHaptic('medium'); }}
               className="flex items-center gap-1.5 px-2.5 py-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-xl text-xs font-bold text-amber-400 transition active:scale-95 shadow-sm"
@@ -1401,7 +1530,6 @@ export default function PlatformPage() {
               {canSpin ? <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span> : <span className="text-[9px] text-slate-400">({spinCooldownText})</span>}
             </button>
 
-            {/* Canlı Destek */}
             <button 
               onClick={() => { setIsSupportModalOpen(true); triggerTelegramHaptic('medium'); }}
               className="p-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-sky-400 transition active:scale-95"
@@ -1409,7 +1537,6 @@ export default function PlatformPage() {
               <MessageCircle className="w-4 h-4" />
             </button>
 
-            {/* Bakiye Göstergesi */}
             <div className="flex items-center bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-inner">
               <div className="flex items-center gap-1 px-2.5 py-2 text-xs font-bold text-amber-400">
                 <Wallet className="w-3.5 h-3.5 text-slate-400" />
@@ -1423,7 +1550,6 @@ export default function PlatformPage() {
               </button>
             </div>
 
-            {/* Cüzdan Durumu */}
             {account ? (
               <div className="flex items-center gap-1 px-2.5 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold text-slate-200">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -1443,12 +1569,12 @@ export default function PlatformPage() {
           </div>
         </header>
 
-        {/* Oyun Seçim Sekmeleri */}
-        {!activeGame && (
-          <div className="flex gap-2 p-1 bg-slate-900 border border-slate-800 rounded-2xl max-w-md mx-auto">
+        {/* 4 Ana Oyun Sekmesi */}
+        {!activeGame && !minesActive && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-1.5 bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl mx-auto shadow-lg">
             <button
               onClick={() => changeTab('dice')}
-              className={`flex-1 py-2.5 rounded-xl text-xs font-black flex items-center justify-center gap-2 transition ${
+              className={`py-2.5 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition ${
                 activeTab === 'dice' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -1456,16 +1582,32 @@ export default function PlatformPage() {
             </button>
             <button
               onClick={() => changeTab('coinflip')}
-              className={`flex-1 py-2.5 rounded-xl text-xs font-black flex items-center justify-center gap-2 transition ${
+              className={`py-2.5 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition ${
                 activeTab === 'coinflip' ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30' : 'text-slate-400 hover:text-white'
               }`}
             >
               <CircleDot className="w-4 h-4" /> {t.tabCoin}
             </button>
+            <button
+              onClick={() => changeTab('roulette')}
+              className={`py-2.5 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition ${
+                activeTab === 'roulette' ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/30' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Play className="w-4 h-4" /> {t.tabRoulette}
+            </button>
+            <button
+              onClick={() => changeTab('mines')}
+              className={`py-2.5 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition ${
+                activeTab === 'mines' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Bomb className="w-4 h-4" /> {t.tabMines}
+            </button>
           </div>
         )}
 
-        {/* Oyun Arenası */}
+        {/* Oyun Arenası: Zar, Yazı-Tura, Rulet ve Mayın Tarlası */}
         {activeGame ? (
           <div className="flex flex-col items-center justify-center p-5 bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-xl mx-auto shadow-2xl">
             {isWaitingMatch ? (
@@ -1490,7 +1632,7 @@ export default function PlatformPage() {
                   <div className="text-xs font-semibold text-slate-300">{t.reward}: <span className="text-amber-400 font-bold">{currentWinPayout.toFixed(2)} USDT</span></div>
                 </div>
 
-                {activeTab === 'dice' ? (
+                {activeTab === 'dice' && (
                   <div className="grid grid-cols-2 gap-4 w-full relative mb-6">
                     <div className="flex flex-col items-center p-4 bg-slate-800/60 rounded-2xl border border-slate-700/50">
                       <span className="text-xs text-slate-400 mb-2">{t.you}</span>
@@ -1506,7 +1648,9 @@ export default function PlatformPage() {
                       </motion.div>
                     </div>
                   </div>
-                ) : (
+                )}
+
+                {activeTab === 'coinflip' && (
                   <div className="grid grid-cols-2 gap-4 w-full relative mb-6">
                     <div className="flex flex-col items-center p-4 bg-slate-800/60 rounded-2xl border border-slate-700/50">
                       <span className="text-xs text-slate-400 mb-2">{t.you} ({coinChoice})</span>
@@ -1529,6 +1673,24 @@ export default function PlatformPage() {
                         {isRolling ? '🪙' : coinResult ? (coinResult === 'YAZI' ? 'TURA' : 'YAZI') : (coinChoice === 'YAZI' ? 'TURA' : 'YAZI')}
                       </motion.div>
                     </div>
+                  </div>
+                )}
+
+                {activeTab === 'roulette' && (
+                  <div className="flex flex-col items-center my-4 space-y-4">
+                    <span className="text-xs text-slate-400">Seçim: <span className="font-bold text-amber-400">{rouletteChoice}</span></span>
+                    <motion.div 
+                      animate={isRolling ? { rotate: [0, 2160] } : {}} 
+                      transition={{ duration: 3.8, ease: "easeOut" }}
+                      className={`w-28 h-28 rounded-full flex items-center justify-center text-xl font-black border-4 shadow-2xl ${
+                        rouletteResult === 'RED' ? 'bg-rose-600 border-rose-400 text-white' :
+                        rouletteResult === 'BLACK' ? 'bg-slate-900 border-slate-700 text-white' :
+                        rouletteResult === 'GREEN' ? 'bg-emerald-600 border-emerald-400 text-white' :
+                        'bg-gradient-to-tr from-rose-600 via-slate-900 to-emerald-600 border-amber-400 text-white'
+                      }`}
+                    >
+                      {isRolling ? '🔴⚫' : rouletteResult || rouletteChoice}
+                    </motion.div>
                   </div>
                 )}
 
@@ -1616,7 +1778,7 @@ export default function PlatformPage() {
                 </div>
               </div>
             </div>
-          ) : (
+          ) : activeTab === 'coinflip' ? (
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 md:p-6 max-w-lg mx-auto space-y-4 shadow-2xl">
               <div className="text-center space-y-0.5">
                 <h2 className="text-base md:text-lg font-black text-white flex items-center justify-center gap-2"><CircleDot className="w-5 h-5 text-amber-400" /> {t.tabCoin}</h2>
@@ -1658,6 +1820,118 @@ export default function PlatformPage() {
               <button onClick={handleStartCoinFlipDuel} className="w-full py-3 bg-gradient-to-r from-amber-600 to-yellow-500 hover:from-amber-500 hover:to-yellow-400 text-slate-950 font-black text-xs md:text-sm rounded-xl transition shadow-lg shadow-amber-500/20 active:scale-95">
                 🪙 Düello Başlat ({(parseFloat(betInput || '0') * 1.94).toFixed(2)} USDT)
               </button>
+            </div>
+          ) : activeTab === 'roulette' ? (
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 md:p-6 max-w-lg mx-auto space-y-4 shadow-2xl">
+              <div className="text-center space-y-0.5">
+                <h2 className="text-base md:text-lg font-black text-white flex items-center justify-center gap-2"><Play className="w-5 h-5 text-rose-400" /> {t.tabRoulette}</h2>
+                <p className="text-[11px] text-slate-400">Kırmızı / Siyah • 1.94x Çarpan • Anlık Çark</p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <button onClick={() => { setRouletteChoice('RED'); triggerTelegramHaptic('light'); }} className={`py-3 rounded-2xl font-black text-xs border transition ${rouletteChoice === 'RED' ? 'bg-rose-600 border-rose-400 text-white shadow-lg shadow-rose-600/30' : 'bg-slate-950 border-slate-800 text-slate-400'}`}>🔴 KIRMIZI</button>
+                <button onClick={() => { setRouletteChoice('GREEN'); triggerTelegramHaptic('light'); }} className={`py-3 rounded-2xl font-black text-xs border transition ${rouletteChoice === 'GREEN' ? 'bg-emerald-600 border-emerald-400 text-white shadow-lg shadow-emerald-600/30' : 'bg-slate-950 border-slate-800 text-slate-400'}`}>🟢 YEŞİL (0/00)</button>
+                <button onClick={() => { setRouletteChoice('BLACK'); triggerTelegramHaptic('light'); }} className={`py-3 rounded-2xl font-black text-xs border transition ${rouletteChoice === 'BLACK' ? 'bg-slate-800 border-slate-600 text-white shadow-lg' : 'bg-slate-950 border-slate-800 text-slate-400'}`}>⚫ SİYAH</button>
+              </div>
+
+              <div className="relative">
+                <input 
+                  type="number" 
+                  step="0.5"
+                  min="0.5"
+                  max="20"
+                  value={betInput} 
+                  onChange={(e) => handleBetInputChange(e.target.value)} 
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm font-bold text-white focus:outline-none pr-16" 
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-amber-400">USDT</span>
+              </div>
+
+              <div className="grid grid-cols-4 gap-1">
+                {['0.5', '1', '5', '10'].map((preset) => (
+                  <button key={preset} onClick={() => { handleBetInputChange(preset); triggerTelegramHaptic('light'); }} className="py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 rounded-lg transition">
+                    +{preset} USDT
+                  </button>
+                ))}
+              </div>
+
+              <button onClick={handleStartRoulette} className="w-full py-3 bg-gradient-to-r from-rose-600 to-red-500 hover:from-rose-500 hover:to-red-400 text-white font-black text-xs md:text-sm rounded-xl transition shadow-lg shadow-rose-600/20 active:scale-95">
+                🔴 {t.spinRoulette} ({(parseFloat(betInput || '0') * 1.94).toFixed(2)} USDT)
+              </button>
+            </div>
+          ) : (
+            /* MAYIN TARLASI PENCERESİ */
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 md:p-6 max-w-lg mx-auto space-y-4 shadow-2xl">
+              <div className="flex justify-between items-center pb-2 border-b border-slate-800">
+                <div className="flex items-center gap-2">
+                  <Bomb className="w-5 h-5 text-emerald-400" />
+                  <span className="font-bold text-sm text-white">{t.tabMines} (3 Mayın)</span>
+                </div>
+                {minesActive && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black text-emerald-400">{currentMinesMultiplier}x</span>
+                    <button onClick={handleCashoutMines} className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition active:scale-95 shadow-lg shadow-emerald-600/30">
+                      {t.cashout} ({currentMinesPayout.toFixed(2)} USDT)
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {minesActive || minesGameOver ? (
+                <div className="grid grid-cols-5 gap-2 my-2">
+                  {minesField.map((tile) => (
+                    <button
+                      key={tile.id}
+                      onClick={() => handleRevealTile(tile.id)}
+                      disabled={tile.revealed || minesGameOver}
+                      className={`h-12 md:h-14 rounded-2xl font-black text-lg flex items-center justify-center transition active:scale-95 ${
+                        tile.revealed
+                          ? tile.isMine
+                            ? 'bg-rose-600/40 border border-rose-500 text-rose-300 shadow-lg'
+                            : 'bg-emerald-600/40 border border-emerald-500 text-emerald-300 shadow-lg'
+                          : 'bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-600'
+                      }`}
+                    >
+                      {tile.revealed ? (tile.isMine ? '💣' : '💎') : '?'}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="relative">
+                    <input 
+                      type="number" 
+                      step="0.5"
+                      min="0.5"
+                      max="20"
+                      value={betInput} 
+                      onChange={(e) => handleBetInputChange(e.target.value)} 
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm font-bold text-white focus:outline-none pr-16" 
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-amber-400">USDT</span>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-1">
+                    {['0.5', '1', '5', '10'].map((preset) => (
+                      <button key={preset} onClick={() => { handleBetInputChange(preset); triggerTelegramHaptic('light'); }} className="py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 rounded-lg transition">
+                        +{preset} USDT
+                      </button>
+                    ))}
+                  </div>
+
+                  <button onClick={handleStartMines} className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-black text-xs md:text-sm rounded-xl transition shadow-lg shadow-emerald-600/20 active:scale-95">
+                    💣 {t.startMines} ({parseFloat(betInput || '0').toFixed(2)} USDT)
+                  </button>
+                </div>
+              )}
+
+              {minesGameOver && (
+                <div className="text-center pt-2">
+                  <button onClick={() => { setMinesGameOver(false); setMinesActive(false); }} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl transition">
+                    Yeniden Başlat 🔄
+                  </button>
+                </div>
+              )}
             </div>
           )
         )}
