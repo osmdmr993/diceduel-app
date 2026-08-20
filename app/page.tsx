@@ -8,10 +8,10 @@ import {
   Wallet, Swords, Plus, Flame, TrendingUp, ShieldCheck, 
   Trophy, RotateCcw, Activity, WifiOff, Sparkles, 
   ArrowDownCircle, ArrowUpCircle, X, CheckCircle2, LogOut,
-  Coins, FileCode2, Volume2, VolumeX,
-  History, Copy, Check, Gift, Users, CircleDot, Dices, Send,
-  ReceiptText, Download, Printer, CheckCircle,
-  MessageCircle, Info, ChevronDown, QrCode, Loader2
+  Coins, FileCode2,
+  History, Gift, CircleDot, Dices, Send,
+  ReceiptText, Download, Printer,
+  MessageCircle, Info, ChevronDown, Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -218,7 +218,7 @@ export default function PlatformPage() {
   const [spinReward, setSpinReward] = useState<number | null>(null);
   const [canSpin, setCanSpin] = useState<boolean>(true);
 
-  // Provably Fair & Destek
+  // Destek & Bilgi
   const [isSupportModalOpen, setIsSupportModalOpen] = useState<boolean>(false);
 
   // İşlem Geçmişi
@@ -402,7 +402,7 @@ export default function PlatformPage() {
     };
   }, []);
 
-  // Profesyonel Çoklu Cüzdan Entegrasyonu
+  // PROFESYONEL VE NET CÜZDAN SEÇİM FONKSİYONU
   const handleSelectWallet = async (type: string) => {
     initAudio();
     triggerTelegramHaptic('medium');
@@ -419,20 +419,22 @@ export default function PlatformPage() {
     let providerToUse: any = null;
 
     if (type === 'binance') {
-      if (win.BinanceChain) {
-        providerToUse = win.BinanceChain;
-      } else if (win.ethereum?.isBinance) {
-        providerToUse = win.ethereum;
-      } else if (win.ethereum?.providers) {
-        providerToUse = win.ethereum.providers.find((p: any) => p.isBinance);
-      }
+      providerToUse = win.BinanceChain || win.ethereum?.providers?.find((p: any) => p.isBinance) || (win.ethereum?.isBinance ? win.ethereum : null);
     } else if (type === 'metamask') {
-      if (win.ethereum?.isMetaMask && !win.ethereum?.isBinance) {
-        providerToUse = win.ethereum;
-      } else if (win.ethereum?.providers) {
-        providerToUse = win.ethereum.providers.find((p: any) => p.isMetaMask && !p.isBinance);
-      }
+      providerToUse = win.ethereum?.providers?.find((p: any) => p.isMetaMask && !p.isBinance) || (win.ethereum?.isMetaMask ? win.ethereum : null);
+    } else if (type === 'okx') {
+      providerToUse = win.okxwallet || win.ethereum?.providers?.find((p: any) => p.isOkxWallet);
+    } else if (type === 'bybit' || type === 'bitget') {
+      providerToUse = win.bybitWallet || win.bitkeep?.ethereum || win.ethereum?.providers?.find((p: any) => p.isBitKeep || p.isBybit);
+    } else if (type === 'trust') {
+      providerToUse = win.trustwallet || win.ethereum?.providers?.find((p: any) => p.isTrust);
+    } else if (type === 'coinbase') {
+      providerToUse = win.coinbaseWalletExtension || win.ethereum?.providers?.find((p: any) => p.isCoinbaseWallet);
     } else {
+      providerToUse = win.ethereum || win.BinanceChain || win.okxwallet;
+    }
+
+    if (!providerToUse && (win.ethereum || win.BinanceChain)) {
       providerToUse = win.ethereum || win.BinanceChain;
     }
 
@@ -456,12 +458,12 @@ export default function PlatformPage() {
         }
       } catch (err: any) {
         console.error('Cüzdan onay hatası:', err);
-        alert('Cüzdan bağlantısı kullanıcı tarafından iptal edildi.');
+        alert('Cüzdan bağlantısı iptal edildi veya reddedildi.');
         return;
       }
     }
 
-    alert(`${type.toUpperCase()} cüzdan eklentisi tarayıcınızda bulunamadı. Lütfen eklentinin açık olduğundan emin olun.`);
+    alert('Seçilen cüzdan eklentisi bulunamadı. Lütfen eklentinizin açık olduğundan emin olun.');
   };
 
   // GERÇEK ON-CHAIN USDT YATIRMA VE ÇEKME İŞLEMİ
@@ -472,7 +474,6 @@ export default function PlatformPage() {
     if (isNaN(val) || val <= 0) return;
     if (!account) return alert('Lütfen önce cüzdanınızı bağlayın!');
 
-    // Demo Modu
     if (isDemoWallet) {
       if (modalTab === 'deposit') {
         setBalance((prev) => prev + val);
@@ -488,7 +489,6 @@ export default function PlatformPage() {
       return;
     }
 
-    // Gerçek BSC Mainnet Web3 İşlemi
     try {
       setIsTxPending(true);
       const win = window as any;
@@ -500,11 +500,9 @@ export default function PlatformPage() {
       const amountWei = ethers.parseUnits(val.toString(), 18);
 
       if (modalTab === 'deposit') {
-        // 1. USDT Onayı (Approve)
         const approveTx = await usdtContract.approve(CONTRACT_ADDRESS, amountWei);
         await approveTx.wait();
 
-        // 2. Kontrata Yatırma (Deposit)
         const depositTx = await platformContract.deposit(amountWei, ethers.ZeroAddress);
         await depositTx.wait();
 
@@ -512,7 +510,6 @@ export default function PlatformPage() {
         setTxSuccessMsg(`+${val} USDT BSC Kontratına Yatırıldı!`);
         addTransaction('DEPOSIT', 'BSC USDT Yatırma', val, depositTx.hash);
       } else {
-        // 3. Kontrattan Çekme (Withdraw)
         if (val > balance) {
           setIsTxPending(false);
           return alert('Kasada yeterli bakiye yok!');
@@ -806,7 +803,7 @@ export default function PlatformPage() {
               </button>
             </div>
 
-            {/* Cüzdan Bağlantısı */}
+            {/* Cüzdan Durumu */}
             {account ? (
               <div className="flex items-center gap-1 px-2.5 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold text-slate-200">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -1033,7 +1030,7 @@ export default function PlatformPage() {
                   <input type="number" value={modalAmount} onChange={(e) => setModalAmount(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm font-bold text-white focus:outline-none" />
                   
                   <div className="flex gap-1.5">
-                    {['10', '25', '50', '100'].map((preset) => (
+                    {['1', '5', '10', '25'].map((preset) => (
                       <button key={preset} onClick={() => setModalAmount(preset)} className="flex-1 py-1 bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 rounded-lg transition">+{preset}</button>
                     ))}
                   </div>
@@ -1061,7 +1058,7 @@ export default function PlatformPage() {
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-slate-900 border border-slate-800 rounded-3xl p-5 w-full max-w-md shadow-2xl relative">
                 <button onClick={() => setIsWalletModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white transition"><X className="w-5 h-5" /></button>
                 <h3 className="font-bold text-base text-white mb-1 flex items-center gap-2"><Wallet className="w-5 h-5 text-indigo-400" /> {t.connectWallet}</h3>
-                <p className="text-[11px] text-slate-400 mb-3">BSC Mainnet cüzdanınızı bağlayın.</p>
+                <p className="text-[11px] text-slate-400 mb-3">BSC Mainnet cüzdanınızı seçin:</p>
                 
                 <div className="space-y-1.5 max-h-[60vh] overflow-y-auto pr-1">
                   <button onClick={() => handleSelectWallet('binance')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-amber-950/20 border border-slate-800 rounded-2xl transition">
@@ -1080,7 +1077,17 @@ export default function PlatformPage() {
                       <div className="w-7 h-7 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center font-black text-xs">🦊</div>
                       <div className="text-left">
                         <div className="text-xs font-bold text-slate-200">MetaMask</div>
-                        <div className="text-[9px] text-slate-500">BSC Ağı</div>
+                        <div className="text-[9px] text-slate-500">EVM & Chrome Extension</div>
+                      </div>
+                    </div>
+                  </button>
+
+                  <button onClick={() => handleSelectWallet('okx')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-2xl transition">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-xl bg-white/10 text-white flex items-center justify-center font-black text-xs">⬛</div>
+                      <div className="text-left">
+                        <div className="text-xs font-bold text-slate-200">OKX Web3 Wallet</div>
+                        <div className="text-[9px] text-slate-500">OKX App & Extension</div>
                       </div>
                     </div>
                   </button>
@@ -1095,15 +1102,36 @@ export default function PlatformPage() {
                     </div>
                   </button>
 
+                  <button onClick={() => handleSelectWallet('bybit')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-teal-950/20 border border-slate-800 rounded-2xl transition">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center font-black text-xs">💎</div>
+                      <div className="text-left">
+                        <div className="text-xs font-bold text-slate-200">Bybit / Bitget Wallet</div>
+                        <div className="text-[9px] text-slate-500">Web3 Multi-Chain</div>
+                      </div>
+                    </div>
+                  </button>
+
+                  <button onClick={() => handleSelectWallet('other')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-purple-950/20 border border-slate-800 rounded-2xl transition">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center font-black text-xs">🌐</div>
+                      <div className="text-left">
+                        <div className="text-xs font-bold text-slate-200">Tüm Diğer Cüzdanlar</div>
+                        <div className="text-[9px] text-slate-500">Rabby, Phantom, Brave vb.</div>
+                      </div>
+                    </div>
+                    <span className="text-[9px] bg-purple-950 text-purple-300 px-1.5 py-0.5 rounded border border-purple-800/40">Evrensel</span>
+                  </button>
+
                   <button onClick={() => handleSelectWallet('demo')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-indigo-950/20 border border-slate-800 rounded-2xl transition">
                     <div className="flex items-center gap-2.5">
                       <div className="w-7 h-7 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-black text-xs">⚡</div>
                       <div className="text-left">
                         <div className="text-xs font-bold text-slate-200">Hızlı Demo Cüzdan</div>
-                        <div className="text-[9px] text-slate-500">Simülasyon Bakiyesi</div>
+                        <div className="text-[9px] text-slate-500">Test & Simülasyon</div>
                       </div>
                     </div>
-                    <span className="text-[9px] bg-indigo-950 text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-800/40">Kolay</span>
+                    <span className="text-[9px] bg-indigo-950 text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-800/40">Deneme</span>
                   </button>
                 </div>
               </motion.div>
