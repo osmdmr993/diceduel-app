@@ -60,8 +60,9 @@ const PLATFORM_ABI = [
 
 let socket: Socket;
 
+// Güvenli Checksum & Anti-Tamper
 const generateTamperProofHash = (addr: string, bal: number): string => {
-  const payload = `${addr.toLowerCase()}_${bal.toFixed(2)}_dd_salt_2026_sec_shield`;
+  const payload = `${addr.toLowerCase()}_${bal.toFixed(2)}_dd_salt_2026_sec_ids_shield`;
   return ethers.keccak256(ethers.toUtf8Bytes(payload));
 };
 
@@ -108,7 +109,7 @@ const TRANSLATIONS: Record<string, any> = {
     spinRolling: 'Çark Dönüyor...',
     waitingPlayer: 'Canlı Oyuncu Aranıyor...',
     refTitle: 'Arkadaşını Davet Et & Kazan',
-    refDesc: 'Davet linkinizle gelen kullanıcıların oynadığı her bahisten anında %0.5 nakit komisyon kazanın.',
+    refDesc: 'Aktif yatırımcı olan davetlilerinizin oynadığı her bahisten anında %0.5 nakit komisyon kazanın.',
     copyLink: 'Davet Linkini Kopyala',
     linkCopied: 'Link Kopyalandı!',
     shareTelegramWin: '🚀 Zaferini Telegram\'da Paylaş',
@@ -117,7 +118,8 @@ const TRANSLATIONS: Record<string, any> = {
     cashout: 'Nakit Çek',
     startMines: 'Mayın Tarlasını Başlat',
     spinRoulette: 'Rulet Çarkını Çevir',
-    inGameLock: 'Oyun devam ederken işlem yapılamaz!'
+    inGameLock: 'Oyun devam ederken işlem yapılamaz!',
+    sybilError: 'Anti-Sybil Kalkanı: Komisyon kazanmak için cüzdanınızda en az 1 aktif işlem olmalıdır.'
   },
   en: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -159,7 +161,7 @@ const TRANSLATIONS: Record<string, any> = {
     spinRolling: 'Spinning...',
     waitingPlayer: 'Searching for live player...',
     refTitle: 'Refer Friends & Earn',
-    refDesc: 'Earn 0.5% instant cash commission from every single bet placed by users you invite.',
+    refDesc: 'Earn 0.5% instant cash commission from active invited traders.',
     copyLink: 'Copy Invite Link',
     linkCopied: 'Link Copied!',
     shareTelegramWin: '🚀 Brag on Telegram',
@@ -168,7 +170,8 @@ const TRANSLATIONS: Record<string, any> = {
     cashout: 'Cash Out',
     startMines: 'Start Mines Game',
     spinRoulette: 'Spin Roulette Wheel',
-    inGameLock: 'Cannot act while game is active!'
+    inGameLock: 'Cannot act while game is active!',
+    sybilError: 'Anti-Sybil Shield: Wallet must have active volume to earn commissions.'
   },
   ru: {
     hubTitle: 'DiceDuel Игровая Арена',
@@ -210,7 +213,7 @@ const TRANSLATIONS: Record<string, any> = {
     spinRolling: 'Крутится...',
     waitingPlayer: 'Поиск игрока...',
     refTitle: 'Приглашай и Зарабатывай',
-    refDesc: 'Получайте 0.5% мгновенной комиссии с каждой ставки ваших рефералов.',
+    refDesc: 'Получайте 0.5% комиссии от активных рефералов.',
     copyLink: 'Скопировать ссылку',
     linkCopied: 'Ссылка скопирована!',
     shareTelegramWin: '🚀 Поделиться в Telegram',
@@ -271,6 +274,7 @@ export default function PlatformPage() {
   const [isAdminModalOpen, setIsAdminModalOpen] = useState<boolean>(false);
   const [adminWithdrawAmount, setAdminWithdrawAmount] = useState<string>('10');
   const [isWrongNetwork, setIsWrongNetwork] = useState<boolean>(false);
+  const [securityAlertMsg, setSecurityAlertMsg] = useState<string | null>(null);
 
   // Bakiye & Güvenlik Kilidi
   const [balance, setBalance] = useState<number>(0.0);
@@ -279,7 +283,7 @@ export default function PlatformPage() {
   const [betInput, setBetInput] = useState<string>('1.0');
   const [isGameLocked, setIsGameLocked] = useState<boolean>(false);
   
-  // Canlı Lobi Odaları (2-6 Dinamik)
+  // Canlı Lobi Odaları
   const [rooms, setRooms] = useState<Room[]>([
     { id: 'r-1', creator: 'KriptoPasa_34', betAmount: 1.0 },
     { id: 'r-2', creator: 'LuckyStrike', betAmount: 2.5 },
@@ -302,7 +306,7 @@ export default function PlatformPage() {
   const [rouletteChoice, setRouletteChoice] = useState<'RED' | 'BLACK' | 'GREEN'>('RED');
   const [rouletteResult, setRouletteResult] = useState<string | null>(null);
 
-  // ZIRHLI MAYIN TARLASI
+  // Mayın Tarlası
   const [minesActive, setMinesActive] = useState<boolean>(false);
   const [minesField, setMinesField] = useState<Array<{ id: number; revealed: boolean; state: 'hidden' | 'gem' | 'mine' }>>([]);
   const [revealedCount, setRevealedCount] = useState<number>(0);
@@ -330,7 +334,6 @@ export default function PlatformPage() {
   const [isTxModalOpen, setIsTxModalOpen] = useState<boolean>(false);
   const [txFilter, setTxFilter] = useState<'ALL' | 'IN' | 'OUT' | 'WINS'>('ALL');
   
-  // Kalıcı İşlem, Maç ve Liderlik Geçmişi
   const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
   const [matchHistory, setMatchHistory] = useState<MatchHistoryItem[]>([]);
   const [leaderboard] = useState<LeaderboardUser[]>([
@@ -346,7 +349,6 @@ export default function PlatformPage() {
   const rollSoundIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastActionTimeRef = useRef<number>(0);
 
-  // Kasa / LP Staking
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [modalTab, setModalTab] = useState<'deposit' | 'withdraw'>('deposit');
   const [modalAmount, setModalAmount] = useState<string>('1.0');
@@ -372,14 +374,24 @@ export default function PlatformPage() {
     } catch (e) {}
   };
 
+  // 🚨 SALDIRI TESPİT SİSTEMİ (IDS - Discord/Telegram Webhook Alert Simülasyonu)
+  const triggerSecurityAlert = (threatType: string) => {
+    const alertMsg = `🚨 IDS SECURITY ALERT: [${threatType}] detected from Wallet: ${account || 'Unknown'}`;
+    console.error(alertMsg);
+    setSecurityAlertMsg(`Güvenlik Kalkanı Tetiklendi: ${threatType}`);
+    setTimeout(() => setSecurityAlertMsg(null), 4000);
+  };
+
   const isRateLimited = (): boolean => {
     const now = Date.now();
-    if (now - lastActionTimeRef.current < 400) return true;
+    if (now - lastActionTimeRef.current < 400) {
+      triggerSecurityAlert('Rapid Spam / Flood Attack');
+      return true;
+    }
     lastActionTimeRef.current = now;
     return false;
   };
 
-  // KESİN VE ASLA SİLİNMEYEN BAKİYE GÜNCELLEYİCİ
   const updatePersistentBalance = (newBal: number, userAddr?: string) => {
     const targetAddr = userAddr || account;
     const sanitizedBal = +newBal.toFixed(2);
@@ -495,7 +507,6 @@ export default function PlatformPage() {
     }
   };
 
-  // AKILLI SENKRONİZASYON (KAZANÇLARI KORUYAN MİMARİ)
   const syncBlockchainBalances = useCallback(async (userAddress: string) => {
     if (!userAddress || userAddress.length < 10) return;
     try {
@@ -533,7 +544,6 @@ export default function PlatformPage() {
         }
       }
 
-      // KESİN KORUMA: LocalStorage'daki kazançlı bakiye her zaman kontrat bakiyesinden üstündür (Oyun içi kazanılan USDT'yi silmez)
       const savedBal = localStorage.getItem(`dd_bal_${userAddress.toLowerCase()}`);
       const savedProof = localStorage.getItem(`dd_proof_${userAddress.toLowerCase()}`);
 
@@ -544,13 +554,13 @@ export default function PlatformPage() {
         const expectedProof = generateTamperProofHash(userAddress, parseFloat(savedBal));
         const localVal = parseFloat(savedBal);
         if (savedProof === expectedProof) {
-          // Eğer kontrattaki bakiye yerelden yüksekse (yatırım yapılmışsa) onu baz al, değilse kazanılan yüksek bakiyeyi koru
           if (fetchedContractBal > localVal) {
             updatePersistentBalance(fetchedContractBal, userAddress);
           } else {
             setBalance(localVal);
           }
         } else {
+          triggerSecurityAlert('LocalStorage Balance Tampering Detected');
           updatePersistentBalance(fetchedContractBal, userAddress);
         }
       } else {
@@ -1438,6 +1448,11 @@ export default function PlatformPage() {
   };
 
   const handleCopyRef = () => {
+    // Anti-Sybil Kalkanı Kontrolü
+    if (balance < 0.5 && transactions.length === 0) {
+      alert(t.sybilError);
+      return;
+    }
     const refLink = `https://diceduel.fun?ref=${account || '0x26e2'}`;
     navigator.clipboard.writeText(refLink);
     setRefCopied(true);
@@ -1460,6 +1475,14 @@ export default function PlatformPage() {
     <main className="min-h-screen bg-slate-950 text-slate-100 p-3 md:p-8 font-sans select-none">
       <div className="max-w-4xl mx-auto space-y-5">
         
+        {/* IDS Güvenlik Alarm Bildirimi */}
+        {securityAlertMsg && (
+          <div className="flex items-center gap-2 p-3 bg-amber-950/90 border border-amber-600 rounded-2xl text-xs text-amber-200 animate-bounce">
+            <ShieldAlert className="w-4 h-4 text-amber-400" />
+            <span>{securityAlertMsg}</span>
+          </div>
+        )}
+
         {/* Yanlış Ağ Uyarısı */}
         {isWrongNetwork && (
           <div className="flex items-center justify-between p-3 bg-rose-950/80 border border-rose-800 rounded-2xl text-xs text-rose-200">
@@ -2393,7 +2416,7 @@ export default function PlatformPage() {
                 <div className="flex-1 overflow-y-auto pr-1 space-y-1.5">
                   {filteredTransactions.length === 0 ? (
                     <div className="text-center py-8 text-slate-500 text-xs">
-                      Henüz kayıtlı bir işlem bulun0uyor.
+                      Henüz kayıtlı bir işlem bulunmuyor.
                     </div>
                   ) : (
                     filteredTransactions.map(tx => (
