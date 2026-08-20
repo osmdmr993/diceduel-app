@@ -11,7 +11,7 @@ import {
   Coins, FileCode2, Share2, Copy,
   History, Gift, CircleDot, Dices, Send,
   ReceiptText, Download, Printer,
-  MessageCircle, Info, ChevronDown, Loader2, Clock, Lock, Unlock, Zap
+  MessageCircle, Info, ChevronDown, Loader2, Clock, Lock, Unlock, ExternalLink
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -25,21 +25,13 @@ const CONTRACT_ADDRESS = '0xC9c586A92465C7254C3e19FebAAeD9D5c61f974f';
 const MIN_BET = 0.5;
 const MAX_PLAYER_BET = 20.0;
 
-// 50+ ÇOK DİLLİ VE ZENGİN BOT LİSTESİ
 const BOT_NAMES = [
-  // Türkçe Anlamlı
   'KriptoPasa_34', 'AnadoluKaplani', 'Bozkurt_06', 'ZarUstasi', 'AltinVurus_TR', 
   'Dede_USDT', 'KismetliTrader', 'GeceVurgunu', 'PiyasaAvcisi', 'BordoBereli',
-  // Global & İngilizce
   'CryptoWhale_88', 'DegenKing_07', 'LuckyStrike', 'AlphaSeeker', 'SolanaKing', 
   'MoonHunter', 'ApexTrader', 'BullRunner_99', 'CyberNinja', 'WhaleShark_VIP',
-  'SatoshiGhost', 'DiamondHands_42', 'MetaRider', 'RocketFuel', 'NeonWolf',
-  // Rusça / Doğu Bloku
   'Bogatyr_Crypto', 'Medved_777', 'SiberianWolf', 'Tsar_Bets', 'KremlinWhale',
-  'Dmitry_Roll', 'Ivan_Trader', 'VolgaViking', 'TaigaKing',
-  // Asya & Avrupa
-  'DragonTrader_HK', 'Samurai_ETH', 'Le_Capitaine', 'El_Matador_BSC', 'Viking_Shield',
-  'TokyoDrift_99', 'NordicHammer', 'MonacoVIP'
+  'DragonTrader_HK', 'Samurai_ETH', 'Le_Capitaine', 'El_Matador_BSC', 'Viking_Shield'
 ];
 
 const ERC20_ABI = [
@@ -87,7 +79,7 @@ const TRANSLATIONS: Record<string, any> = {
     betAmount: 'Bahis Tutarı',
     recentGames: 'Son Biten Oyunlar & Canlı Kazançlar',
     liveDist: 'Canlı Dağıtım',
-    contractBadge: 'BSC Kontratı',
+    contractBadge: 'Doğrulanmış BSC Akıllı Sözleşmesi',
     evmVerified: 'Mainnet Doğrulandı',
     support: 'Destek & SSS',
     stakeTitle: 'Kasa Ortaklığı & LP Staking',
@@ -128,7 +120,7 @@ const TRANSLATIONS: Record<string, any> = {
     betAmount: 'Bet Amount',
     recentGames: 'Recent Games & Live Payouts',
     liveDist: 'Live Payouts',
-    contractBadge: 'BSC Contract',
+    contractBadge: 'Verified BSC Smart Contract',
     evmVerified: 'Verified',
     support: 'Support',
     stakeTitle: 'House Bankroll & LP Staking',
@@ -271,12 +263,14 @@ export default function PlatformPage() {
   const [isSupportModalOpen, setIsSupportModalOpen] = useState<boolean>(false);
   const [isTxModalOpen, setIsTxModalOpen] = useState<boolean>(false);
   const [txFilter, setTxFilter] = useState<'ALL' | 'IN' | 'OUT' | 'WINS'>('ALL');
+  
+  // Kalıcı İşlem Geçmişi
   const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
 
   // Kalıcı ve Canlı Maç Geçmişi
   const [matchHistory, setMatchHistory] = useState<MatchHistoryItem[]>([]);
 
-  const [isMuted] = useState<boolean>(false);
+  const [isMuted, setIsMuted] = useState<boolean>(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const rollSoundIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -313,6 +307,28 @@ export default function PlatformPage() {
     if (targetAddr && typeof window !== 'undefined') {
       localStorage.setItem(`dd_bal_${targetAddr.toLowerCase()}`, newBal.toString());
     }
+  };
+
+  // Kalıcı İşlem Ekleme Fonksiyonu
+  const addTransaction = (type: TransactionRecord['type'], title: string, amount: number, txHash?: string, userAddr?: string) => {
+    const targetAddr = userAddr || account || 'guest';
+    const newTx: TransactionRecord = {
+      id: `tx-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      type,
+      title,
+      amount,
+      date: new Date().toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+      txHash: txHash || `0x${Array.from({ length: 8 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}...${Array.from({ length: 4 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`,
+      status: 'COMPLETED'
+    };
+
+    setTransactions((prev) => {
+      const updated = [newTx, ...prev];
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`dd_txs_${targetAddr.toLowerCase()}`, JSON.stringify(updated.slice(0, 50)));
+      }
+      return updated;
+    });
   };
 
   // Kalıcı Maç Geçmişi Kaydı
@@ -358,7 +374,7 @@ export default function PlatformPage() {
     setSpinCooldownText('');
   }, [account]);
 
-  // Blokzincir Bakiyelerini Senkronize Etme
+  // Blokzincir Bakiyelerini Senkronize Etme & İşlem Geçmişini Yükleme
   const syncBlockchainBalances = useCallback(async (userAddress: string) => {
     if (!userAddress || userAddress.length < 10) return;
     try {
@@ -381,6 +397,12 @@ export default function PlatformPage() {
         const rawContractBal = await platformContract.userBalances(userAddress);
         const fetchedBal = +parseFloat(ethers.formatUnits(rawContractBal, 18)).toFixed(2);
         updatePersistentBalance(fetchedBal, userAddress);
+      }
+
+      // Kullanıcıya özel işlem geçmişini yükle
+      const savedTxs = localStorage.getItem(`dd_txs_${userAddress.toLowerCase()}`);
+      if (savedTxs) {
+        try { setTransactions(JSON.parse(savedTxs)); } catch (e) {}
       }
 
       checkSpinCooldown(userAddress);
@@ -435,7 +457,7 @@ export default function PlatformPage() {
     }
   }, [syncBlockchainBalances, checkSpinCooldown]);
 
-  // CANLI BOT MAÇLARI SİMÜLASYONU (14-25 sn aralıklarla)
+  // CANLI BOT MAÇLARI SİMÜLASYONU
   useEffect(() => {
     const interval = setInterval(() => {
       const b1 = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
@@ -455,7 +477,6 @@ export default function PlatformPage() {
         pushMatchRecord(b1, b2, `🪙 Yazı-Tura (${face})`, randomBet);
       }
 
-      // Canlı Oda Listesini Dinamik Yenile
       const randRooms: Room[] = [
         { id: `r-${Date.now()}-1`, creator: BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)], betAmount: 1.0 },
         { id: `r-${Date.now()}-2`, creator: BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)], betAmount: 2.0 },
@@ -542,19 +563,6 @@ export default function PlatformPage() {
     confetti({ particleCount: 90, spread: 75, origin: { y: 0.6 } });
   };
 
-  const addTransaction = (type: TransactionRecord['type'], title: string, amount: number, txHash?: string) => {
-    const newTx: TransactionRecord = {
-      id: `tx-${Date.now()}`,
-      type,
-      title,
-      amount,
-      date: new Date().toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-      txHash: txHash || `0x${Array.from({ length: 8 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}...${Array.from({ length: 4 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`,
-      status: 'COMPLETED'
-    };
-    setTransactions((prev) => [newTx, ...prev]);
-  };
-
   // Cüzdan Bağlantısı
   const handleSelectWallet = async (type: string) => {
     initAudio();
@@ -567,6 +575,7 @@ export default function PlatformPage() {
       setAccount(demoAddr);
       setIsDemoWallet(true);
       updatePersistentBalance(100.0, demoAddr);
+      addTransaction('DEPOSIT', 'Demo Başlangıç Bakiyesi', 100.0, undefined, demoAddr);
       checkSpinCooldown(demoAddr);
       return;
     }
@@ -653,16 +662,15 @@ export default function PlatformPage() {
 
         const nBal = +(balance + val).toFixed(2);
         updatePersistentBalance(nBal);
+        addTransaction('DEPOSIT', 'BSC USDT Yatırma', val, depositTx.hash);
         await syncBlockchainBalances(account);
         setTxSuccessMsg(`+${val} USDT BSC Kontratına Yatırıldı!`);
-        addTransaction('DEPOSIT', 'BSC USDT Yatırma', val, depositTx.hash);
       } else {
         if (val > balance) {
           setIsTxPending(false);
           return alert('Kasada yeterli bakiye yok!');
         }
 
-        // Akıllı Sözleşme Rezerv Kontrolü (Soğuk Cüzdan Protokolü)
         try {
           const contractUsdtBal = await usdtContract.balanceOf(CONTRACT_ADDRESS);
           const contractBalFormatted = parseFloat(ethers.formatUnits(contractUsdtBal, 18));
@@ -679,9 +687,9 @@ export default function PlatformPage() {
 
         const nBal = +(balance - val).toFixed(2);
         updatePersistentBalance(nBal);
+        addTransaction('WITHDRAW', 'BSC USDT Çekme', val, withdrawTx.hash);
         await syncBlockchainBalances(account);
         setTxSuccessMsg(`-${val} USDT Cüzdanınıza Aktarıldı!`);
-        addTransaction('WITHDRAW', 'BSC USDT Çekme', val, withdrawTx.hash);
       }
 
       setIsTxPending(false);
@@ -1048,7 +1056,7 @@ export default function PlatformPage() {
               {accumulatedYield > 0 && <span className="text-[10px] font-black text-amber-400">+{accumulatedYield.toFixed(2)}</span>}
             </button>
 
-            {/* Raporlar */}
+            {/* Raporlar (İşlemler) */}
             <button 
               onClick={() => { setIsTxModalOpen(true); triggerTelegramHaptic('medium'); }}
               className="flex items-center gap-1.5 px-2.5 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-bold text-slate-200 transition active:scale-95 shadow-sm"
@@ -1336,18 +1344,29 @@ export default function PlatformPage() {
           </div>
         </section>
 
-        {/* Footer */}
-        <footer className="flex flex-wrap items-center justify-between gap-2 p-3 bg-slate-900/60 border border-slate-800/80 rounded-2xl text-[11px] text-slate-400">
-          <div className="flex items-center gap-1.5">
-            <FileCode2 className="w-3.5 h-3.5 text-indigo-400" />
-            <span>{t.contractBadge}:</span>
-            <a href={`https://bscscan.com/address/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer" className="font-mono text-[10px] text-indigo-300 hover:underline bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800">
-              {CONTRACT_ADDRESS.substring(0, 10)}... (BscScan ↗)
-            </a>
+        {/* Şık ve Kurumsal BSC Akıllı Sözleşme Footerı */}
+        <footer className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-slate-900/80 border border-slate-800 rounded-2xl text-[11px] text-slate-400 shadow-inner">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-lg bg-indigo-600/20 text-indigo-400 flex items-center justify-center font-bold">
+              <FileCode2 className="w-3.5 h-3.5" />
+            </div>
+            <div>
+              <span className="font-semibold text-slate-300 block leading-tight">{t.contractBadge}:</span>
+              <a 
+                href={`https://bscscan.com/address/${CONTRACT_ADDRESS}`} 
+                target="_blank" 
+                rel="noreferrer" 
+                className="font-mono text-[10px] text-indigo-400 hover:text-indigo-300 underline flex items-center gap-1 mt-0.5"
+              >
+                <span>{CONTRACT_ADDRESS.substring(0, 14)}...{CONTRACT_ADDRESS.substring(CONTRACT_ADDRESS.length - 8)}</span>
+                <ExternalLink className="w-2.5 h-2.5" />
+              </a>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5 text-emerald-400 font-semibold">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-            <span>{t.evmVerified}</span>
+
+          <div className="flex items-center gap-2 bg-emerald-950/60 border border-emerald-800/50 px-3 py-1.5 rounded-xl text-emerald-400 font-bold text-[10px]">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>{t.evmVerified} (BEP-20)</span>
           </div>
         </footer>
 
@@ -1415,7 +1434,6 @@ export default function PlatformPage() {
                   <p className="text-[11px] text-slate-300 leading-relaxed">{t.poolGuideText}</p>
                 </div>
 
-                {/* 3 Kademe Seçenekleri */}
                 <div className="grid grid-cols-3 gap-2">
                   <button onClick={() => setStakeDuration('flex')} className={`p-2.5 rounded-2xl border text-left transition ${stakeDuration === 'flex' ? 'bg-emerald-950/60 border-emerald-500 text-white shadow-lg' : 'bg-slate-950 border-slate-800 text-slate-400'}`}>
                     <div className="flex items-center gap-1 text-xs font-bold"><Unlock className="w-3 h-3 text-emerald-400" /> Esnek</div>
@@ -1611,7 +1629,7 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 7. İşlemler Geçmişi (PDF & CSV) */}
+        {/* 7. İşlemler Geçmişi (PDF & CSV Kalıcı Liste) */}
         <AnimatePresence>
           {isTxModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
@@ -1635,20 +1653,26 @@ export default function PlatformPage() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto pr-1 space-y-1.5">
-                  {filteredTransactions.map(tx => (
-                    <div key={tx.id} className="p-2.5 bg-slate-950 border border-slate-800 rounded-xl flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs ${tx.type === 'WITHDRAW' ? 'bg-rose-950/60 text-rose-400 border border-rose-800/40' : 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/40'}`}>
-                          {tx.type === 'DEPOSIT' && '📥'}{tx.type === 'WITHDRAW' && '📤'}{tx.type === 'GAME_WIN' && '🏆'}{tx.type === 'SPIN' && '🎁'}{tx.type === 'REF_COMMISSION' && '👥'}
-                        </div>
-                        <div>
-                          <div className="text-xs font-bold text-slate-200">{tx.title}</div>
-                          <div className="text-[9px] text-slate-500 font-mono">{tx.date} • {tx.txHash}</div>
-                        </div>
-                      </div>
-                      <div className={`text-xs font-black ${tx.type === 'WITHDRAW' ? 'text-rose-400' : 'text-emerald-400'}`}>{tx.type === 'WITHDRAW' ? '-' : '+'}{tx.amount.toFixed(2)} USDT</div>
+                  {filteredTransactions.length === 0 ? (
+                    <div className="text-center py-8 text-slate-500 text-xs">
+                      Henüz kayıtlı bir işlem bulunmuyor.
                     </div>
-                  ))}
+                  ) : (
+                    filteredTransactions.map(tx => (
+                      <div key={tx.id} className="p-2.5 bg-slate-950 border border-slate-800 rounded-xl flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs ${tx.type === 'WITHDRAW' ? 'bg-rose-950/60 text-rose-400 border border-rose-800/40' : 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/40'}`}>
+                            {tx.type === 'DEPOSIT' && '📥'}{tx.type === 'WITHDRAW' && '📤'}{tx.type === 'GAME_WIN' && '🏆'}{tx.type === 'SPIN' && '🎁'}{tx.type === 'REF_COMMISSION' && '👥'}
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold text-slate-200">{tx.title}</div>
+                            <div className="text-[9px] text-slate-500 font-mono">{tx.date} • {tx.txHash}</div>
+                          </div>
+                        </div>
+                        <div className={`text-xs font-black ${tx.type === 'WITHDRAW' ? 'text-rose-400' : 'text-emerald-400'}`}>{tx.type === 'WITHDRAW' ? '-' : '+'}{tx.amount.toFixed(2)} USDT</div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </motion.div>
             </div>
