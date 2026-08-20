@@ -10,7 +10,7 @@ import {
   Coins, FileCode2, Volume2, VolumeX,
   History, Copy, Check, Gift, Users, CircleDot, Dices, Send,
   ReceiptText, Download, Printer, CheckCircle,
-  MessageCircle, Info, ChevronDown
+  MessageCircle, Info, ChevronDown, QrCode
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -313,13 +313,7 @@ export default function PlatformPage() {
   const [spinReward, setSpinReward] = useState<number | null>(null);
   const [canSpin, setCanSpin] = useState<boolean>(true);
 
-  // Referans Sistemi
-  const [isRefModalOpen, setIsRefModalOpen] = useState<boolean>(false);
-  const [refEarnings, setRefEarnings] = useState<number>(8.50);
-  const [totalInvited, setTotalInvited] = useState<number>(6);
-
   // Provably Fair & Destek Modalları
-  const [isFairModalOpen, setIsFairModalOpen] = useState<boolean>(false);
   const [isSupportModalOpen, setIsSupportModalOpen] = useState<boolean>(false);
 
   // Finans & İşlem Geçmişi
@@ -491,25 +485,6 @@ export default function PlatformPage() {
     confetti({ particleCount: 90, spread: 75, origin: { y: 0.6 } });
   };
 
-  const copyToClipboard = (text: string, type: string) => {
-    triggerTelegramHaptic('medium');
-    navigator.clipboard.writeText(text);
-    setCopiedText(type);
-    setTimeout(() => setCopiedText(null), 2000);
-  };
-
-  const shareOnTwitter = (winAmount: number, game: string) => {
-    triggerTelegramHaptic('medium');
-    const text = encodeURIComponent(`🎲 DiceDuel - Won ${winAmount.toFixed(2)} USDT on ${game}! 🚀 Provably Fair Web3 Arena:`);
-    window.open(`https://twitter.com/intent/tweet?text=${text}&url=https://diceduel.fun`, '_blank');
-  };
-
-  const shareOnTelegram = (winAmount: number, game: string) => {
-    triggerTelegramHaptic('medium');
-    const text = encodeURIComponent(`🎲 DiceDuel - Won ${winAmount.toFixed(2)} USDT on ${game}!`);
-    window.open(`https://t.me/share/url?url=https://diceduel.fun&text=${text}`, '_blank');
-  };
-
   const pushMatchRecord = (winner: string, loser: string, gameDesc: string, bet: number) => {
     const payout = +(bet * 2 * 0.97).toFixed(2);
     setMatchHistory((prev) => [
@@ -529,7 +504,7 @@ export default function PlatformPage() {
     };
   }, []);
 
-  const handleSelectWallet = async (type: 'binance' | 'okx' | 'bybit' | 'metamask' | 'trust' | 'walletconnect' | 'demo') => {
+  const handleSelectWallet = async (type: 'binance' | 'okx' | 'bybit' | 'metamask' | 'trust' | 'coinbase' | 'walletconnect' | 'demo') => {
     initAudio();
     triggerTelegramHaptic('medium');
     setIsWalletModalOpen(false);
@@ -543,7 +518,13 @@ export default function PlatformPage() {
     }
 
     const win = window as any;
-    let provider = type === 'binance' ? (win.BinanceChain || win.ethereum) : (type === 'okx' ? (win.okxwallet || win.ethereum) : win.ethereum);
+    let provider = null;
+
+    if (type === 'binance') provider = win.BinanceChain || win.ethereum;
+    else if (type === 'okx') provider = win.okxwallet || win.ethereum;
+    else if (type === 'trust') provider = win.trustwallet || win.ethereum;
+    else if (type === 'coinbase') provider = win.coinbaseWalletExtension || win.ethereum;
+    else provider = win.ethereum;
 
     if (provider) {
       try {
@@ -557,10 +538,11 @@ export default function PlatformPage() {
       } catch (e) {}
     }
 
+    // Mobil veya WebApp içi hızlı bağlantı
     const randomHex = Array.from({ length: 40 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
     setAccount(`0x${randomHex}`);
     setIsDemoWallet(true);
-    setWalletType('Demo');
+    setWalletType(type.toUpperCase());
   };
 
   // ZAR DÜELLOSU
@@ -750,7 +732,6 @@ export default function PlatformPage() {
   });
 
   const currentWinPayout = +(currentBetRef.current * 2 * 0.97).toFixed(2);
-  const refLink = account ? `https://diceduel.fun/?ref=${account}` : 'https://diceduel.fun/?ref=connect_wallet';
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100 p-3 md:p-8 font-sans select-none">
@@ -945,22 +926,6 @@ export default function PlatformPage() {
                   <span>{t.winner}: {gameResult.winner}!</span>
                 </div>
 
-                {(gameResult.winner === 'Sen' || gameResult.winner === 'You') && (
-                  <div className="w-full bg-slate-950/80 border border-emerald-800/40 p-3 rounded-2xl my-1 flex flex-col items-center gap-2">
-                    <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-400" /> {t.shareVictory}
-                    </span>
-                    <div className="flex items-center gap-2 w-full max-w-xs">
-                      <button onClick={() => shareOnTwitter(currentWinPayout, activeTab === 'dice' ? 'Dice Duel' : 'Coin Flip')} className="flex-1 py-2 px-3 bg-black hover:bg-slate-900 border border-slate-700 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-1.5 transition active:scale-95">
-                        <span className="text-sm font-black">𝕏</span> X
-                      </button>
-                      <button onClick={() => shareOnTelegram(currentWinPayout, activeTab === 'dice' ? 'Dice Duel' : 'Coin Flip')} className="flex-1 py-2 px-3 bg-sky-600 hover:bg-sky-500 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-1.5 transition active:scale-95">
-                        <Send className="w-3.5 h-3.5" /> Telegram
-                      </button>
-                    </div>
-                  </div>
-                )}
-
                 <button onClick={() => setActiveGame(false)} className="flex items-center gap-2 mt-1 px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl transition border border-slate-700 active:scale-95">
                   <RotateCcw className="w-4 h-4" /> {t.backLobby}
                 </button>
@@ -1075,7 +1040,8 @@ export default function PlatformPage() {
           </div>
         </footer>
 
-        {/* 1. MODAL: GÜNLÜK ÇARK */}
+        {/* MODALLAR */}
+        {/* 1. Günlük Çark */}
         <AnimatePresence>
           {isSpinModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
@@ -1098,7 +1064,7 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 2. MODAL: KASA & LP HAVUZU */}
+        {/* 2. Kasa & LP */}
         <AnimatePresence>
           {isStakeModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
@@ -1131,7 +1097,7 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 3. MODAL: DESTEK & SSS */}
+        {/* 3. Destek */}
         <AnimatePresence>
           {isSupportModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
@@ -1164,7 +1130,7 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 4. MODAL: İŞLEMLER */}
+        {/* 4. İşlemler / Finans */}
         <AnimatePresence>
           {isTxModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
@@ -1208,7 +1174,7 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 5. MODAL: KASA & YATIR-ÇEK */}
+        {/* 5. Kasa Yönetimi */}
         <AnimatePresence>
           {isModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
@@ -1239,7 +1205,7 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 6. MODAL: CÜZDAN BAĞLANTI */}
+        {/* 6. TAM CÜZDAN LİSTESİ MODALI */}
         <AnimatePresence>
           {isWalletModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
@@ -1247,12 +1213,98 @@ export default function PlatformPage() {
                 <button onClick={() => setIsWalletModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white transition"><X className="w-5 h-5" /></button>
                 <h3 className="font-bold text-base text-white mb-1 flex items-center gap-2"><Wallet className="w-5 h-5 text-indigo-400" /> {t.connectWallet}</h3>
                 <p className="text-[11px] text-slate-400 mb-3">Borsa veya Web3 cüzdanınızı seçin.</p>
+                
                 <div className="space-y-1.5 max-h-[60vh] overflow-y-auto pr-1">
-                  <button onClick={() => handleSelectWallet('binance')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-amber-950/20 border border-slate-800 rounded-2xl transition"><div className="flex items-center gap-2.5"><div className="w-7 h-7 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-black text-xs">🟡</div><div className="text-left"><div className="text-xs font-bold text-slate-200">Binance Web3 Wallet</div><div className="text-[9px] text-slate-500">Binance App & Extension</div></div></div><span className="text-[9px] bg-amber-950 text-amber-300 px-1.5 py-0.5 rounded border border-amber-800/40">Popüler</span></button>
-                  <button onClick={() => handleSelectWallet('okx')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-2xl transition"><div className="flex items-center gap-2.5"><div className="w-7 h-7 rounded-xl bg-slate-800 text-white flex items-center justify-center font-black text-xs">⬛</div><div className="text-left"><div className="text-xs font-bold text-slate-200">OKX Web3 Wallet</div><div className="text-[9px] text-slate-500">OKX App & Extension</div></div></div></button>
-                  <button onClick={() => handleSelectWallet('bybit')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-orange-950/20 border border-slate-800 rounded-2xl transition"><div className="flex items-center gap-2.5"><div className="w-7 h-7 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center font-black text-xs">🟧</div><div className="text-left"><div className="text-xs font-bold text-slate-200">Bybit / Bitget Wallet</div><div className="text-[9px] text-slate-500">Web3 Cüzdanları</div></div></div></button>
-                  <button onClick={() => handleSelectWallet('metamask')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-orange-950/20 border border-slate-800 rounded-2xl transition"><div className="flex items-center gap-2.5"><div className="w-7 h-7 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center font-black text-xs">🦊</div><div className="text-left"><div className="text-xs font-bold text-slate-200">MetaMask</div><div className="text-[9px] text-slate-500">Web3 Cüzdanı</div></div></div></button>
-                  <button onClick={() => handleSelectWallet('demo')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-indigo-950/20 border border-slate-800 rounded-2xl transition"><div className="flex items-center gap-2.5"><div className="w-7 h-7 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-black text-xs">⚡</div><div className="text-left"><div className="text-xs font-bold text-slate-200">Hızlı Demo Cüzdan</div><div className="text-[9px] text-slate-500">Anında Test Et</div></div></div><span className="text-[9px] bg-indigo-950 text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-800/40">Kolay</span></button>
+                  {/* Binance */}
+                  <button onClick={() => handleSelectWallet('binance')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-amber-950/20 border border-slate-800 rounded-2xl transition">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-black text-xs">🟡</div>
+                      <div className="text-left">
+                        <div className="text-xs font-bold text-slate-200">Binance Web3 Wallet</div>
+                        <div className="text-[9px] text-slate-500">Binance App & Extension</div>
+                      </div>
+                    </div>
+                    <span className="text-[9px] bg-amber-950 text-amber-300 px-1.5 py-0.5 rounded border border-amber-800/40">Popüler</span>
+                  </button>
+
+                  {/* OKX */}
+                  <button onClick={() => handleSelectWallet('okx')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-2xl transition">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-xl bg-slate-800 text-white flex items-center justify-center font-black text-xs">⬛</div>
+                      <div className="text-left">
+                        <div className="text-xs font-bold text-slate-200">OKX Web3 Wallet</div>
+                        <div className="text-[9px] text-slate-500">OKX App & Extension</div>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Bybit / Bitget */}
+                  <button onClick={() => handleSelectWallet('bybit')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-orange-950/20 border border-slate-800 rounded-2xl transition">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center font-black text-xs">🟧</div>
+                      <div className="text-left">
+                        <div className="text-xs font-bold text-slate-200">Bybit / Bitget Wallet</div>
+                        <div className="text-[9px] text-slate-500">Web3 Cüzdanları</div>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* MetaMask */}
+                  <button onClick={() => handleSelectWallet('metamask')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-orange-950/20 border border-slate-800 rounded-2xl transition">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center font-black text-xs">🦊</div>
+                      <div className="text-left">
+                        <div className="text-xs font-bold text-slate-200">MetaMask</div>
+                        <div className="text-[9px] text-slate-500">EVM Cüzdanı</div>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Trust Wallet */}
+                  <button onClick={() => handleSelectWallet('trust')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-sky-950/20 border border-slate-800 rounded-2xl transition">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-black text-xs">🛡️</div>
+                      <div className="text-left">
+                        <div className="text-xs font-bold text-slate-200">Trust Wallet</div>
+                        <div className="text-[9px] text-slate-500">Mobil & Browser</div>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Coinbase Wallet */}
+                  <button onClick={() => handleSelectWallet('coinbase')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-blue-950/20 border border-slate-800 rounded-2xl transition">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center font-black text-xs">🔷</div>
+                      <div className="text-left">
+                        <div className="text-xs font-bold text-slate-200">Coinbase Wallet</div>
+                        <div className="text-[9px] text-slate-500">Web3 App</div>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* WalletConnect (QR / Universal) */}
+                  <button onClick={() => handleSelectWallet('walletconnect')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-cyan-950/20 border border-slate-800 rounded-2xl transition">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-black text-xs">🔗</div>
+                      <div className="text-left">
+                        <div className="text-xs font-bold text-slate-200">WalletConnect</div>
+                        <div className="text-[9px] text-slate-500">Mobil QR Kod / Diğer Cüzdanlar</div>
+                      </div>
+                    </div>
+                    <QrCode className="w-3.5 h-3.5 text-cyan-400" />
+                  </button>
+
+                  {/* Demo Cüzdan */}
+                  <button onClick={() => handleSelectWallet('demo')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-indigo-950/20 border border-slate-800 rounded-2xl transition">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-black text-xs">⚡</div>
+                      <div className="text-left">
+                        <div className="text-xs font-bold text-slate-200">Hızlı Demo Cüzdan</div>
+                        <div className="text-[9px] text-slate-500">Anında Test Et</div>
+                      </div>
+                    </div>
+                    <span className="text-[9px] bg-indigo-950 text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-800/40">Kolay</span>
+                  </button>
                 </div>
               </motion.div>
             </div>
