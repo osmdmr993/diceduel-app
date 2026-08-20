@@ -193,7 +193,7 @@ export default function PlatformPage() {
   const [isDemoWallet, setIsDemoWallet] = useState<boolean>(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState<boolean>(false);
 
-  const [balance, setBalance] = useState<number>(250.0);
+  const [balance, setBalance] = useState<number>(0.0);
   const [walletUSDT, setWalletUSDT] = useState<number>(0);
   const [betInput, setBetInput] = useState<string>('5');
   const [rooms, setRooms] = useState<Room[]>([]);
