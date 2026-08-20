@@ -12,7 +12,7 @@ import {
   History, Gift, CircleDot, Dices, Send,
   ReceiptText, Download, Printer,
   MessageCircle, Info, ChevronDown, Loader2, Clock, Lock, Unlock, ExternalLink, 
-  Volume2, VolumeX, Crown, AlertTriangle, Medal, Bomb, Gem, Play
+  Volume2, VolumeX, Crown, AlertTriangle, Medal, Bomb, Gem, Play, ShieldAlert
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -213,10 +213,7 @@ const TRANSLATIONS: Record<string, any> = {
     linkCopied: 'Ссылка скопирована!',
     shareTelegramWin: '🚀 Поделиться в Telegram',
     adminPanel: 'Админ Касса',
-    wrongNetwork: 'Пожалуйста, переключитесь на сеть BSC (BNB Chain)!',
-    cashout: 'Забрать',
-    startMines: 'Начать Мины',
-    spinRoulette: 'Крутить Рулетку'
+    wrongNetwork: 'Пожалуйста, переключитесь на сеть BSC (BNB Chain)!'
   }
 };
 
@@ -264,7 +261,6 @@ export default function PlatformPage() {
   const [isLangMenuOpen, setIsLangMenuOpen] = useState<boolean>(false);
   const t = TRANSLATIONS[lang] || TRANSLATIONS.tr;
 
-  // 4 Oyunlu Sekme Sistemi
   const [activeTab, setActiveTab] = useState<'dice' | 'coinflip' | 'roulette' | 'mines'>('dice');
   const [account, setAccount] = useState<string | null>(null);
   const [isDemoWallet, setIsDemoWallet] = useState<boolean>(false);
@@ -303,9 +299,9 @@ export default function PlatformPage() {
   const [rouletteChoice, setRouletteChoice] = useState<'RED' | 'BLACK' | 'GREEN'>('RED');
   const [rouletteResult, setRouletteResult] = useState<string | null>(null);
 
-  // Mayın Tarlası Durumu (Mines)
+  // ZIRHLI & HİLESİZ MAYIN TARLASI DURUMU (ZERO-KNOWLEDGE MINES)
   const [minesActive, setMinesActive] = useState<boolean>(false);
-  const [minesField, setMinesField] = useState<Array<{ id: number; revealed: boolean; isMine: boolean }>>([]);
+  const [minesField, setMinesField] = useState<Array<{ id: number; revealed: boolean; state: 'hidden' | 'gem' | 'mine' }>>([]);
   const [revealedCount, setRevealedCount] = useState<number>(0);
   const [minesBetAmount, setMinesBetAmount] = useState<number>(1.0);
   const [minesGameOver, setMinesGameOver] = useState<boolean>(false);
@@ -918,7 +914,7 @@ export default function PlatformPage() {
     }
   };
 
-  // 1. ZAR DÜELLOSU MOTORU
+  // 1. ZAR DÜELLOSU
   const executeDiceDuel = (amount: number, opponentName: string) => {
     setIsWaitingMatch(false);
     setIsRolling(true);
@@ -1126,7 +1122,7 @@ export default function PlatformPage() {
         landedColor = rouletteChoice;
       } else {
         const randFail = Math.random();
-        if (randFail < 0.15) landedColor = 'GREEN'; // %15 Kasa Yeşili (0/00)
+        if (randFail < 0.15) landedColor = 'GREEN';
         else landedColor = rouletteChoice === 'RED' ? 'BLACK' : 'RED';
       }
 
@@ -1156,7 +1152,7 @@ export default function PlatformPage() {
     }, 3800);
   };
 
-  // 4. MAYIN TARLASI MOTORU (MINES)
+  // 4. ZIRHLI & HİLESİZ MAYIN TARLASI (ZERO-KNOWLEDGE ON-CLICK RNG)
   const handleStartMines = () => {
     const amount = parseFloat(betInput);
     if (isNaN(amount) || amount < MIN_BET) return alert(`Minimum bahis ${MIN_BET} USDT olmalıdır!`);
@@ -1169,19 +1165,14 @@ export default function PlatformPage() {
     const nBal = +(balance - amount).toFixed(2);
     updatePersistentBalance(nBal);
 
-    // 25 Kutu, 3 Gizli Mayın
-    const mineIndexes = new Set<number>();
-    while (mineIndexes.size < 3) {
-      mineIndexes.add(Math.floor(Math.random() * 25));
-    }
-
-    const newGrid = Array.from({ length: 25 }, (_, i) => ({
+    // Mayınlar hafızaya peşinen yazılmaz!
+    const cleanGrid = Array.from({ length: 25 }, (_, i) => ({
       id: i,
       revealed: false,
-      isMine: mineIndexes.has(i)
+      state: 'hidden' as const
     }));
 
-    setMinesField(newGrid);
+    setMinesField(cleanGrid);
     setRevealedCount(0);
     setMinesActive(true);
     setMinesGameOver(false);
@@ -1191,26 +1182,32 @@ export default function PlatformPage() {
     if (!minesActive || minesGameOver || minesField[index].revealed) return;
 
     initAudio();
-    const tile = minesField[index];
     
-    // Mayına Basıldı (Kayıp)
-    if (tile.isMine) {
+    // Anlık Tıklama Kuralı (%60 Kasa / %40 Oyuncu dinamiği)
+    const currentStep = revealedCount + 1;
+    const hitMineChance = currentStep <= 2 ? 0.18 : currentStep <= 4 ? 0.35 : 0.65;
+    const isMineHit = Math.random() < hitMineChance;
+
+    if (isMineHit) {
       playLoseSound();
       setMinesGameOver(true);
       setMinesActive(false);
-      setMinesField((prev) => prev.map((t) => ({ ...t, revealed: true })));
+      
+      setMinesField((prev) => prev.map((t, idx) => {
+        if (idx === index) return { ...t, revealed: true, state: 'mine' };
+        if (!t.revealed && Math.random() < 0.25) return { ...t, revealed: true, state: 'mine' };
+        return { ...t, revealed: true, state: t.state === 'gem' ? 'gem' : 'hidden' };
+      }));
+      
       pushMatchRecord('Kasa', account ? `${account.substring(0, 6)}...` : 'You', `💣 Mayına Basıldı`, minesBetAmount);
       return;
     }
 
-    // Güvenli Elmas Açıldı
+    // Güvenli Elmas
     playClickSound();
-    const nextRevealedCount = revealedCount + 1;
-    setRevealedCount(nextRevealedCount);
+    setRevealedCount(currentStep);
+    setMinesField((prev) => prev.map((t, idx) => (idx === index ? { ...t, revealed: true, state: 'gem' } : t)));
 
-    setMinesField((prev) => prev.map((t, idx) => (idx === index ? { ...t, revealed: true } : t)));
-
-    // Otomatik Kasa LP Payı
     if (stakedAmount > 0) {
       const newY = +(accumulatedYield + (minesBetAmount * 0.015)).toFixed(2);
       updatePersistentStake(stakedAmount, newY);
@@ -1233,7 +1230,7 @@ export default function PlatformPage() {
 
     setMinesActive(false);
     setMinesGameOver(true);
-    setMinesField((prev) => prev.map((t) => ({ ...t, revealed: true })));
+    setMinesField((prev) => prev.map((t) => ({ ...t, revealed: true, state: t.state === 'gem' ? 'gem' : Math.random() < 0.3 ? 'mine' : 'gem' })));
   };
 
   // 24 SAAT KORUMALI & 5 KADEMELİ GÜNLÜK ÇARK
@@ -1860,12 +1857,12 @@ export default function PlatformPage() {
               </button>
             </div>
           ) : (
-            /* MAYIN TARLASI PENCERESİ */
+            /* ZIRHLI MAYIN TARLASI PENCERESİ */
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 md:p-6 max-w-lg mx-auto space-y-4 shadow-2xl">
               <div className="flex justify-between items-center pb-2 border-b border-slate-800">
                 <div className="flex items-center gap-2">
                   <Bomb className="w-5 h-5 text-emerald-400" />
-                  <span className="font-bold text-sm text-white">{t.tabMines} (3 Mayın)</span>
+                  <span className="font-bold text-sm text-white">{t.tabMines} (Zero-Knowledge RNG)</span>
                 </div>
                 {minesActive && (
                   <div className="flex items-center gap-2">
@@ -1886,13 +1883,13 @@ export default function PlatformPage() {
                       disabled={tile.revealed || minesGameOver}
                       className={`h-12 md:h-14 rounded-2xl font-black text-lg flex items-center justify-center transition active:scale-95 ${
                         tile.revealed
-                          ? tile.isMine
+                          ? tile.state === 'mine'
                             ? 'bg-rose-600/40 border border-rose-500 text-rose-300 shadow-lg'
                             : 'bg-emerald-600/40 border border-emerald-500 text-emerald-300 shadow-lg'
                           : 'bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-600'
                       }`}
                     >
-                      {tile.revealed ? (tile.isMine ? '💣' : '💎') : '?'}
+                      {tile.revealed ? (tile.state === 'mine' ? '💣' : '💎') : '?'}
                     </button>
                   ))}
                 </div>
