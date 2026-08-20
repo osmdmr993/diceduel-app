@@ -589,12 +589,35 @@ export default function PlatformPage() {
       isRollingRef.current = false;
       setIsRolling(false);
 
-      const p1 = Math.floor(Math.random() * 100) + 1;
-      let p2 = Math.floor(Math.random() * 100) + 1;
-      while (p1 === p2) p2 = Math.floor(Math.random() * 100) + 1;
-      const winner = p1 > p2 ? (lang === 'tr' ? 'Sen' : 'You') : 'Hybrid Bot';
+const p1 = Math.floor(Math.random() * 100) + 1;
+let p2 = Math.floor(Math.random() * 100) + 1;
+while (p1 === p2) p2 = Math.floor(Math.random() * 100) + 1;
 
-      setGameResult({ opponent: 'Hybrid Bot', p1Score: p1, p2Score: p2, winner });
+const isMeWinner = p1 > p2;
+const winnerDisplayName = isMeWinner ? (lang === 'tr' ? 'Sen' : 'You') : (lang === 'tr' ? 'Kasa' : 'House');
+
+setGameResult({ 
+  opponent: lang === 'tr' ? 'Kasa' : 'House', 
+  p1Score: p1, 
+  p2Score: p2, 
+  winner: winnerDisplayName 
+});
+
+setAccumulatedYield((prev) => +(prev + 0.08).toFixed(2));
+
+const winnerName = isMeWinner ? (account ? `${account.substring(0, 6)}...` : 'You') : 'House';
+const loserName = isMeWinner ? 'House' : (account ? `${account.substring(0, 6)}...` : 'You');
+pushMatchRecord(winnerName, loserName, `🎲 Dice (${p1}-${p2})`, amount);
+
+if (isMeWinner) {
+  const netWin = amount * 2 * 0.97;
+  triggerConfetti();
+  playWinSound();
+  setBalance((prev) => prev + netWin);
+  addTransaction('GAME_WIN', `Dice Win (${p1} vs ${p2})`, +netWin.toFixed(2));
+} else {
+  playLoseSound();
+}
       setAccumulatedYield((prev) => +(prev + 0.08).toFixed(2));
 
       const isMeWinner = winner === (lang === 'tr' ? 'Sen' : 'You');
