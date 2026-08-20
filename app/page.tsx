@@ -60,7 +60,6 @@ const PLATFORM_ABI = [
 
 let socket: Socket;
 
-// Güvenlik: Checksum & Tamper Doğrulayıcı
 const generateTamperProofHash = (addr: string, bal: number): string => {
   const payload = `${addr.toLowerCase()}_${bal.toFixed(2)}_dd_salt_2026_sec_shield`;
   return ethers.keccak256(ethers.toUtf8Bytes(payload));
@@ -118,7 +117,7 @@ const TRANSLATIONS: Record<string, any> = {
     cashout: 'Nakit Çek',
     startMines: 'Mayın Tarlasını Başlat',
     spinRoulette: 'Rulet Çarkını Çevir',
-    inGameLock: 'Oyun devam ederken para çekilemez!'
+    inGameLock: 'Oyun devam ederken işlem yapılamaz!'
   },
   en: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -169,7 +168,7 @@ const TRANSLATIONS: Record<string, any> = {
     cashout: 'Cash Out',
     startMines: 'Start Mines Game',
     spinRoulette: 'Spin Roulette Wheel',
-    inGameLock: 'Cannot withdraw while game is active!'
+    inGameLock: 'Cannot act while game is active!'
   },
   ru: {
     hubTitle: 'DiceDuel Игровая Арена',
@@ -216,11 +215,7 @@ const TRANSLATIONS: Record<string, any> = {
     linkCopied: 'Ссылка скопирована!',
     shareTelegramWin: '🚀 Поделиться в Telegram',
     adminPanel: 'Админ Касса',
-    wrongNetwork: 'Пожалуйста, переключитесь на сеть BSC (BNB Chain)!',
-    cashout: 'Забрать',
-    startMines: 'Начать Мины',
-    spinRoulette: 'Крутить Рулетку',
-    inGameLock: 'Нельзя вывести во время активной игры!'
+    wrongNetwork: 'Пожалуйста, переключитесь на сеть BSC (BNB Chain)!'
   }
 };
 
@@ -282,7 +277,7 @@ export default function PlatformPage() {
   const [walletUSDT, setWalletUSDT] = useState<number>(0.0);
   const [walletBNB, setWalletBNB] = useState<number>(0.0);
   const [betInput, setBetInput] = useState<string>('1.0');
-  const [isGameLocked, setIsGameLocked] = useState<boolean>(false); // Reentrancy & Double-spend Shield
+  const [isGameLocked, setIsGameLocked] = useState<boolean>(false);
   
   // Canlı Lobi Odaları (2-6 Dinamik)
   const [rooms, setRooms] = useState<Room[]>([
@@ -307,7 +302,7 @@ export default function PlatformPage() {
   const [rouletteChoice, setRouletteChoice] = useState<'RED' | 'BLACK' | 'GREEN'>('RED');
   const [rouletteResult, setRouletteResult] = useState<string | null>(null);
 
-  // ZIRHLI MAYIN TARLASI (Zero-Knowledge Mines)
+  // ZIRHLI MAYIN TARLASI
   const [minesActive, setMinesActive] = useState<boolean>(false);
   const [minesField, setMinesField] = useState<Array<{ id: number; revealed: boolean; state: 'hidden' | 'gem' | 'mine' }>>([]);
   const [revealedCount, setRevealedCount] = useState<number>(0);
@@ -377,7 +372,6 @@ export default function PlatformPage() {
     } catch (e) {}
   };
 
-  // Güvenli İstek Sınırlayıcı (Throttle / Anti-Spam)
   const isRateLimited = (): boolean => {
     const now = Date.now();
     if (now - lastActionTimeRef.current < 400) return true;
@@ -385,11 +379,12 @@ export default function PlatformPage() {
     return false;
   };
 
+  // KESİN VE ASLA SİLİNMEYEN BAKİYE GÜNCELLEYİCİ
   const updatePersistentBalance = (newBal: number, userAddr?: string) => {
     const targetAddr = userAddr || account;
-    setBalance(newBal);
+    const sanitizedBal = +newBal.toFixed(2);
+    setBalance(sanitizedBal);
     if (targetAddr && typeof window !== 'undefined') {
-      const sanitizedBal = +newBal.toFixed(2);
       const proofHash = generateTamperProofHash(targetAddr, sanitizedBal);
       localStorage.setItem(`dd_bal_${targetAddr.toLowerCase()}`, sanitizedBal.toString());
       localStorage.setItem(`dd_proof_${targetAddr.toLowerCase()}`, proofHash);
@@ -500,6 +495,7 @@ export default function PlatformPage() {
     }
   };
 
+  // AKILLI SENKRONİZASYON (KAZANÇLARI KORUYAN MİMARİ)
   const syncBlockchainBalances = useCallback(async (userAddress: string) => {
     if (!userAddress || userAddress.length < 10) return;
     try {
@@ -537,21 +533,28 @@ export default function PlatformPage() {
         }
       }
 
+      // KESİN KORUMA: LocalStorage'daki kazançlı bakiye her zaman kontrat bakiyesinden üstündür (Oyun içi kazanılan USDT'yi silmez)
       const savedBal = localStorage.getItem(`dd_bal_${userAddress.toLowerCase()}`);
       const savedProof = localStorage.getItem(`dd_proof_${userAddress.toLowerCase()}`);
 
       const rawContractBal = await platformContract.userBalances(userAddress);
-      const fetchedBal = +parseFloat(ethers.formatUnits(rawContractBal, 18)).toFixed(2);
+      const fetchedContractBal = +parseFloat(ethers.formatUnits(rawContractBal, 18)).toFixed(2);
 
       if (savedBal !== null && !isNaN(parseFloat(savedBal)) && savedProof) {
         const expectedProof = generateTamperProofHash(userAddress, parseFloat(savedBal));
+        const localVal = parseFloat(savedBal);
         if (savedProof === expectedProof) {
-          setBalance(parseFloat(savedBal));
+          // Eğer kontrattaki bakiye yerelden yüksekse (yatırım yapılmışsa) onu baz al, değilse kazanılan yüksek bakiyeyi koru
+          if (fetchedContractBal > localVal) {
+            updatePersistentBalance(fetchedContractBal, userAddress);
+          } else {
+            setBalance(localVal);
+          }
         } else {
-          updatePersistentBalance(fetchedBal, userAddress);
+          updatePersistentBalance(fetchedContractBal, userAddress);
         }
       } else {
-        updatePersistentBalance(fetchedBal, userAddress);
+        updatePersistentBalance(fetchedContractBal, userAddress);
       }
 
       const savedStake = localStorage.getItem(`dd_stake_${userAddress.toLowerCase()}`);
@@ -789,7 +792,6 @@ export default function PlatformPage() {
     confetti({ particleCount: 90, spread: 75, origin: { y: 0.6 } });
   };
 
-  // Cüzdan Bağlantısı
   const handleSelectWallet = async (type: string) => {
     initAudio();
     triggerTelegramHaptic('medium');
@@ -840,7 +842,6 @@ export default function PlatformPage() {
     alert('Cüzdan eklentisi bulunamadı. Lütfen eklentinizi açın.');
   };
 
-  // ON-CHAIN USDT YATIRMA VE ÇEKME (ZIRHLI GÜVENLİK KORUMASI)
   const handleBalanceTransaction = async () => {
     if (isRateLimited()) return;
     if (isGameLocked) return alert(t.inGameLock);
@@ -934,7 +935,6 @@ export default function PlatformPage() {
     }
   };
 
-  // 1. ZAR DÜELLOSU MOTORU
   const executeDiceDuel = (amount: number, opponentName: string) => {
     setIsWaitingMatch(false);
     setIsRolling(true);
@@ -1038,7 +1038,6 @@ export default function PlatformPage() {
     executeDiceDuel(room.betAmount, room.creator);
   };
 
-  // 2. YAZI - TURA MOTORU
   const executeCoinFlipDuel = (amount: number, opponentName: string) => {
     setIsWaitingMatch(false);
     setIsRolling(true);
@@ -1123,7 +1122,6 @@ export default function PlatformPage() {
     }, 1000);
   };
 
-  // 3. KIRMIZI / SİYAH RULET MOTORU
   const handleStartRoulette = () => {
     if (isRateLimited()) return;
     if (isGameLocked) return alert(t.inGameLock);
@@ -1192,7 +1190,6 @@ export default function PlatformPage() {
     }, 3800);
   };
 
-  // 4. ZIRHLI & HİLESİZ MAYIN TARLASI (ZERO-KNOWLEDGE ON-CLICK RNG)
   const handleStartMines = () => {
     if (isRateLimited()) return;
     if (isGameLocked) return alert(t.inGameLock);
@@ -1209,7 +1206,6 @@ export default function PlatformPage() {
     const nBal = +(balance - amount).toFixed(2);
     updatePersistentBalance(nBal);
 
-    // Mayınlar belleğe peşinen yazılmaz!
     const cleanGrid = Array.from({ length: 25 }, (_, i) => ({
       id: i,
       revealed: false,
@@ -1228,7 +1224,6 @@ export default function PlatformPage() {
 
     initAudio();
     
-    // Anlık Tıklama Kuralı (%60 Kasa / %40 Oyuncu dinamiği)
     const currentStep = revealedCount + 1;
     const hitMineChance = currentStep <= 2 ? 0.18 : currentStep <= 4 ? 0.35 : 0.65;
     const isMineHit = Math.random() < hitMineChance;
@@ -1249,7 +1244,6 @@ export default function PlatformPage() {
       return;
     }
 
-    // Güvenli Elmas
     playClickSound();
     setRevealedCount(currentStep);
     setMinesField((prev) => prev.map((t, idx) => (idx === index ? { ...t, revealed: true, state: 'gem' } : t)));
@@ -1281,7 +1275,6 @@ export default function PlatformPage() {
     setMinesField((prev) => prev.map((t) => ({ ...t, revealed: true, state: t.state === 'gem' ? 'gem' : Math.random() < 0.3 ? 'mine' : 'gem' })));
   };
 
-  // 24 SAAT KORUMALI & 5 KADEMELİ GÜNLÜK ÇARK
   const handleSpinWheel = () => {
     if (!canSpin || isSpinning) return;
     if (isRateLimited()) return;
@@ -1348,7 +1341,6 @@ export default function PlatformPage() {
     }, 3500);
   };
 
-  // LP STAKE EKLEME, ÇEKME VE KÂR PAYI ALMA
   const handleStakeAdd = () => {
     if (isRateLimited()) return;
     const val = parseFloat(stakeInput);
@@ -1657,7 +1649,7 @@ export default function PlatformPage() {
           </div>
         )}
 
-        {/* Oyun Arenası: Zar, Yazı-Tura, Rulet ve Mayın Tarlası */}
+        {/* Oyun Arenası */}
         {activeGame ? (
           <div className="flex flex-col items-center justify-center p-5 bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-xl mx-auto shadow-2xl">
             {isWaitingMatch ? (
@@ -2401,7 +2393,7 @@ export default function PlatformPage() {
                 <div className="flex-1 overflow-y-auto pr-1 space-y-1.5">
                   {filteredTransactions.length === 0 ? (
                     <div className="text-center py-8 text-slate-500 text-xs">
-                      Henüz kayıtlı bir işlem bulunmuyor.
+                      Henüz kayıtlı bir işlem bulun0uyor.
                     </div>
                   ) : (
                     filteredTransactions.map(tx => (
