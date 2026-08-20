@@ -7,10 +7,10 @@ import {
   Wallet, Swords, Plus, Flame, TrendingUp, ShieldCheck, 
   Trophy, RotateCcw, Activity, WifiOff, Sparkles, 
   ArrowDownCircle, ArrowUpCircle, X, CheckCircle2, LogOut,
-  Coins, PieChart, Percent, FileCode2, Volume2, VolumeX,
+  Coins, FileCode2, Volume2, VolumeX,
   History, Copy, Check, Gift, Users, CircleDot, Dices, Send,
-  ReceiptText, Download, Printer, Filter, Lock, CheckCircle,
-  Globe, HelpCircle, MessageCircle, Info, ChevronDown, Award
+  ReceiptText, Download, Printer, CheckCircle,
+  MessageCircle, Info, ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -19,7 +19,6 @@ const CONTRACT_ADDRESS = '0xd9145CCE52D386f254917e481eB44e9943F39138';
 
 let socket: Socket;
 
-// ÇOKLU DİL SÖZLÜĞÜ (TR, EN, RU, ES, DE, ZH)
 const TRANSLATIONS: Record<string, any> = {
   tr: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -308,7 +307,7 @@ export default function PlatformPage() {
     winner: string | null;
   }>({ opponent: 'Rakip', p1Score: null, p2Score: null, winner: null });
 
-  // Günlük Çark (Ağırlıklı Düşük Havuz Oranları)
+  // Günlük Çark
   const [isSpinModalOpen, setIsSpinModalOpen] = useState<boolean>(false);
   const [isSpinning, setIsSpinning] = useState<boolean>(false);
   const [spinReward, setSpinReward] = useState<number | null>(null);
@@ -323,7 +322,7 @@ export default function PlatformPage() {
   const [isFairModalOpen, setIsFairModalOpen] = useState<boolean>(false);
   const [isSupportModalOpen, setIsSupportModalOpen] = useState<boolean>(false);
 
-  // Finans & İşlem Geçmişi (Payments / Transactions)
+  // Finans & İşlem Geçmişi
   const [isTxModalOpen, setIsTxModalOpen] = useState<boolean>(false);
   const [txFilter, setTxFilter] = useState<'ALL' | 'IN' | 'OUT' | 'WINS'>('ALL');
   const [transactions, setTransactions] = useState<TransactionRecord[]>([
@@ -359,7 +358,6 @@ export default function PlatformPage() {
   const isRollingRef = useRef<boolean>(false);
   const currentBetRef = useRef<number>(0);
 
-  // Telegram Haptic Feedback Tetikleyici
   const triggerTelegramHaptic = (style: 'light' | 'medium' | 'heavy' | 'success') => {
     try {
       const tg = (window as any).Telegram?.WebApp;
@@ -370,7 +368,6 @@ export default function PlatformPage() {
     } catch (e) {}
   };
 
-  // Otomatik Dil Tespiti
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const browserLang = (navigator.language || (navigator as any).userLanguage || '').toLowerCase();
@@ -381,7 +378,6 @@ export default function PlatformPage() {
       else if (browserLang.startsWith('zh')) setLang('zh');
       else setLang('en');
 
-      // Telegram WebApp Hazırlığı
       const tg = (window as any).Telegram?.WebApp;
       if (tg) {
         tg.ready();
@@ -582,48 +578,33 @@ export default function PlatformPage() {
     if (rollSoundIntervalRef.current) clearInterval(rollSoundIntervalRef.current);
     rollSoundIntervalRef.current = setInterval(playClickSound, 110);
 
-    setGameResult({ opponent: 'Matching...', p1Score: null, p2Score: null, winner: null });
+    const opponentName = lang === 'tr' ? 'Kasa' : 'House';
+    setGameResult({ opponent: opponentName, p1Score: null, p2Score: null, winner: null });
 
     setTimeout(() => {
       if (rollSoundIntervalRef.current) clearInterval(rollSoundIntervalRef.current);
       isRollingRef.current = false;
       setIsRolling(false);
 
-const p1 = Math.floor(Math.random() * 100) + 1;
-let p2 = Math.floor(Math.random() * 100) + 1;
-while (p1 === p2) p2 = Math.floor(Math.random() * 100) + 1;
+      const p1 = Math.floor(Math.random() * 100) + 1;
+      let p2 = Math.floor(Math.random() * 100) + 1;
+      while (p1 === p2) p2 = Math.floor(Math.random() * 100) + 1;
+      
+      const isMeWinner = p1 > p2;
+      const winnerDisplayName = isMeWinner ? (lang === 'tr' ? 'Sen' : 'You') : (lang === 'tr' ? 'Kasa' : 'House');
 
-const isMeWinner = p1 > p2;
-const winnerDisplayName = isMeWinner ? (lang === 'tr' ? 'Sen' : 'You') : (lang === 'tr' ? 'Kasa' : 'House');
+      setGameResult({ 
+        opponent: opponentName, 
+        p1Score: p1, 
+        p2Score: p2, 
+        winner: winnerDisplayName 
+      });
 
-setGameResult({ 
-  opponent: lang === 'tr' ? 'Kasa' : 'House', 
-  p1Score: p1, 
-  p2Score: p2, 
-  winner: winnerDisplayName 
-});
-
-setAccumulatedYield((prev) => +(prev + 0.08).toFixed(2));
-
-const winnerName = isMeWinner ? (account ? `${account.substring(0, 6)}...` : 'You') : 'House';
-const loserName = isMeWinner ? 'House' : (account ? `${account.substring(0, 6)}...` : 'You');
-pushMatchRecord(winnerName, loserName, `🎲 Dice (${p1}-${p2})`, amount);
-
-if (isMeWinner) {
-  const netWin = amount * 2 * 0.97;
-  triggerConfetti();
-  playWinSound();
-  setBalance((prev) => prev + netWin);
-  addTransaction('GAME_WIN', `Dice Win (${p1} vs ${p2})`, +netWin.toFixed(2));
-} else {
-  playLoseSound();
-}
       setAccumulatedYield((prev) => +(prev + 0.08).toFixed(2));
 
-      const isMeWinner = winner === (lang === 'tr' ? 'Sen' : 'You');
-      const winnerName = isMeWinner ? (account ? `${account.substring(0, 6)}...` : 'You') : 'Hybrid Bot';
-      const loserName = isMeWinner ? 'Hybrid Bot' : (account ? `${account.substring(0, 6)}...` : 'You');
-      pushMatchRecord(winnerName, loserName, `🎲 Dice (${p1}-${p2})`, amount);
+      const winnerPlayer = isMeWinner ? (account ? `${account.substring(0, 6)}...` : 'You') : opponentName;
+      const loserPlayer = isMeWinner ? opponentName : (account ? `${account.substring(0, 6)}...` : 'You');
+      pushMatchRecord(winnerPlayer, loserPlayer, `🎲 Dice (${p1}-${p2})`, amount);
 
       if (isMeWinner) {
         const netWin = amount * 2 * 0.97;
@@ -652,7 +633,8 @@ if (isMeWinner) {
     if (rollSoundIntervalRef.current) clearInterval(rollSoundIntervalRef.current);
     rollSoundIntervalRef.current = setInterval(playClickSound, 100);
 
-    setGameResult({ opponent: 'House (Flip Bot)', p1Score: coinChoice, p2Score: null, winner: null });
+    const houseName = lang === 'tr' ? 'Kasa' : 'House';
+    setGameResult({ opponent: houseName, p1Score: coinChoice, p2Score: null, winner: null });
 
     setTimeout(() => {
       if (rollSoundIntervalRef.current) clearInterval(rollSoundIntervalRef.current);
@@ -663,14 +645,14 @@ if (isMeWinner) {
       setCoinResult(landed);
 
       const isWon = landed === coinChoice;
-      const winner = isWon ? (lang === 'tr' ? 'Sen' : 'You') : 'House';
+      const winnerName = isWon ? (lang === 'tr' ? 'Sen' : 'You') : houseName;
 
-      setGameResult({ opponent: 'House', p1Score: coinChoice, p2Score: landed, winner });
+      setGameResult({ opponent: houseName, p1Score: coinChoice, p2Score: landed, winner: winnerName });
       setAccumulatedYield((prev) => +(prev + 0.08).toFixed(2));
 
-      const winnerName = isWon ? (account ? `${account.substring(0, 6)}...` : 'You') : 'House';
-      const loserName = isWon ? 'House' : (account ? `${account.substring(0, 6)}...` : 'You');
-      pushMatchRecord(winnerName, loserName, `🪙 CoinFlip (${landed})`, amount);
+      const winnerPlayer = isWon ? (account ? `${account.substring(0, 6)}...` : 'You') : houseName;
+      const loserPlayer = isWon ? houseName : (account ? `${account.substring(0, 6)}...` : 'You');
+      pushMatchRecord(winnerPlayer, loserPlayer, `🪙 CoinFlip (${landed})`, amount);
 
       if (isWon) {
         const netWin = amount * 2 * 0.97;
@@ -684,15 +666,13 @@ if (isMeWinner) {
     }, 3800);
   };
 
-  // DENGELİ & GÜVENLİ GÜNLÜK ÇARK (Binance Modeli Ağırlıklı Olasılık)
+  // GÜNLÜK ÇARK
   const handleSpinWheel = () => {
     if (!canSpin || isSpinning) return;
     initAudio();
     triggerTelegramHaptic('medium');
     setIsSpinning(true);
 
-    // Havuzu tüketmeyen dengeli ödül oranları:
-    // %45 -> 0.05 USDT, %35 -> 0.10 USDT, %15 -> 0.25 USDT, %4 -> 0.50 USDT, %1 -> 2.00 USDT
     const rand = Math.random() * 100;
     let chosen = 0.05;
     if (rand < 45) chosen = 0.05;
@@ -790,7 +770,7 @@ if (isMeWinner) {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {/* Dil Seçici */}
+            {/* Dil Menüsü */}
             <div className="relative">
               <button 
                 onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
@@ -824,7 +804,7 @@ if (isMeWinner) {
               </AnimatePresence>
             </div>
 
-            {/* Ödemeler / Hesap Dökümü */}
+            {/* Ödemeler / İşlemler */}
             <button 
               onClick={() => { setIsTxModalOpen(true); triggerTelegramHaptic('medium'); }}
               className="flex items-center gap-1.5 px-2.5 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-bold text-slate-200 transition active:scale-95 shadow-sm"
@@ -862,7 +842,7 @@ if (isMeWinner) {
               <span>+{accumulatedYield.toFixed(2)}</span>
             </button>
 
-            {/* Bakiye & Kasa */}
+            {/* Bakiye */}
             <div className="flex items-center bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-inner">
               <div className="flex items-center gap-1 px-2.5 py-2 text-xs font-bold text-amber-400">
                 <Wallet className="w-3.5 h-3.5 text-slate-400" />
@@ -896,7 +876,7 @@ if (isMeWinner) {
           </div>
         </header>
 
-        {/* Oyun Seçim Sekmeleri (Tabs) */}
+        {/* Oyun Seçim Sekmeleri */}
         {!activeGame && (
           <div className="flex gap-2 p-1 bg-slate-900 border border-slate-800 rounded-2xl max-w-md mx-auto">
             <button
@@ -1011,8 +991,8 @@ if (isMeWinner) {
                       <span className="text-xs font-semibold text-slate-300">{r.creator}</span>
                       <div className="flex items-center gap-3">
                         <span className="text-xs font-bold text-amber-400">{r.betAmount} USDT</span>
-                        <button onClick={() => handleStartDiceGame(r.betAmount)} className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg flex items-center gap-1 active:scale-95 transition">
-                          <Swords className="w-3 h-3" /> {t.rollDice}
+                        <button onClick={() => handleStartDiceGame(r.betAmount)} className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg flex items-center gap-1 active:scale-95 transition">
+                          <Swords className="w-3.5 h-3.5" /> {t.rollDice}
                         </button>
                       </div>
                     </div>
@@ -1095,7 +1075,7 @@ if (isMeWinner) {
           </div>
         </footer>
 
-        {/* 1. MODAL: GÜNLÜK ÇARK (Binance Modeli Ağırlıklı Oranlar) */}
+        {/* 1. MODAL: GÜNLÜK ÇARK */}
         <AnimatePresence>
           {isSpinModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
@@ -1118,7 +1098,7 @@ if (isMeWinner) {
           )}
         </AnimatePresence>
 
-        {/* 2. MODAL: KASA & LP HAVUZU (Detaylı Rehber Kartlı) */}
+        {/* 2. MODAL: KASA & LP HAVUZU */}
         <AnimatePresence>
           {isStakeModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
@@ -1126,7 +1106,6 @@ if (isMeWinner) {
                 <button onClick={() => setIsStakeModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white transition"><X className="w-5 h-5" /></button>
                 <h3 className="font-bold text-base text-white flex items-center gap-2"><Coins className="w-5 h-5 text-emerald-400" /> Kasa Payı & LP Havuzu</h3>
                 
-                {/* LP Rehber Kartı */}
                 <div className="p-3 bg-indigo-950/40 border border-indigo-800/40 rounded-2xl text-xs space-y-1">
                   <div className="font-bold text-indigo-300 flex items-center gap-1.5"><Info className="w-3.5 h-3.5" /> {t.poolGuideTitle}</div>
                   <p className="text-[11px] text-slate-300 leading-relaxed">{t.poolGuideText}</p>
@@ -1152,7 +1131,7 @@ if (isMeWinner) {
           )}
         </AnimatePresence>
 
-        {/* 3. MODAL: DESTEK & SSS (Support) */}
+        {/* 3. MODAL: DESTEK & SSS */}
         <AnimatePresence>
           {isSupportModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
@@ -1185,7 +1164,7 @@ if (isMeWinner) {
           )}
         </AnimatePresence>
 
-        {/* 4. MODAL: İŞLEMLER (PDF/CSV) */}
+        {/* 4. MODAL: İŞLEMLER */}
         <AnimatePresence>
           {isTxModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
