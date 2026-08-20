@@ -182,7 +182,7 @@ export default function PlatformPage() {
   const [activeGame, setActiveGame] = useState<boolean>(false);
   const [isRolling, setIsRolling] = useState<boolean>(false);
   const [isWaitingMatch, setIsWaitingMatch] = useState<boolean>(false);
-  const [matchCountdown, setMatchCountdown] = useState<number>(7);
+  const [matchCountdown, setMatchCountdown] = useState<number>(30);
 
   const [coinChoice, setCoinChoice] = useState<'YAZI' | 'TURA'>('YAZI');
   const [coinResult, setCoinResult] = useState<'YAZI' | 'TURA' | null>(null);
@@ -577,10 +577,10 @@ export default function PlatformPage() {
     setBalance((prev) => +(prev - amount).toFixed(2));
     setActiveGame(true);
     setIsWaitingMatch(true);
-    setMatchCountdown(7);
+    setMatchCountdown(30);
 
-    // 7 Saniye gerçek oyuncu bekleme sayacı
-    let count = 7;
+    // 30 Saniye gerçek oyuncu bekleme sayacı
+    let count = 30;
     const interval = setInterval(() => {
       count--;
       setMatchCountdown(count);
