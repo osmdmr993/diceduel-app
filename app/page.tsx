@@ -402,7 +402,7 @@ export default function PlatformPage() {
     };
   }, []);
 
-  // Cüzdan Bağlantısı
+  // Profesyonel Çoklu Cüzdan Entegrasyonu
   const handleSelectWallet = async (type: string) => {
     initAudio();
     triggerTelegramHaptic('medium');
@@ -416,30 +416,52 @@ export default function PlatformPage() {
     }
 
     const win = window as any;
-    let provider = type === 'binance' ? (win.BinanceChain || win.ethereum) : (type === 'okx' ? (win.okxwallet || win.ethereum) : win.ethereum);
+    let providerToUse: any = null;
 
-    if (provider) {
+    if (type === 'binance') {
+      if (win.BinanceChain) {
+        providerToUse = win.BinanceChain;
+      } else if (win.ethereum?.isBinance) {
+        providerToUse = win.ethereum;
+      } else if (win.ethereum?.providers) {
+        providerToUse = win.ethereum.providers.find((p: any) => p.isBinance);
+      }
+    } else if (type === 'metamask') {
+      if (win.ethereum?.isMetaMask && !win.ethereum?.isBinance) {
+        providerToUse = win.ethereum;
+      } else if (win.ethereum?.providers) {
+        providerToUse = win.ethereum.providers.find((p: any) => p.isMetaMask && !p.isBinance);
+      }
+    } else {
+      providerToUse = win.ethereum || win.BinanceChain;
+    }
+
+    if (providerToUse) {
       try {
-        const browserProvider = new ethers.BrowserProvider(provider);
+        const browserProvider = new ethers.BrowserProvider(providerToUse);
         const accounts = await browserProvider.send('eth_requestAccounts', []);
+        
         if (accounts && accounts.length > 0) {
           setAccount(accounts[0]);
           setIsDemoWallet(false);
 
-          // Cüzdandaki Gerçek BSC USDT Bakiyesini Oku
           try {
             const usdtContract = new ethers.Contract(BSC_USDT_ADDRESS, ERC20_ABI, browserProvider);
             const rawBal = await usdtContract.balanceOf(accounts[0]);
             setWalletUSDT(+parseFloat(ethers.formatUnits(rawBal, 18)).toFixed(2));
-          } catch (e) {}
+          } catch (e) {
+            console.error('USDT bakiye okunamadı:', e);
+          }
           return;
         }
-      } catch (e) {}
+      } catch (err: any) {
+        console.error('Cüzdan onay hatası:', err);
+        alert('Cüzdan bağlantısı kullanıcı tarafından iptal edildi.');
+        return;
+      }
     }
 
-    const randomHex = Array.from({ length: 40 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
-    setAccount(`0x${randomHex}`);
-    setIsDemoWallet(true);
+    alert(`${type.toUpperCase()} cüzdan eklentisi tarayıcınızda bulunamadı. Lütfen eklentinin açık olduğundan emin olun.`);
   };
 
   // GERÇEK ON-CHAIN USDT YATIRMA VE ÇEKME İŞLEMİ
