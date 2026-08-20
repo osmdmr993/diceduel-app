@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import confetti from 'canvas-confetti';
 import { ethers } from 'ethers';
@@ -15,6 +15,9 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// ==========================================
+// 1. SABİTLER & KONTRAT YAPILANDIRMASI
+// ==========================================
 const SERVER_URL = 'https://diceduel-server.onrender.com';
 const BSC_USDT_ADDRESS = '0x55d398326f99059fF775485246999027B3197955';
 const CONTRACT_ADDRESS = '0xC9c586A92465C7254C3e19FebAAeD9D5c61f974f';
@@ -59,7 +62,6 @@ const TRANSLATIONS: Record<string, any> = {
     reward: 'Ödül',
     winner: 'Kazanan',
     backLobby: 'Lobiye Dön',
-    shareVictory: 'Zaferini Arkadaşlarınla Paylaş:',
     selectHeads: 'YAZI SEÇ',
     selectTails: 'TURA SEÇ',
     flipCoin: 'Parayı Çevir',
@@ -70,7 +72,7 @@ const TRANSLATIONS: Record<string, any> = {
     evmVerified: 'Mainnet Doğrulandı',
     support: 'Destek & SSS',
     poolGuideTitle: 'Kasa Havuzu (LP) Nedir?',
-    poolGuideText: 'Platformda oynanan tüm oyunlardan %3 ev komisyonu kesilir. Bu komisyonun yarısı (%1.5) havuz ortaklarına anlık paylaştırılır. İstediğiniz zaman anaparanızı ve biriken USDT payınızı çekebilirsiniz.',
+    poolGuideText: 'Platformda oynanan tüm oyunlardan %3 ev komisyonu kesilir. Bu komisyonun yarısı (%1.5) havuz ortaklarına anlık paylaştırılır.',
     dailySpinNote: 'Her 24 saatte bir ücretsiz çevirin!',
     spinBtn: 'Ücretsiz Çevir',
     spinWait: 'Yarın Tekrar Gel (24 Saat)',
@@ -79,7 +81,7 @@ const TRANSLATIONS: Record<string, any> = {
   en: {
     hubTitle: 'DiceDuel Gaming Hub',
     liveNet: 'BSC Mainnet Live',
-    connecting: 'Server Connecting...',
+    connecting: 'Connecting...',
     txBtn: 'Statements (PDF/CSV)',
     dailySpin: 'Daily Spin',
     inviteBtn: 'Invite (%0.5)',
@@ -87,68 +89,66 @@ const TRANSLATIONS: Record<string, any> = {
     connectWallet: 'Connect Wallet',
     tabDice: '🎲 DICE DUEL',
     tabCoin: '🪙 COIN FLIP',
-    openRoom: 'Create Dice Room',
+    openRoom: 'Create Room',
     challenge: 'Challenge',
-    liveRooms: 'Live Dice Rooms',
-    rollDice: 'Roll Dice',
+    liveRooms: 'Live Rooms',
+    rollDice: 'Roll',
     you: 'You',
     fairRng: 'Provably Fair RNG',
     reward: 'Reward',
     winner: 'Winner',
-    backLobby: 'Back to Lobby',
-    shareVictory: 'Share Your Victory:',
-    selectHeads: 'CHOOSE HEADS',
-    selectTails: 'CHOOSE TAILS',
+    backLobby: 'Lobby',
+    selectHeads: 'HEADS',
+    selectTails: 'TAILS',
     flipCoin: 'Flip Coin',
     betAmount: 'Bet Amount (USDT)',
-    recentGames: 'Recent Completed Games & Winners',
+    recentGames: 'Recent Games',
     liveDist: 'Live Payouts',
     contractBadge: 'BSC Contract',
-    evmVerified: 'Mainnet Verified',
-    support: 'Support & FAQ',
-    poolGuideTitle: 'What is House Liquidity (LP)?',
-    poolGuideText: 'A 3% house fee is collected on each game. Half of this fee (1.5%) is distributed directly to liquidity providers. You can withdraw your staked USDT and accumulated rewards anytime.',
-    dailySpinNote: 'Spin for free every 24 hours!',
+    evmVerified: 'Verified',
+    support: 'Support',
+    poolGuideTitle: 'Liquidity Pool (LP)',
+    poolGuideText: '3% house edge is collected on games. 1.5% is distributed directly to liquidity providers.',
+    dailySpinNote: 'Free spin every 24 hours!',
     spinBtn: 'Free Spin',
-    spinWait: 'Come Back Tomorrow (24h)',
-    spinRolling: 'Spinning Wheel...',
+    spinWait: 'Come Back in 24h',
+    spinRolling: 'Spinning...',
   },
   ru: {
     hubTitle: 'DiceDuel Игровая Арена',
     liveNet: 'BSC Mainnet Онлайн',
-    connecting: 'Подключение к серверу...',
+    connecting: 'Подключение...',
     txBtn: 'Транзакции (PDF/CSV)',
     dailySpin: 'Колесо Удачи',
     inviteBtn: 'Пригласить (%0.5)',
     vault: 'Касса ⚡',
-    connectWallet: 'Подключить Кошелек',
+    connectWallet: 'Кошелек',
     tabDice: '🎲 ДУЭЛЬ КОСТЕЙ',
     tabCoin: '🪙 ОРЕЛ И РЕШКА',
-    openRoom: 'Создать Комнату',
-    challenge: 'Бросить Вызов',
-    liveRooms: 'Активные Комнаты',
+    openRoom: 'Создать',
+    challenge: 'Вызов',
+    liveRooms: 'Комнаты',
     rollDice: 'Бросить',
     you: 'Вы',
     fairRng: 'Provably Fair RNG',
     reward: 'Награда',
     winner: 'Победитель',
     backLobby: 'В Лобби',
-    shareVictory: 'Поделиться Победой:',
     selectHeads: 'ОРЕЛ',
     selectTails: 'РЕШКА',
-    flipCoin: 'Бросить Монету',
+    flipCoin: 'Бросить',
     betAmount: 'Ставка (USDT)',
-    recentGames: 'Недавние Игры и Победители',
-    liveDist: 'Выплаты Онлайн',
+    recentGames: 'Недавние Игры',
+    liveDist: 'Выплаты',
     contractBadge: 'Контракт BSC',
-    evmVerified: 'Mainnet Проверено',
-    support: 'Поддержка & FAQ',
-    poolGuideTitle: 'Что такое Пул Ликвидности (LP)?',
-    poolGuideText: 'С каждой игры взимается комиссия 3%. Половина (1.5%) распределяется между поставщиками ликвидности. Вы можете забрать свои USDT и доход в любое время.',
-    dailySpinNote: 'Крутите бесплатно каждые 24 часа!',
-    spinBtn: 'Крутить Бесплатно',
-    spinWait: 'Приходите Завтра (24ч)',
-    spinRolling: 'Колесо крутится...',
+    evmVerified: 'Проверено',
+    support: 'Поддержка',
+    poolGuideTitle: 'Пул Ликвидности (LP)',
+    poolGuideText: 'Комиссия платформы 3%. 1.5% распределяется между участниками пула.',
+    dailySpinNote: 'Крутите каждые 24 часа!',
+    spinBtn: 'Крутить',
+    spinWait: 'Через 24ч',
+    spinRolling: 'Крутится...',
   }
 };
 
@@ -193,14 +193,15 @@ export default function PlatformPage() {
   const [isDemoWallet, setIsDemoWallet] = useState<boolean>(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState<boolean>(false);
 
+  // Bakiye Yönetimi (Tek Doğruluk Kaynağı: Kontrat)
   const [balance, setBalance] = useState<number>(0.0);
-  const [walletUSDT, setWalletUSDT] = useState<number>(0);
+  const [walletUSDT, setWalletUSDT] = useState<number>(0.0);
   const [betInput, setBetInput] = useState<string>('1');
   const [rooms, setRooms] = useState<Room[]>([]);
   const [isServerConnected, setIsServerConnected] = useState<boolean>(false);
   const [isTxPending, setIsTxPending] = useState<boolean>(false);
 
-  // Oyun State'leri
+  // Oyun Durumları
   const [activeGame, setActiveGame] = useState<boolean>(false);
   const [isRolling, setIsRolling] = useState<boolean>(false);
   const [coinChoice, setCoinChoice] = useState<'YAZI' | 'TURA'>('YAZI');
@@ -212,31 +213,27 @@ export default function PlatformPage() {
     winner: string | null;
   }>({ opponent: 'Kasa', p1Score: null, p2Score: null, winner: null });
 
-  // Günlük Çark
+  // Çark & Modallar
   const [isSpinModalOpen, setIsSpinModalOpen] = useState<boolean>(false);
   const [isSpinning, setIsSpinning] = useState<boolean>(false);
   const [spinReward, setSpinReward] = useState<number | null>(null);
   const [canSpin, setCanSpin] = useState<boolean>(true);
-
-  // Destek & Bilgi
   const [isSupportModalOpen, setIsSupportModalOpen] = useState<boolean>(false);
-
-  // İşlem Geçmişi
   const [isTxModalOpen, setIsTxModalOpen] = useState<boolean>(false);
   const [txFilter, setTxFilter] = useState<'ALL' | 'IN' | 'OUT' | 'WINS'>('ALL');
   const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
 
-  // Canlı Maç Geçmişi
+  // Canlı Maçlar
   const [matchHistory, setMatchHistory] = useState<MatchHistoryItem[]>([
-    { id: 'm-1', winner: 'CryptoWhale_88', loser: 'SolanaKing', game: '🎲 Zar (89-45)', payout: 19.40, time: '1m ago' },
-    { id: 'm-2', winner: 'LuckyStrike', loser: 'MoonBuster', game: '🪙 Yazı-Tura', payout: 9.70, time: '2m ago' }
+    { id: 'm-1', winner: 'CryptoWhale_88', loser: 'SolanaKing', game: '🎲 Zar (89-45)', payout: 1.94, time: '1m ago' },
+    { id: 'm-2', winner: 'LuckyStrike', loser: 'MoonBuster', game: '🪙 Yazı-Tura', payout: 1.94, time: '2m ago' }
   ]);
 
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const rollSoundIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Kasa / LP Modalları
+  // Kasa / LP
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [modalTab, setModalTab] = useState<'deposit' | 'withdraw'>('deposit');
   const [modalAmount, setModalAmount] = useState<string>('1');
@@ -261,8 +258,11 @@ export default function PlatformPage() {
     } catch (e) {}
   };
 
-  // Gerçek Blokzincir Bakiyelerini Çekme Fonksiyonu
-  const fetchBlockchainBalances = async (userAddress: string) => {
+  // ==========================================
+  // 2. BLOKZİNCİR BAKİYE SENKRONİZASYONU
+  // ==========================================
+  const syncBlockchainBalances = useCallback(async (userAddress: string) => {
+    if (!userAddress || userAddress.length < 10) return;
     try {
       const win = window as any;
       const providerObj = win.ethereum || win.BinanceChain || win.okxwallet;
@@ -270,7 +270,7 @@ export default function PlatformPage() {
 
       const browserProvider = new ethers.BrowserProvider(providerObj);
       
-      // 1. Cüzdandaki BEP-20 USDT
+      // 1. Cüzdandaki Gerçek BEP-20 USDT
       const usdtContract = new ethers.Contract(BSC_USDT_ADDRESS, ERC20_ABI, browserProvider);
       const rawWalletBal = await usdtContract.balanceOf(userAddress);
       setWalletUSDT(+parseFloat(ethers.formatUnits(rawWalletBal, 18)).toFixed(2));
@@ -280,7 +280,7 @@ export default function PlatformPage() {
       const rawContractBal = await platformContract.userBalances(userAddress);
       setBalance(+parseFloat(ethers.formatUnits(rawContractBal, 18)).toFixed(2));
 
-      // 3. Staked LP & Yield
+      // 3. Staked LP & Getirisi
       try {
         const rawStake = await platformContract.stakedLP(userAddress);
         const rawYield = await platformContract.accumulatedLPYield(userAddress);
@@ -288,11 +288,11 @@ export default function PlatformPage() {
         setAccumulatedYield(+parseFloat(ethers.formatUnits(rawYield, 18)).toFixed(2));
       } catch (e) {}
     } catch (err) {
-      console.error('Bakiye çekme hatası:', err);
+      console.error('Bakiye okuma hatası:', err);
     }
-  };
+  }, []);
 
-  // Sayfa Açılışında Otomatik Cüzdan Algılama
+  // Sayfa İlk Yüklendiğinde Otomatik Cüzdan Bağlantısı
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const browserLang = (navigator.language || (navigator as any).userLanguage || '').toLowerCase();
@@ -306,8 +306,7 @@ export default function PlatformPage() {
         tg.expand();
       }
 
-      // Mevcut bağlı cüzdanı kontrol et
-      const checkConnected = async () => {
+      const initCheck = async () => {
         const win = window as any;
         const providerObj = win.ethereum || win.BinanceChain || win.okxwallet;
         if (providerObj) {
@@ -317,47 +316,16 @@ export default function PlatformPage() {
             if (accounts && accounts.length > 0) {
               setAccount(accounts[0]);
               setIsDemoWallet(false);
-              fetchBlockchainBalances(accounts[0]);
+              syncBlockchainBalances(accounts[0]);
             }
           } catch (e) {}
         }
       };
-      checkConnected();
+      initCheck();
     }
-  }, []);
+  }, [syncBlockchainBalances]);
 
-  const addTransaction = (type: TransactionRecord['type'], title: string, amount: number, txHash?: string) => {
-    const newTx: TransactionRecord = {
-      id: `tx-${Date.now()}`,
-      type,
-      title,
-      amount,
-      date: new Date().toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-      txHash: txHash || `0x${Array.from({ length: 8 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}...${Array.from({ length: 4 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`,
-      status: 'COMPLETED'
-    };
-    setTransactions((prev) => [newTx, ...prev]);
-  };
-
-  const exportToCSV = () => {
-    triggerTelegramHaptic('medium');
-    const headers = 'ID,Islem Turu,Detay,Tutar (USDT),Tarih,Islem Hashi,Durum\n';
-    const rows = transactions.map(t => `"${t.id}","${t.type}","${t.title}","${t.amount}","${t.date}","${t.txHash}","${t.status}"`).join('\n');
-    const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `diceduel_statement_${Date.now()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const printStatement = () => {
-    triggerTelegramHaptic('medium');
-    window.print();
-  };
-
+  // Ses Efektleri
   const initAudio = () => {
     if (!audioCtxRef.current && typeof window !== 'undefined') {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
@@ -439,6 +407,20 @@ export default function PlatformPage() {
     ]);
   };
 
+  const addTransaction = (type: TransactionRecord['type'], title: string, amount: number, txHash?: string) => {
+    const newTx: TransactionRecord = {
+      id: `tx-${Date.now()}`,
+      type,
+      title,
+      amount,
+      date: new Date().toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+      txHash: txHash || `0x${Array.from({ length: 8 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}...${Array.from({ length: 4 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`,
+      status: 'COMPLETED'
+    };
+    setTransactions((prev) => [newTx, ...prev]);
+  };
+
+  // Socket Bağlantısı
   useEffect(() => {
     socket = io(SERVER_URL);
     socket.on('connect', () => setIsServerConnected(true));
@@ -450,6 +432,9 @@ export default function PlatformPage() {
     };
   }, []);
 
+  // ==========================================
+  // 3. EVRENSEL CÜZDAN BAĞLANTI MOTORU
+  // ==========================================
   const handleSelectWallet = async (type: string) => {
     initAudio();
     triggerTelegramHaptic('medium');
@@ -476,8 +461,6 @@ export default function PlatformPage() {
       providerToUse = win.bybitWallet || win.bitkeep?.ethereum || win.ethereum?.providers?.find((p: any) => p.isBitKeep || p.isBybit);
     } else if (type === 'trust') {
       providerToUse = win.trustwallet || win.ethereum?.providers?.find((p: any) => p.isTrust);
-    } else if (type === 'coinbase') {
-      providerToUse = win.coinbaseWalletExtension || win.ethereum?.providers?.find((p: any) => p.isCoinbaseWallet);
     } else {
       providerToUse = win.ethereum || win.BinanceChain || win.okxwallet;
     }
@@ -494,20 +477,22 @@ export default function PlatformPage() {
         if (accounts && accounts.length > 0) {
           setAccount(accounts[0]);
           setIsDemoWallet(false);
-          await fetchBlockchainBalances(accounts[0]);
+          await syncBlockchainBalances(accounts[0]);
           return;
         }
       } catch (err: any) {
-        console.error('Cüzdan onay hatası:', err);
-        alert('Cüzdan bağlantısı iptal edildi.');
+        console.error('Cüzdan bağlantı hatası:', err);
+        alert('Cüzdan bağlantısı iptal edildi veya reddedildi.');
         return;
       }
     }
 
-    alert('Cüzdan eklentisi bulunamadı. Lütfen eklentinizi açın.');
+    alert('Seçilen cüzdan eklentisi bulunamadı. Lütfen eklentinizin açık olduğundan emin olun.');
   };
 
-  // GERÇEK ON-CHAIN USDT YATIRMA VE ÇEKME
+  // ==========================================
+  // 4. ON-CHAIN USDT YATIRMA VE ÇEKME (SAĞLAMLAŞTIRILMIŞ)
+  // ==========================================
   const handleBalanceTransaction = async () => {
     initAudio();
     triggerTelegramHaptic('medium');
@@ -517,12 +502,12 @@ export default function PlatformPage() {
 
     if (isDemoWallet) {
       if (modalTab === 'deposit') {
-        setBalance((prev) => prev + val);
+        setBalance((prev) => +(prev + val).toFixed(2));
         setTxSuccessMsg(`+${val} USDT Demo Kasaya Eklendi!`);
         addTransaction('DEPOSIT', 'Demo USDT Yatırma', val);
       } else {
         if (val > balance) return alert('Yetersiz bakiye!');
-        setBalance((prev) => prev - val);
+        setBalance((prev) => +(prev - val).toFixed(2));
         setTxSuccessMsg(`-${val} USDT Demo Çekildi!`);
         addTransaction('WITHDRAW', 'Demo USDT Çekme', val);
       }
@@ -533,7 +518,8 @@ export default function PlatformPage() {
     try {
       setIsTxPending(true);
       const win = window as any;
-      const browserProvider = new ethers.BrowserProvider(win.ethereum || win.BinanceChain || win.okxwallet);
+      const providerObj = win.ethereum || win.BinanceChain || win.okxwallet;
+      const browserProvider = new ethers.BrowserProvider(providerObj);
       const signer = await browserProvider.getSigner();
 
       const usdtContract = new ethers.Contract(BSC_USDT_ADDRESS, ERC20_ABI, signer);
@@ -541,16 +527,18 @@ export default function PlatformPage() {
       const amountWei = ethers.parseUnits(val.toString(), 18);
 
       if (modalTab === 'deposit') {
+        // Otomatik Harcama İzni Kontrolü
         const allowance = await usdtContract.allowance(account, CONTRACT_ADDRESS);
         if (allowance < amountWei) {
           const approveTx = await usdtContract.approve(CONTRACT_ADDRESS, ethers.MaxUint256);
           await approveTx.wait();
         }
 
+        // Kontrata Yatırma
         const depositTx = await platformContract.deposit(amountWei, ethers.ZeroAddress);
         await depositTx.wait();
 
-        await fetchBlockchainBalances(account);
+        await syncBlockchainBalances(account);
         setTxSuccessMsg(`+${val} USDT BSC Kontratına Yatırıldı!`);
         addTransaction('DEPOSIT', 'BSC USDT Yatırma', val, depositTx.hash);
       } else {
@@ -561,7 +549,7 @@ export default function PlatformPage() {
         const withdrawTx = await platformContract.withdraw(amountWei);
         await withdrawTx.wait();
 
-        await fetchBlockchainBalances(account);
+        await syncBlockchainBalances(account);
         setTxSuccessMsg(`-${val} USDT Cüzdanınıza Aktarıldı!`);
         addTransaction('WITHDRAW', 'BSC USDT Çekme', val, withdrawTx.hash);
       }
@@ -571,15 +559,17 @@ export default function PlatformPage() {
     } catch (err: any) {
       setIsTxPending(false);
       console.error(err);
-      alert('İşlem cüzdandan reddedildi veya hata oluştu.');
+      alert('İşlem cüzdandan reddedildi veya ağda hata oluştu.');
     }
   };
 
-  // ZAR OYUNU
+  // ==========================================
+  // 5. OYUN MEKANİKLERİ (ZAR & YAZI-TURA)
+  // ==========================================
   const handleStartDiceGame = (amount: number) => {
     initAudio();
     triggerTelegramHaptic('heavy');
-    if (isNaN(amount) || amount <= 0 || amount > balance) return alert('Yetersiz bakiye!');
+    if (isNaN(amount) || amount <= 0 || amount > balance) return alert('Yetersiz bakiye! Lütfen kasaya USDT yatırın.');
 
     currentBetRef.current = amount;
     setBalance((prev) => +(prev - amount).toFixed(2));
@@ -614,25 +604,24 @@ export default function PlatformPage() {
 
       const winnerPlayer = isMeWinner ? (account ? `${account.substring(0, 6)}...` : 'You') : opponentName;
       const loserPlayer = isMeWinner ? opponentName : (account ? `${account.substring(0, 6)}...` : 'You');
-      pushMatchRecord(winnerPlayer, loserPlayer, `🎲 Dice (${p1}-${p2})`, amount);
+      pushMatchRecord(winnerPlayer, loserPlayer, `🎲 Zar (${p1}-${p2})`, amount);
 
       if (isMeWinner) {
         const netWin = amount * 2 * 0.97;
         triggerConfetti();
         playWinSound();
         setBalance((prev) => +(prev + netWin).toFixed(2));
-        addTransaction('GAME_WIN', `Dice Win (${p1} vs ${p2})`, +netWin.toFixed(2));
+        addTransaction('GAME_WIN', `Zar Galibiyeti (${p1} vs ${p2})`, +netWin.toFixed(2));
       } else {
         playLoseSound();
       }
-    }, 4200);
+    }, 4000);
   };
 
-  // YAZI - TURA OYUNU
   const handleStartCoinFlip = (amount: number) => {
     initAudio();
     triggerTelegramHaptic('heavy');
-    if (isNaN(amount) || amount <= 0 || amount > balance) return alert('Yetersiz bakiye!');
+    if (isNaN(amount) || amount <= 0 || amount > balance) return alert('Yetersiz bakiye! Lütfen kasaya USDT yatırın.');
 
     currentBetRef.current = amount;
     setBalance((prev) => +(prev - amount).toFixed(2));
@@ -661,21 +650,21 @@ export default function PlatformPage() {
 
       const winnerPlayer = isWon ? (account ? `${account.substring(0, 6)}...` : 'You') : houseName;
       const loserPlayer = isWon ? houseName : (account ? `${account.substring(0, 6)}...` : 'You');
-      pushMatchRecord(winnerPlayer, loserPlayer, `🪙 CoinFlip (${landed})`, amount);
+      pushMatchRecord(winnerPlayer, loserPlayer, `🪙 Yazı-Tura (${landed})`, amount);
 
       if (isWon) {
         const netWin = amount * 2 * 0.97;
         triggerConfetti();
         playWinSound();
         setBalance((prev) => +(prev + netWin).toFixed(2));
-        addTransaction('GAME_WIN', `CoinFlip Win (${landed})`, +netWin.toFixed(2));
+        addTransaction('GAME_WIN', `Yazı-Tura Galibiyeti (${landed})`, +netWin.toFixed(2));
       } else {
         playLoseSound();
       }
-    }, 3800);
+    }, 3500);
   };
 
-  // GÜNLÜK ÇARK
+  // Günlük Çark
   const handleSpinWheel = () => {
     if (!canSpin || isSpinning) return;
     initAudio();
@@ -688,7 +677,7 @@ export default function PlatformPage() {
     else if (rand < 80) chosen = 0.10;
     else if (rand < 95) chosen = 0.25;
     else if (rand < 99) chosen = 0.50;
-    else chosen = 2.00;
+    else chosen = 1.00;
 
     let ticks = 0;
     const tickInterval = setInterval(() => {
@@ -704,8 +693,22 @@ export default function PlatformPage() {
       setCanSpin(false);
       triggerConfetti();
       playWinSound();
-      addTransaction('SPIN', 'Daily Spin Reward', chosen);
+      addTransaction('SPIN', 'Günlük Çark Ödülü', chosen);
     }, 3500);
+  };
+
+  const exportToCSV = () => {
+    triggerTelegramHaptic('medium');
+    const headers = 'ID,Islem Turu,Detay,Tutar (USDT),Tarih,Islem Hashi,Durum\n';
+    const rows = transactions.map(t => `"${t.id}","${t.type}","${t.title}","${t.amount}","${t.date}","${t.txHash}","${t.status}"`).join('\n');
+    const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `diceduel_statement_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const filteredTransactions = transactions.filter(t => {
@@ -769,11 +772,10 @@ export default function PlatformPage() {
               </AnimatePresence>
             </div>
 
-            {/* Ödemeler */}
+            {/* İşlemler Raporu */}
             <button 
               onClick={() => { setIsTxModalOpen(true); triggerTelegramHaptic('medium'); }}
               className="flex items-center gap-1.5 px-2.5 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-bold text-slate-200 transition active:scale-95 shadow-sm"
-              title={t.txBtn}
             >
               <ReceiptText className="w-3.5 h-3.5 text-indigo-400" />
               <span className="hidden sm:inline">{t.txBtn}</span>
@@ -793,12 +795,11 @@ export default function PlatformPage() {
             <button 
               onClick={() => { setIsSupportModalOpen(true); triggerTelegramHaptic('medium'); }}
               className="p-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-sky-400 transition active:scale-95"
-              title={t.support}
             >
               <MessageCircle className="w-4 h-4" />
             </button>
 
-            {/* Bakiye */}
+            {/* Bakiye Göstergesi */}
             <div className="flex items-center bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-inner">
               <div className="flex items-center gap-1 px-2.5 py-2 text-xs font-bold text-amber-400">
                 <Wallet className="w-3.5 h-3.5 text-slate-400" />
@@ -806,7 +807,7 @@ export default function PlatformPage() {
               </div>
               <button 
                 onClick={() => { setIsModalOpen(true); triggerTelegramHaptic('medium'); }}
-                className="px-2 py-2 bg-slate-700 hover:bg-slate-600 text-[11px] font-bold text-slate-200 border-l border-slate-600 transition active:scale-95"
+                className="px-2.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-[11px] font-bold text-white border-l border-indigo-500 transition active:scale-95"
               >
                 {t.vault}
               </button>
@@ -1017,8 +1018,7 @@ export default function PlatformPage() {
           </div>
         </footer>
 
-        {/* MODALLAR */}
-        {/* Kasa Yönetimi */}
+        {/* 1. Kasa Yönetim Modalı */}
         <AnimatePresence>
           {isModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
@@ -1060,7 +1060,7 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* Cüzdan Modal */}
+        {/* 2. Cüzdan Bağlantı Modalı */}
         <AnimatePresence>
           {isWalletModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
@@ -1086,7 +1086,7 @@ export default function PlatformPage() {
                       <div className="w-7 h-7 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center font-black text-xs">🦊</div>
                       <div className="text-left">
                         <div className="text-xs font-bold text-slate-200">MetaMask</div>
-                        <div className="text-[9px] text-slate-500">EVM & Chrome Extension</div>
+                        <div className="text-[9px] text-slate-500">EVM & Extension</div>
                       </div>
                     </div>
                   </button>
@@ -1138,7 +1138,7 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* Günlük Çark */}
+        {/* 3. Günlük Çark Modalı */}
         <AnimatePresence>
           {isSpinModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
@@ -1161,7 +1161,7 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* Destek */}
+        {/* 4. Canlı Destek Modalı */}
         <AnimatePresence>
           {isSupportModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
@@ -1186,7 +1186,7 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* İşlemler */}
+        {/* 5. İşlemler Geçmişi (PDF / CSV) */}
         <AnimatePresence>
           {isTxModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
@@ -1198,7 +1198,7 @@ export default function PlatformPage() {
                   </div>
                   <div className="flex items-center gap-1.5">
                     <button onClick={exportToCSV} className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-indigo-300 rounded-xl text-[11px] font-bold flex items-center gap-1 border border-slate-700 transition"><Download className="w-3 h-3" /> CSV</button>
-                    <button onClick={printStatement} className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-[11px] font-bold flex items-center gap-1 border border-slate-700 transition"><Printer className="w-3 h-3" /> PDF</button>
+                    <button onClick={() => window.print()} className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-[11px] font-bold flex items-center gap-1 border border-slate-700 transition"><Printer className="w-3 h-3" /> PDF</button>
                     <button onClick={() => setIsTxModalOpen(false)} className="text-slate-400 hover:text-white transition ml-1"><X className="w-5 h-5" /></button>
                   </div>
                 </div>
