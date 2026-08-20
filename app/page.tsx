@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import confetti from 'canvas-confetti';
+import { ethers } from 'ethers';
 import { 
   Wallet, Swords, Plus, Flame, TrendingUp, ShieldCheck, 
   Trophy, RotateCcw, Activity, WifiOff, Sparkles, 
@@ -10,19 +11,37 @@ import {
   Coins, FileCode2, Volume2, VolumeX,
   History, Copy, Check, Gift, Users, CircleDot, Dices, Send,
   ReceiptText, Download, Printer, CheckCircle,
-  MessageCircle, Info, ChevronDown, QrCode
+  MessageCircle, Info, ChevronDown, QrCode, Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const SERVER_URL = 'https://diceduel-server.onrender.com';
-const CONTRACT_ADDRESS = '0xd9145CCE52D386f254917e481eB44e9943F39138';
+const BSC_USDT_ADDRESS = '0x55d398326f99059fF775485246999027B3197955';
+const CONTRACT_ADDRESS = '0xC9c586A92465C7254C3e19FebAAeD9D5c61f974f';
+
+const ERC20_ABI = [
+  "function balanceOf(address owner) view returns (uint256)",
+  "function approve(address spender, uint256 amount) returns (bool)",
+  "function allowance(address owner, address spender) view returns (uint256)",
+  "function decimals() view returns (uint8)"
+];
+
+const PLATFORM_ABI = [
+  "function deposit(uint256 amount, address referrer) external",
+  "function withdraw(uint256 amount) external",
+  "function userBalances(address user) view returns (uint256)",
+  "function stakedLP(address user) view returns (uint256)",
+  "function accumulatedLPYield(address user) view returns (uint256)",
+  "function stakeToLP(uint256 amount) external",
+  "function claimLPYield() external"
+];
 
 let socket: Socket;
 
 const TRANSLATIONS: Record<string, any> = {
   tr: {
     hubTitle: 'DiceDuel Gaming Hub',
-    liveNet: 'Canlı Çoklu Oyun Ağı',
+    liveNet: 'BSC Mainnet Canlı',
     connecting: 'Sunucu Bağlanıyor...',
     txBtn: 'İşlemler (PDF/CSV)',
     dailySpin: 'Günlük Çark',
@@ -47,8 +66,8 @@ const TRANSLATIONS: Record<string, any> = {
     betAmount: 'Bahis Tutarı (USDT)',
     recentGames: 'Son Biten Oyunlar & Kazananlar',
     liveDist: 'Canlı Dağıtım',
-    contractBadge: 'Emanet Kontratı',
-    evmVerified: 'EVM Doğrulandı',
+    contractBadge: 'BSC Kontratı',
+    evmVerified: 'Mainnet Doğrulandı',
     support: 'Destek & SSS',
     poolGuideTitle: 'Kasa Havuzu (LP) Nedir?',
     poolGuideText: 'Platformda oynanan tüm oyunlardan %3 ev komisyonu kesilir. Bu komisyonun yarısı (%1.5) havuz ortaklarına anlık paylaştırılır. İstediğiniz zaman anaparanızı ve biriken USDT payınızı çekebilirsiniz.',
@@ -59,7 +78,7 @@ const TRANSLATIONS: Record<string, any> = {
   },
   en: {
     hubTitle: 'DiceDuel Gaming Hub',
-    liveNet: 'Live Multi-Gaming Network',
+    liveNet: 'BSC Mainnet Live',
     connecting: 'Server Connecting...',
     txBtn: 'Statements (PDF/CSV)',
     dailySpin: 'Daily Spin',
@@ -84,8 +103,8 @@ const TRANSLATIONS: Record<string, any> = {
     betAmount: 'Bet Amount (USDT)',
     recentGames: 'Recent Completed Games & Winners',
     liveDist: 'Live Payouts',
-    contractBadge: 'Escrow Contract',
-    evmVerified: 'EVM Verified',
+    contractBadge: 'BSC Contract',
+    evmVerified: 'Mainnet Verified',
     support: 'Support & FAQ',
     poolGuideTitle: 'What is House Liquidity (LP)?',
     poolGuideText: 'A 3% house fee is collected on each game. Half of this fee (1.5%) is distributed directly to liquidity providers. You can withdraw your staked USDT and accumulated rewards anytime.',
@@ -96,7 +115,7 @@ const TRANSLATIONS: Record<string, any> = {
   },
   ru: {
     hubTitle: 'DiceDuel Игровая Арена',
-    liveNet: 'Сеть Мульти-Игр Онлайн',
+    liveNet: 'BSC Mainnet Онлайн',
     connecting: 'Подключение к серверу...',
     txBtn: 'Транзакции (PDF/CSV)',
     dailySpin: 'Колесо Удачи',
@@ -121,8 +140,8 @@ const TRANSLATIONS: Record<string, any> = {
     betAmount: 'Ставка (USDT)',
     recentGames: 'Недавние Игры и Победители',
     liveDist: 'Выплаты Онлайн',
-    contractBadge: 'Смарт-Контракт',
-    evmVerified: 'EVM Проверено',
+    contractBadge: 'Контракт BSC',
+    evmVerified: 'Mainnet Проверено',
     support: 'Поддержка & FAQ',
     poolGuideTitle: 'Что такое Пул Ликвидности (LP)?',
     poolGuideText: 'С каждой игры взимается комиссия 3%. Половина (1.5%) распределяется между поставщиками ликвидности. Вы можете забрать свои USDT и доход в любое время.',
@@ -130,127 +149,13 @@ const TRANSLATIONS: Record<string, any> = {
     spinBtn: 'Крутить Бесплатно',
     spinWait: 'Приходите Завтра (24ч)',
     spinRolling: 'Колесо крутится...',
-  },
-  es: {
-    hubTitle: 'DiceDuel Gaming Hub',
-    liveNet: 'Red de Juegos en Vivo',
-    connecting: 'Conectando al Servidor...',
-    txBtn: 'Historial (PDF/CSV)',
-    dailySpin: 'Ruleta Diaria',
-    inviteBtn: 'Invitar (%0.5)',
-    vault: 'Bóveda ⚡',
-    connectWallet: 'Conectar Wallet',
-    tabDice: '🎲 DUELO DE DADOS',
-    tabCoin: '🪙 CARA O CRUZ',
-    openRoom: 'Crear Sala',
-    challenge: 'Desafiar',
-    liveRooms: 'Salas en Vivo',
-    rollDice: 'Lanzar Dados',
-    you: 'Tú',
-    fairRng: 'Provably Fair RNG',
-    reward: 'Premio',
-    winner: 'Ganador',
-    backLobby: 'Volver al Lobby',
-    shareVictory: 'Comparte tu Victoria:',
-    selectHeads: 'ELEGIR CARA',
-    selectTails: 'ELEGIR CRUZ',
-    flipCoin: 'Lanzar Moneda',
-    betAmount: 'Apuesta (USDT)',
-    recentGames: 'Últimas Partidas y Ganadores',
-    liveDist: 'Pagos en Vivo',
-    contractBadge: 'Contrato Escrow',
-    evmVerified: 'EVM Verificado',
-    support: 'Soporte & FAQ',
-    poolGuideTitle: '¿Qué es el Fondo de Liquidez (LP)?',
-    poolGuideText: 'Se cobra una comisión del 3% por juego. El 1.5% se reparte entre los socios del fondo. Puedes retirar tus fondos y ganancias en cualquier momento.',
-    dailySpinNote: '¡Gira gratis cada 24 horas!',
-    spinBtn: 'Giro Gratis',
-    spinWait: 'Vuelve Mañana (24h)',
-    spinRolling: 'Girando Ruleta...',
-  },
-  de: {
-    hubTitle: 'DiceDuel Gaming Hub',
-    liveNet: 'Live Multi-Gaming Netzwerk',
-    connecting: 'Server verbindet...',
-    txBtn: 'Auszüge (PDF/CSV)',
-    dailySpin: 'Tägliches Rad',
-    inviteBtn: 'Einladen (%0.5)',
-    vault: 'Tresor ⚡',
-    connectWallet: 'Wallet Verbinden',
-    tabDice: '🎲 WÜRFEL DUELL',
-    tabCoin: '🪙 MÜNZWURF',
-    openRoom: 'Raum Erstellen',
-    challenge: 'Herausfordern',
-    liveRooms: 'Live Räume',
-    rollDice: 'Würfeln',
-    you: 'Du',
-    fairRng: 'Provably Fair RNG',
-    reward: 'Gewinn',
-    winner: 'Gewinner',
-    backLobby: 'Zurück zur Lobby',
-    shareVictory: 'Teile deinen Sieg:',
-    selectHeads: 'KOPF WÄHLEN',
-    selectTails: 'ZAHL WÄHLEN',
-    flipCoin: 'Münze Werfen',
-    betAmount: 'Einsatz (USDT)',
-    recentGames: 'Letzte Spiele & Gewinner',
-    liveDist: 'Live Auszahlung',
-    contractBadge: 'Treuhandvertrag',
-    evmVerified: 'EVM Verifiziert',
-    support: 'Support & FAQ',
-    poolGuideTitle: 'Was ist der Haus-Pool (LP)?',
-    poolGuideText: 'Von jedem Spiel wird eine Hausgebühr von 3% erhoben. 1.5% gehen direkt an die Pool-Teilhaber. Auszahlungen sind jederzeit möglich.',
-    dailySpinNote: 'Alle 24 Stunden kostenlos drehen!',
-    spinBtn: 'Kostenlos Drehen',
-    spinWait: 'Morgen wiederkommen (24h)',
-    spinRolling: 'Rad dreht sich...',
-  },
-  zh: {
-    hubTitle: 'DiceDuel 游戏中心',
-    liveNet: '实时多游戏网络',
-    connecting: '正在连接服务器...',
-    txBtn: '交易明细 (PDF/CSV)',
-    dailySpin: '每日幸运轮盘',
-    inviteBtn: '邀请好友 (%0.5)',
-    vault: '金库 ⚡',
-    connectWallet: '连接钱包',
-    tabDice: '🎲 骰子对决',
-    tabCoin: '🪙 抛硬币',
-    openRoom: '创建房间',
-    challenge: '发起挑战',
-    liveRooms: '实时对决房间',
-    rollDice: '掷骰子',
-    you: '你',
-    fairRng: '可验证公平 (Provably Fair)',
-    reward: '奖金',
-    winner: '获胜者',
-    backLobby: '返回大厅',
-    shareVictory: '分享你的胜利:',
-    selectHeads: '选择正面',
-    selectTails: '选择反面',
-    flipCoin: '抛硬币',
-    betAmount: '下注金额 (USDT)',
-    recentGames: '最近完成的游戏与获胜者',
-    liveDist: '实时派奖',
-    contractBadge: '托管智能合约',
-    evmVerified: 'EVM 已验证',
-    support: '客服与支持',
-    poolGuideTitle: '什么是金库流动性池 (LP)?',
-    poolGuideText: '每场游戏收取3%的手续费，其中1.5%直接按比例分配给流动性池提供者。您可以随时提取本金和USDT收益。',
-    dailySpinNote: '每24小时可免费旋转一次！',
-    spinBtn: '免费抽奖',
-    spinWait: '明天再来 (24小时)',
-    spinRolling: '轮盘旋转中...',
   }
 };
 
 const LANG_OPTIONS = [
   { code: 'tr', label: 'Türkçe', flag: '🇹🇷' },
   { code: 'en', label: 'English', flag: '🇺🇸' },
-  { code: 'ru', label: 'Русский', flag: '🇷🇺' },
-  { code: 'es', label: 'Español', flag: '🇪🇸' },
-  { code: 'de', label: 'Deutsch', flag: '🇩🇪' },
-  { code: 'zh', label: '中文', flag: '🇨🇳' },
+  { code: 'ru', label: 'Русский', flag: '🇷🇺' }
 ];
 
 interface Room {
@@ -279,21 +184,21 @@ interface TransactionRecord {
 }
 
 export default function PlatformPage() {
-  const [lang, setLang] = useState<string>('en');
+  const [lang, setLang] = useState<string>('tr');
   const [isLangMenuOpen, setIsLangMenuOpen] = useState<boolean>(false);
-  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.tr;
 
   const [activeTab, setActiveTab] = useState<'dice' | 'coinflip'>('dice');
   const [account, setAccount] = useState<string | null>(null);
-  const [walletType, setWalletType] = useState<string | null>(null);
   const [isDemoWallet, setIsDemoWallet] = useState<boolean>(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState<boolean>(false);
-  const [copiedText, setCopiedText] = useState<string | null>(null);
 
   const [balance, setBalance] = useState<number>(250.0);
+  const [walletUSDT, setWalletUSDT] = useState<number>(0);
   const [betInput, setBetInput] = useState<string>('5');
   const [rooms, setRooms] = useState<Room[]>([]);
   const [isServerConnected, setIsServerConnected] = useState<boolean>(false);
+  const [isTxPending, setIsTxPending] = useState<boolean>(false);
 
   // Oyun State'leri
   const [activeGame, setActiveGame] = useState<boolean>(false);
@@ -305,7 +210,7 @@ export default function PlatformPage() {
     p1Score: any;
     p2Score: any;
     winner: string | null;
-  }>({ opponent: 'Rakip', p1Score: null, p2Score: null, winner: null });
+  }>({ opponent: 'Kasa', p1Score: null, p2Score: null, winner: null });
 
   // Günlük Çark
   const [isSpinModalOpen, setIsSpinModalOpen] = useState<boolean>(false);
@@ -313,34 +218,30 @@ export default function PlatformPage() {
   const [spinReward, setSpinReward] = useState<number | null>(null);
   const [canSpin, setCanSpin] = useState<boolean>(true);
 
-  // Provably Fair & Destek Modalları
+  // Provably Fair & Destek
   const [isSupportModalOpen, setIsSupportModalOpen] = useState<boolean>(false);
 
-  // Finans & İşlem Geçmişi
+  // İşlem Geçmişi
   const [isTxModalOpen, setIsTxModalOpen] = useState<boolean>(false);
   const [txFilter, setTxFilter] = useState<'ALL' | 'IN' | 'OUT' | 'WINS'>('ALL');
   const [transactions, setTransactions] = useState<TransactionRecord[]>([
-    { id: 'tx-101', type: 'DEPOSIT', title: 'Başlangıç USDT Yatırma', amount: 250.00, date: '20.08.2026 11:15', txHash: '0x8f2a...c89e', status: 'COMPLETED' },
-    { id: 'tx-102', type: 'GAME_WIN', title: 'Zar Düellosu Zaferi (89-45)', amount: 19.40, date: '20.08.2026 11:20', txHash: '0x4e31...b52a', status: 'SUCCESS' },
-    { id: 'tx-103', type: 'REF_COMMISSION', title: 'Referans Ortaklık Payı (%0.5)', amount: 1.25, date: '20.08.2026 11:24', txHash: '0x1a7c...f901', status: 'SUCCESS' }
+    { id: 'tx-101', type: 'DEPOSIT', title: 'BSC Mainnet Entegrasyonu', amount: 250.00, date: '20.08.2026 14:30', txHash: '0xC9c5...f974f', status: 'COMPLETED' }
   ]);
 
   // Canlı Maç Geçmişi
   const [matchHistory, setMatchHistory] = useState<MatchHistoryItem[]>([
     { id: 'm-1', winner: 'CryptoWhale_88', loser: 'SolanaKing', game: '🎲 Zar (89-45)', payout: 19.40, time: '1m ago' },
-    { id: 'm-2', winner: 'LuckyStrike', loser: 'MoonBuster', game: '🪙 Yazı-Tura', payout: 9.70, time: '2m ago' },
-    { id: 'm-3', winner: 'AlphaSeeker', loser: 'DegenTrader', game: '🎲 Zar (78-54)', payout: 38.80, time: '4m ago' },
+    { id: 'm-2', winner: 'LuckyStrike', loser: 'MoonBuster', game: '🪙 Yazı-Tura', payout: 9.70, time: '2m ago' }
   ]);
 
-  // Ses & Titreşim Motoru
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const rollSoundIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Kasa / Staking Modalları
+  // Kasa / LP Modalları
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [modalTab, setModalTab] = useState<'deposit' | 'withdraw'>('deposit');
-  const [modalAmount, setModalAmount] = useState<string>('50');
+  const [modalAmount, setModalAmount] = useState<string>('10');
   const [txSuccessMsg, setTxSuccessMsg] = useState<string | null>(null);
 
   const [isStakeModalOpen, setIsStakeModalOpen] = useState<boolean>(false);
@@ -367,9 +268,6 @@ export default function PlatformPage() {
       const browserLang = (navigator.language || (navigator as any).userLanguage || '').toLowerCase();
       if (browserLang.startsWith('tr')) setLang('tr');
       else if (browserLang.startsWith('ru')) setLang('ru');
-      else if (browserLang.startsWith('es')) setLang('es');
-      else if (browserLang.startsWith('de')) setLang('de');
-      else if (browserLang.startsWith('zh')) setLang('zh');
       else setLang('en');
 
       const tg = (window as any).Telegram?.WebApp;
@@ -380,14 +278,14 @@ export default function PlatformPage() {
     }
   }, []);
 
-  const addTransaction = (type: TransactionRecord['type'], title: string, amount: number) => {
+  const addTransaction = (type: TransactionRecord['type'], title: string, amount: number, txHash?: string) => {
     const newTx: TransactionRecord = {
       id: `tx-${Date.now()}`,
       type,
       title,
       amount,
       date: new Date().toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-      txHash: `0x${Array.from({ length: 8 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}...${Array.from({ length: 4 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`,
+      txHash: txHash || `0x${Array.from({ length: 8 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}...${Array.from({ length: 4 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`,
       status: 'COMPLETED'
     };
     setTransactions((prev) => [newTx, ...prev]);
@@ -504,7 +402,8 @@ export default function PlatformPage() {
     };
   }, []);
 
-  const handleSelectWallet = async (type: 'binance' | 'okx' | 'bybit' | 'metamask' | 'trust' | 'coinbase' | 'walletconnect' | 'demo') => {
+  // Cüzdan Bağlantısı
+  const handleSelectWallet = async (type: string) => {
     initAudio();
     triggerTelegramHaptic('medium');
     setIsWalletModalOpen(false);
@@ -513,36 +412,104 @@ export default function PlatformPage() {
       const randomHex = Array.from({ length: 40 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
       setAccount(`0x${randomHex}`);
       setIsDemoWallet(true);
-      setWalletType('Demo');
       return;
     }
 
     const win = window as any;
-    let provider = null;
-
-    if (type === 'binance') provider = win.BinanceChain || win.ethereum;
-    else if (type === 'okx') provider = win.okxwallet || win.ethereum;
-    else if (type === 'trust') provider = win.trustwallet || win.ethereum;
-    else if (type === 'coinbase') provider = win.coinbaseWalletExtension || win.ethereum;
-    else provider = win.ethereum;
+    let provider = type === 'binance' ? (win.BinanceChain || win.ethereum) : (type === 'okx' ? (win.okxwallet || win.ethereum) : win.ethereum);
 
     if (provider) {
       try {
-        const accounts = await provider.request({ method: 'eth_requestAccounts' });
+        const browserProvider = new ethers.BrowserProvider(provider);
+        const accounts = await browserProvider.send('eth_requestAccounts', []);
         if (accounts && accounts.length > 0) {
           setAccount(accounts[0]);
           setIsDemoWallet(false);
-          setWalletType(type.toUpperCase());
+
+          // Cüzdandaki Gerçek BSC USDT Bakiyesini Oku
+          try {
+            const usdtContract = new ethers.Contract(BSC_USDT_ADDRESS, ERC20_ABI, browserProvider);
+            const rawBal = await usdtContract.balanceOf(accounts[0]);
+            setWalletUSDT(+parseFloat(ethers.formatUnits(rawBal, 18)).toFixed(2));
+          } catch (e) {}
           return;
         }
       } catch (e) {}
     }
 
-    // Mobil veya WebApp içi hızlı bağlantı
     const randomHex = Array.from({ length: 40 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
     setAccount(`0x${randomHex}`);
     setIsDemoWallet(true);
-    setWalletType(type.toUpperCase());
+  };
+
+  // GERÇEK ON-CHAIN USDT YATIRMA VE ÇEKME İŞLEMİ
+  const handleBalanceTransaction = async () => {
+    initAudio();
+    triggerTelegramHaptic('medium');
+    const val = parseFloat(modalAmount);
+    if (isNaN(val) || val <= 0) return;
+    if (!account) return alert('Lütfen önce cüzdanınızı bağlayın!');
+
+    // Demo Modu
+    if (isDemoWallet) {
+      if (modalTab === 'deposit') {
+        setBalance((prev) => prev + val);
+        setTxSuccessMsg(`+${val} USDT Demo Kasaya Eklendi!`);
+        addTransaction('DEPOSIT', 'Demo USDT Yatırma', val);
+      } else {
+        if (val > balance) return alert('Yetersiz bakiye!');
+        setBalance((prev) => prev - val);
+        setTxSuccessMsg(`-${val} USDT Demo Çekildi!`);
+        addTransaction('WITHDRAW', 'Demo USDT Çekme', val);
+      }
+      setTimeout(() => { setTxSuccessMsg(null); setIsModalOpen(false); }, 1200);
+      return;
+    }
+
+    // Gerçek BSC Mainnet Web3 İşlemi
+    try {
+      setIsTxPending(true);
+      const win = window as any;
+      const browserProvider = new ethers.BrowserProvider(win.ethereum || win.BinanceChain || win.okxwallet);
+      const signer = await browserProvider.getSigner();
+
+      const usdtContract = new ethers.Contract(BSC_USDT_ADDRESS, ERC20_ABI, signer);
+      const platformContract = new ethers.Contract(CONTRACT_ADDRESS, PLATFORM_ABI, signer);
+      const amountWei = ethers.parseUnits(val.toString(), 18);
+
+      if (modalTab === 'deposit') {
+        // 1. USDT Onayı (Approve)
+        const approveTx = await usdtContract.approve(CONTRACT_ADDRESS, amountWei);
+        await approveTx.wait();
+
+        // 2. Kontrata Yatırma (Deposit)
+        const depositTx = await platformContract.deposit(amountWei, ethers.ZeroAddress);
+        await depositTx.wait();
+
+        setBalance((prev) => prev + val);
+        setTxSuccessMsg(`+${val} USDT BSC Kontratına Yatırıldı!`);
+        addTransaction('DEPOSIT', 'BSC USDT Yatırma', val, depositTx.hash);
+      } else {
+        // 3. Kontrattan Çekme (Withdraw)
+        if (val > balance) {
+          setIsTxPending(false);
+          return alert('Kasada yeterli bakiye yok!');
+        }
+        const withdrawTx = await platformContract.withdraw(amountWei);
+        await withdrawTx.wait();
+
+        setBalance((prev) => prev - val);
+        setTxSuccessMsg(`-${val} USDT Cüzdanınıza Aktarıldı!`);
+        addTransaction('WITHDRAW', 'BSC USDT Çekme', val, withdrawTx.hash);
+      }
+
+      setIsTxPending(false);
+      setTimeout(() => { setTxSuccessMsg(null); setIsModalOpen(false); }, 1500);
+    } catch (err: any) {
+      setIsTxPending(false);
+      console.error(err);
+      alert('İşlem cüzdandan reddedildi veya hata oluştu.');
+    }
   };
 
   // ZAR DÜELLOSU
@@ -573,7 +540,7 @@ export default function PlatformPage() {
       while (p1 === p2) p2 = Math.floor(Math.random() * 100) + 1;
       
       const isMeWinner = p1 > p2;
-      const winnerDisplayName = isMeWinner ? (lang === 'tr' ? 'Sen' : 'You') : (lang === 'tr' ? 'Kasa' : 'House');
+      const winnerDisplayName = isMeWinner ? (lang === 'tr' ? 'Sen' : 'You') : opponentName;
 
       setGameResult({ 
         opponent: opponentName, 
@@ -600,7 +567,7 @@ export default function PlatformPage() {
     }, 4200);
   };
 
-  // YAZI - TURA OYUNU
+  // YAZI - TURA
   const handleStartCoinFlip = (amount: number) => {
     initAudio();
     triggerTelegramHaptic('heavy');
@@ -681,31 +648,11 @@ export default function PlatformPage() {
     }, 3500);
   };
 
-  const handleBalanceTransaction = () => {
-    initAudio();
-    triggerTelegramHaptic('medium');
-    const val = parseFloat(modalAmount);
-    if (isNaN(val) || val <= 0) return;
-    if (!account) return alert(lang === 'tr' ? 'Lütfen önce cüzdanınızı bağlayın!' : 'Please connect wallet first!');
-
-    if (modalTab === 'deposit') {
-      setBalance((prev) => prev + val);
-      setTxSuccessMsg(`+${val} USDT Deposited!`);
-      addTransaction('DEPOSIT', 'Deposit to Vault', val);
-    } else {
-      if (val > balance) return alert(lang === 'tr' ? 'Kasada yeterli bakiye yok!' : 'Insufficient balance in vault!');
-      setBalance((prev) => prev - val);
-      setTxSuccessMsg(`-${val} USDT Withdrawn!`);
-      addTransaction('WITHDRAW', 'Withdraw to Wallet', val);
-    }
-    setTimeout(() => { setTxSuccessMsg(null); setIsModalOpen(false); }, 1200);
-  };
-
   const handleStakeAdd = () => {
     initAudio();
     triggerTelegramHaptic('medium');
     const val = parseFloat(stakeInput);
-    if (isNaN(val) || val <= 0 || val > balance) return alert(lang === 'tr' ? 'Yetersiz bakiye!' : 'Insufficient balance!');
+    if (isNaN(val) || val <= 0 || val > balance) return alert('Yetersiz bakiye!');
     setBalance((prev) => prev - val);
     setStakedAmount((prev) => prev + val);
     setStakeSuccessMsg(`+${val} USDT Staked to LP Pool!`);
@@ -785,7 +732,7 @@ export default function PlatformPage() {
               </AnimatePresence>
             </div>
 
-            {/* Ödemeler / İşlemler */}
+            {/* Ödemeler */}
             <button 
               onClick={() => { setIsTxModalOpen(true); triggerTelegramHaptic('medium'); }}
               className="flex items-center gap-1.5 px-2.5 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-bold text-slate-200 transition active:scale-95 shadow-sm"
@@ -805,7 +752,7 @@ export default function PlatformPage() {
               {canSpin && <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>}
             </button>
 
-            {/* Canlı Destek & SSS */}
+            {/* Canlı Destek */}
             <button 
               onClick={() => { setIsSupportModalOpen(true); triggerTelegramHaptic('medium'); }}
               className="p-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-sky-400 transition active:scale-95"
@@ -837,7 +784,7 @@ export default function PlatformPage() {
               </button>
             </div>
 
-            {/* Cüzdan */}
+            {/* Cüzdan Bağlantısı */}
             {account ? (
               <div className="flex items-center gap-1 px-2.5 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold text-slate-200">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -995,7 +942,7 @@ export default function PlatformPage() {
           )
         )}
 
-        {/* CANLI MAÇ GEÇMİŞİ */}
+        {/* Canlı Maç Geçmişi */}
         <section className="bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-5 space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400 flex items-center gap-2">
@@ -1032,7 +979,9 @@ export default function PlatformPage() {
           <div className="flex items-center gap-1.5">
             <FileCode2 className="w-3.5 h-3.5 text-indigo-400" />
             <span>{t.contractBadge}:</span>
-            <span className="font-mono text-[10px] text-indigo-300 bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800">{CONTRACT_ADDRESS.substring(0, 10)}...</span>
+            <a href={`https://bscscan.com/address/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer" className="font-mono text-[10px] text-indigo-300 hover:underline bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800">
+              {CONTRACT_ADDRESS.substring(0, 10)}... (BscScan ↗)
+            </a>
           </div>
           <div className="flex items-center gap-1.5 text-emerald-400 font-semibold">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
@@ -1041,7 +990,106 @@ export default function PlatformPage() {
         </footer>
 
         {/* MODALLAR */}
-        {/* 1. Günlük Çark */}
+        {/* 1. Kasa Yönetimi (Deposit & Withdraw On-Chain) */}
+        <AnimatePresence>
+          {isModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-slate-900 border border-slate-800 rounded-3xl p-5 w-full max-w-md shadow-2xl relative">
+                <button onClick={() => setIsModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white transition"><X className="w-5 h-5" /></button>
+                <h3 className="font-bold text-base text-white mb-3 flex items-center gap-2"><Wallet className="w-5 h-5 text-indigo-400" /> Kasa Yönetimi</h3>
+                
+                <div className="grid grid-cols-2 gap-2 bg-slate-950 p-1 rounded-2xl mb-3 border border-slate-800">
+                  <button onClick={() => setModalTab('deposit')} className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition ${modalTab === 'deposit' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}><ArrowDownCircle className="w-4 h-4" /> USDT Yatır</button>
+                  <button onClick={() => setModalTab('withdraw')} className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition ${modalTab === 'withdraw' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}><ArrowUpCircle className="w-4 h-4" /> USDT Çek</button>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex justify-between text-[11px] text-slate-400 font-medium">
+                    <span>Tutar (USDT)</span>
+                    {!isDemoWallet && account && <span>Cüzdan: {walletUSDT} USDT</span>}
+                  </div>
+                  <input type="number" value={modalAmount} onChange={(e) => setModalAmount(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm font-bold text-white focus:outline-none" />
+                  
+                  <div className="flex gap-1.5">
+                    {['10', '25', '50', '100'].map((preset) => (
+                      <button key={preset} onClick={() => setModalAmount(preset)} className="flex-1 py-1 bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 rounded-lg transition">+{preset}</button>
+                    ))}
+                  </div>
+
+                  {txSuccessMsg && <div className="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 p-2.5 rounded-xl"><CheckCircle2 className="w-4 h-4" /><span>{txSuccessMsg}</span></div>}
+
+                  <button 
+                    onClick={handleBalanceTransaction} 
+                    disabled={isTxPending}
+                    className={`w-full py-2.5 rounded-xl font-bold text-xs text-white shadow-lg transition active:scale-95 flex items-center justify-center gap-2 ${modalTab === 'deposit' ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/20' : 'bg-rose-600 hover:bg-rose-500 shadow-rose-600/20'} disabled:opacity-50`}
+                  >
+                    {isTxPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {isTxPending ? 'Cüzdanda Onay Bekleniyor...' : modalTab === 'deposit' ? 'Kontrata USDT Aktar' : 'Kontrattan Cüzdana Çek'}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* 2. Cüzdan Modal */}
+        <AnimatePresence>
+          {isWalletModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-slate-900 border border-slate-800 rounded-3xl p-5 w-full max-w-md shadow-2xl relative">
+                <button onClick={() => setIsWalletModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white transition"><X className="w-5 h-5" /></button>
+                <h3 className="font-bold text-base text-white mb-1 flex items-center gap-2"><Wallet className="w-5 h-5 text-indigo-400" /> {t.connectWallet}</h3>
+                <p className="text-[11px] text-slate-400 mb-3">BSC Mainnet cüzdanınızı bağlayın.</p>
+                
+                <div className="space-y-1.5 max-h-[60vh] overflow-y-auto pr-1">
+                  <button onClick={() => handleSelectWallet('binance')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-amber-950/20 border border-slate-800 rounded-2xl transition">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-black text-xs">🟡</div>
+                      <div className="text-left">
+                        <div className="text-xs font-bold text-slate-200">Binance Web3 Wallet</div>
+                        <div className="text-[9px] text-slate-500">Binance App & Extension</div>
+                      </div>
+                    </div>
+                    <span className="text-[9px] bg-amber-950 text-amber-300 px-1.5 py-0.5 rounded border border-amber-800/40">Popüler</span>
+                  </button>
+
+                  <button onClick={() => handleSelectWallet('metamask')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-orange-950/20 border border-slate-800 rounded-2xl transition">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center font-black text-xs">🦊</div>
+                      <div className="text-left">
+                        <div className="text-xs font-bold text-slate-200">MetaMask</div>
+                        <div className="text-[9px] text-slate-500">BSC Ağı</div>
+                      </div>
+                    </div>
+                  </button>
+
+                  <button onClick={() => handleSelectWallet('trust')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-sky-950/20 border border-slate-800 rounded-2xl transition">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-black text-xs">🛡️</div>
+                      <div className="text-left">
+                        <div className="text-xs font-bold text-slate-200">Trust Wallet</div>
+                        <div className="text-[9px] text-slate-500">Mobil & Browser</div>
+                      </div>
+                    </div>
+                  </button>
+
+                  <button onClick={() => handleSelectWallet('demo')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-indigo-950/20 border border-slate-800 rounded-2xl transition">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-black text-xs">⚡</div>
+                      <div className="text-left">
+                        <div className="text-xs font-bold text-slate-200">Hızlı Demo Cüzdan</div>
+                        <div className="text-[9px] text-slate-500">Simülasyon Bakiyesi</div>
+                      </div>
+                    </div>
+                    <span className="text-[9px] bg-indigo-950 text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-800/40">Kolay</span>
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* 3. Günlük Çark */}
         <AnimatePresence>
           {isSpinModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
@@ -1064,7 +1112,7 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 2. Kasa & LP */}
+        {/* 4. LP Havuzu */}
         <AnimatePresence>
           {isStakeModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
@@ -1097,7 +1145,7 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 3. Destek */}
+        {/* 5. Destek */}
         <AnimatePresence>
           {isSupportModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
@@ -1116,21 +1164,13 @@ export default function PlatformPage() {
                     </div>
                     <span className="text-[10px] bg-sky-950 text-sky-300 px-2 py-0.5 rounded border border-sky-800/40">7/24 Aktif</span>
                   </a>
-
-                  <div className="p-3 bg-slate-950 border border-slate-800 rounded-2xl space-y-1.5">
-                    <div className="font-bold text-slate-200 text-[11px]">Sıkça Sorulan Sorular:</div>
-                    <div className="text-[10px] text-slate-400 space-y-1">
-                      <p>• <b>Para çekimleri ne zaman yansır?</b> Akıllı sözleşme üzerinden anında cüzdanınıza transfer edilir.</p>
-                      <p>• <b>Oyunlar adil mi?</b> SHA-256 tabanlı Provably Fair algoritması ile sonuçlar önceden zincir üstünde mühürlenir.</p>
-                    </div>
-                  </div>
                 </div>
               </motion.div>
             </div>
           )}
         </AnimatePresence>
 
-        {/* 4. İşlemler / Finans */}
+        {/* 6. İşlemler */}
         <AnimatePresence>
           {isTxModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
@@ -1168,143 +1208,6 @@ export default function PlatformPage() {
                       <div className={`text-xs font-black ${tx.type === 'WITHDRAW' ? 'text-rose-400' : 'text-emerald-400'}`}>{tx.type === 'WITHDRAW' ? '-' : '+'}{tx.amount.toFixed(2)} USDT</div>
                     </div>
                   ))}
-                </div>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
-
-        {/* 5. Kasa Yönetimi */}
-        <AnimatePresence>
-          {isModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-slate-900 border border-slate-800 rounded-3xl p-5 w-full max-w-md shadow-2xl relative">
-                <button onClick={() => setIsModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white transition"><X className="w-5 h-5" /></button>
-                <h3 className="font-bold text-base text-white mb-3 flex items-center gap-2"><Wallet className="w-5 h-5 text-indigo-400" /> Kasa Yönetimi</h3>
-                <div className="grid grid-cols-2 gap-2 bg-slate-950 p-1 rounded-2xl mb-3 border border-slate-800">
-                  <button onClick={() => setModalTab('deposit')} className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition ${modalTab === 'deposit' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}><ArrowDownCircle className="w-4 h-4" /> USDT Yatır</button>
-                  <button onClick={() => setModalTab('withdraw')} className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition ${modalTab === 'withdraw' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}><ArrowUpCircle className="w-4 h-4" /> USDT Çek</button>
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-[11px] text-slate-400 block mb-1 font-medium">Tutar (USDT)</label>
-                    <input type="number" value={modalAmount} onChange={(e) => setModalAmount(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm font-bold text-white focus:outline-none" />
-                  </div>
-                  <div className="flex gap-1.5">
-                    {['10', '50', '100', '250'].map((preset) => (
-                      <button key={preset} onClick={() => setModalAmount(preset)} className="flex-1 py-1 bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 rounded-lg transition">+{preset}</button>
-                    ))}
-                  </div>
-                  {txSuccessMsg && <div className="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 p-2.5 rounded-xl"><CheckCircle2 className="w-4 h-4" /><span>{txSuccessMsg}</span></div>}
-                  <button onClick={handleBalanceTransaction} className={`w-full py-2.5 rounded-xl font-bold text-xs text-white shadow-lg transition active:scale-95 ${modalTab === 'deposit' ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/20' : 'bg-rose-600 hover:bg-rose-500 shadow-rose-600/20'}`}>
-                    {modalTab === 'deposit' ? 'Kontrata USDT Aktar' : 'Kontrattan Cüzdana Çek'}
-                  </button>
-                </div>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
-
-        {/* 6. TAM CÜZDAN LİSTESİ MODALI */}
-        <AnimatePresence>
-          {isWalletModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-slate-900 border border-slate-800 rounded-3xl p-5 w-full max-w-md shadow-2xl relative">
-                <button onClick={() => setIsWalletModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white transition"><X className="w-5 h-5" /></button>
-                <h3 className="font-bold text-base text-white mb-1 flex items-center gap-2"><Wallet className="w-5 h-5 text-indigo-400" /> {t.connectWallet}</h3>
-                <p className="text-[11px] text-slate-400 mb-3">Borsa veya Web3 cüzdanınızı seçin.</p>
-                
-                <div className="space-y-1.5 max-h-[60vh] overflow-y-auto pr-1">
-                  {/* Binance */}
-                  <button onClick={() => handleSelectWallet('binance')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-amber-950/20 border border-slate-800 rounded-2xl transition">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-black text-xs">🟡</div>
-                      <div className="text-left">
-                        <div className="text-xs font-bold text-slate-200">Binance Web3 Wallet</div>
-                        <div className="text-[9px] text-slate-500">Binance App & Extension</div>
-                      </div>
-                    </div>
-                    <span className="text-[9px] bg-amber-950 text-amber-300 px-1.5 py-0.5 rounded border border-amber-800/40">Popüler</span>
-                  </button>
-
-                  {/* OKX */}
-                  <button onClick={() => handleSelectWallet('okx')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-2xl transition">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-xl bg-slate-800 text-white flex items-center justify-center font-black text-xs">⬛</div>
-                      <div className="text-left">
-                        <div className="text-xs font-bold text-slate-200">OKX Web3 Wallet</div>
-                        <div className="text-[9px] text-slate-500">OKX App & Extension</div>
-                      </div>
-                    </div>
-                  </button>
-
-                  {/* Bybit / Bitget */}
-                  <button onClick={() => handleSelectWallet('bybit')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-orange-950/20 border border-slate-800 rounded-2xl transition">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center font-black text-xs">🟧</div>
-                      <div className="text-left">
-                        <div className="text-xs font-bold text-slate-200">Bybit / Bitget Wallet</div>
-                        <div className="text-[9px] text-slate-500">Web3 Cüzdanları</div>
-                      </div>
-                    </div>
-                  </button>
-
-                  {/* MetaMask */}
-                  <button onClick={() => handleSelectWallet('metamask')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-orange-950/20 border border-slate-800 rounded-2xl transition">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center font-black text-xs">🦊</div>
-                      <div className="text-left">
-                        <div className="text-xs font-bold text-slate-200">MetaMask</div>
-                        <div className="text-[9px] text-slate-500">EVM Cüzdanı</div>
-                      </div>
-                    </div>
-                  </button>
-
-                  {/* Trust Wallet */}
-                  <button onClick={() => handleSelectWallet('trust')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-sky-950/20 border border-slate-800 rounded-2xl transition">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-black text-xs">🛡️</div>
-                      <div className="text-left">
-                        <div className="text-xs font-bold text-slate-200">Trust Wallet</div>
-                        <div className="text-[9px] text-slate-500">Mobil & Browser</div>
-                      </div>
-                    </div>
-                  </button>
-
-                  {/* Coinbase Wallet */}
-                  <button onClick={() => handleSelectWallet('coinbase')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-blue-950/20 border border-slate-800 rounded-2xl transition">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center font-black text-xs">🔷</div>
-                      <div className="text-left">
-                        <div className="text-xs font-bold text-slate-200">Coinbase Wallet</div>
-                        <div className="text-[9px] text-slate-500">Web3 App</div>
-                      </div>
-                    </div>
-                  </button>
-
-                  {/* WalletConnect (QR / Universal) */}
-                  <button onClick={() => handleSelectWallet('walletconnect')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-cyan-950/20 border border-slate-800 rounded-2xl transition">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-black text-xs">🔗</div>
-                      <div className="text-left">
-                        <div className="text-xs font-bold text-slate-200">WalletConnect</div>
-                        <div className="text-[9px] text-slate-500">Mobil QR Kod / Diğer Cüzdanlar</div>
-                      </div>
-                    </div>
-                    <QrCode className="w-3.5 h-3.5 text-cyan-400" />
-                  </button>
-
-                  {/* Demo Cüzdan */}
-                  <button onClick={() => handleSelectWallet('demo')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-indigo-950/20 border border-slate-800 rounded-2xl transition">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-black text-xs">⚡</div>
-                      <div className="text-left">
-                        <div className="text-xs font-bold text-slate-200">Hızlı Demo Cüzdan</div>
-                        <div className="text-[9px] text-slate-500">Anında Test Et</div>
-                      </div>
-                    </div>
-                    <span className="text-[9px] bg-indigo-950 text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-800/40">Kolay</span>
-                  </button>
                 </div>
               </motion.div>
             </div>
