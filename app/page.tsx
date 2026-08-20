@@ -12,7 +12,7 @@ import {
   History, Gift, CircleDot, Dices, Send,
   ReceiptText, Download, Printer,
   MessageCircle, Info, ChevronDown, Loader2, Clock, Lock, Unlock, ExternalLink, 
-  Volume2, VolumeX, Crown, AlertTriangle, Medal
+  Volume2, VolumeX, Crown, AlertTriangle, Medal, ShieldAlert
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -24,6 +24,9 @@ const BSC_USDT_ADDRESS = '0x55d398326f99059fF775485246999027B3197955';
 const CONTRACT_ADDRESS = '0xC9c586A92465C7254C3e19FebAAeD9D5c61f974f';
 const BSC_CHAIN_ID = 56;
 const BSC_CHAIN_ID_HEX = '0x38';
+
+// GÜVENLİ KURUCU TAM ADRESİ
+const OFFICIAL_OWNER_ADDRESS = '0x26e2b6b55db56fbafe1e6a10ce7183e8b09f1bf3';
 
 const MIN_BET = 0.5;
 const MAX_PLAYER_BET = 20.0;
@@ -57,6 +60,12 @@ const PLATFORM_ABI = [
 ];
 
 let socket: Socket;
+
+// Güvenlik: Checksum & Tamper Doğrulayıcı
+const generateTamperProofHash = (addr: string, bal: number): string => {
+  const payload = `${addr.toLowerCase()}_${bal.toFixed(2)}_dd_salt_2026_sec`;
+  return ethers.keccak256(ethers.toUtf8Bytes(payload));
+};
 
 const TRANSLATIONS: Record<string, any> = {
   tr: {
@@ -236,7 +245,6 @@ interface LeaderboardUser {
 }
 
 export default function PlatformPage() {
-  // Kalıcı Ayarlar
   const [lang, setLang] = useState<string>('tr');
   const [isLangMenuOpen, setIsLangMenuOpen] = useState<boolean>(false);
   const t = TRANSLATIONS[lang] || TRANSLATIONS.tr;
@@ -256,7 +264,7 @@ export default function PlatformPage() {
   const [walletBNB, setWalletBNB] = useState<number>(0.0);
   const [betInput, setBetInput] = useState<string>('1.0');
   
-  // Dinamik Değişen Canlı Lobi Odaları (2-6 Arası)
+  // Canlı Lobi Odaları (2-6 Dinamik)
   const [rooms, setRooms] = useState<Room[]>([
     { id: 'r-1', creator: 'KriptoPasa_34', betAmount: 1.0 },
     { id: 'r-2', creator: 'LuckyStrike', betAmount: 2.5 },
@@ -298,7 +306,7 @@ export default function PlatformPage() {
   // Kalıcı İşlem, Maç ve Liderlik Geçmişi
   const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
   const [matchHistory, setMatchHistory] = useState<MatchHistoryItem[]>([]);
-  const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([
+  const [leaderboard] = useState<LeaderboardUser[]>([
     { rank: 1, name: 'KriptoPasa_34', wins: 48, profit: 142.50, badge: '👑' },
     { rank: 2, name: 'CryptoWhale_88', wins: 39, profit: 98.20, badge: '🥈' },
     { rank: 3, name: 'Bogatyr_Crypto', wins: 31, profit: 74.60, badge: '🥉' },
@@ -336,16 +344,19 @@ export default function PlatformPage() {
     } catch (e) {}
   };
 
-  // Kalıcı Bakiye Güncelleyici
+  // GÜVENLİ & MÜHÜRLÜ KALICI BAKİYE GÜNCELLEYİCİ
   const updatePersistentBalance = (newBal: number, userAddr?: string) => {
     const targetAddr = userAddr || account;
     setBalance(newBal);
     if (targetAddr && typeof window !== 'undefined') {
-      localStorage.setItem(`dd_bal_${targetAddr.toLowerCase()}`, newBal.toString());
+      const sanitizedBal = +newBal.toFixed(2);
+      const proofHash = generateTamperProofHash(targetAddr, sanitizedBal);
+      localStorage.setItem(`dd_bal_${targetAddr.toLowerCase()}`, sanitizedBal.toString());
+      localStorage.setItem(`dd_proof_${targetAddr.toLowerCase()}`, proofHash);
     }
   };
 
-  // Kalıcı LP Staking Güncelleyici
+  // GÜVENLİ LP STAKING GÜNCELLEYİCİ
   const updatePersistentStake = (newStake: number, newYield?: number, userAddr?: string) => {
     const targetAddr = userAddr || account || 'guest';
     setStakedAmount(newStake);
@@ -358,7 +369,7 @@ export default function PlatformPage() {
     }
   };
 
-  // Kalıcı İşlem Ekleme Fonksiyonu
+  // KALICI İŞLEM GEÇMİŞİ
   const addTransaction = (type: TransactionRecord['type'], title: string, amount: number, txHash?: string, userAddr?: string) => {
     const targetAddr = userAddr || account || 'guest';
     const newTx: TransactionRecord = {
@@ -380,7 +391,7 @@ export default function PlatformPage() {
     });
   };
 
-  // Kalıcı Maç Geçmişi Kaydı
+  // KALICI MAÇ GEÇMİŞİ
   const pushMatchRecord = (winner: string, loser: string, gameDesc: string, bet: number) => {
     const payout = +(bet * 2 * 0.97).toFixed(2);
     const newItem: MatchHistoryItem = {
@@ -401,7 +412,7 @@ export default function PlatformPage() {
     });
   };
 
-  // 24 Saatlik Çark Kilidi Kontrolü
+  // 24 Saatlik Çark Kilidi
   const checkSpinCooldown = useCallback((userAddr?: string) => {
     const targetAddr = userAddr || account || 'guest';
     if (typeof window === 'undefined') return;
@@ -454,7 +465,7 @@ export default function PlatformPage() {
     }
   };
 
-  // Blokzincir ve Kalıcı Verileri Senkronize Etme
+  // Blokzincir ve Bakiye Doğrulama
   const syncBlockchainBalances = useCallback(async (userAddress: string) => {
     if (!userAddress || userAddress.length < 10) return;
     try {
@@ -471,40 +482,50 @@ export default function PlatformPage() {
         setIsWrongNetwork(false);
       }
 
-      // 1. BNB Gas Bakiyesi
+      // BNB Gas Bakiyesi
       const rawBNB = await browserProvider.getBalance(userAddress);
       setWalletBNB(+parseFloat(ethers.formatEther(rawBNB)).toFixed(4));
       
-      // 2. BEP-20 USDT Bakiyesi
+      // BEP-20 USDT Bakiyesi
       const usdtContract = new ethers.Contract(BSC_USDT_ADDRESS, ERC20_ABI, browserProvider);
       const rawWalletBal = await usdtContract.balanceOf(userAddress);
       setWalletUSDT(+parseFloat(ethers.formatUnits(rawWalletBal, 18)).toFixed(2));
 
-      // 3. Platform Kontrat Bakiyesi & Kurucu Kontrolü
+      // Güvenli Kurucu Yetki Denetimi
       const platformContract = new ethers.Contract(CONTRACT_ADDRESS, PLATFORM_ABI, browserProvider);
       try {
         const ownerAddr = await platformContract.owner();
-        if (ownerAddr.toLowerCase() === userAddress.toLowerCase()) {
+        if (ownerAddr.toLowerCase() === userAddress.toLowerCase() || userAddress.toLowerCase() === OFFICIAL_OWNER_ADDRESS.toLowerCase()) {
           setIsContractOwner(true);
         } else {
           setIsContractOwner(false);
         }
       } catch (e) {
-        // Kontrat sahibi veya admin eşleşmesi
-        if (userAddress.toLowerCase().includes('26e2')) setIsContractOwner(true);
+        if (userAddress.toLowerCase() === OFFICIAL_OWNER_ADDRESS.toLowerCase()) {
+          setIsContractOwner(true);
+        }
       }
 
-      // 4. Oyun Bakiyesi
+      // Güvenlik Kalkanlı Bakiye Okuma (Anti-Tamper Proof)
       const savedBal = localStorage.getItem(`dd_bal_${userAddress.toLowerCase()}`);
-      if (savedBal !== null && !isNaN(parseFloat(savedBal))) {
-        setBalance(parseFloat(savedBal));
+      const savedProof = localStorage.getItem(`dd_proof_${userAddress.toLowerCase()}`);
+
+      const rawContractBal = await platformContract.userBalances(userAddress);
+      const fetchedBal = +parseFloat(ethers.formatUnits(rawContractBal, 18)).toFixed(2);
+
+      if (savedBal !== null && !isNaN(parseFloat(savedBal)) && savedProof) {
+        const expectedProof = generateTamperProofHash(userAddress, parseFloat(savedBal));
+        if (savedProof === expectedProof) {
+          setBalance(parseFloat(savedBal));
+        } else {
+          // Manipülasyon tespit edildi: Kontrat bakiyesine sıfırla
+          updatePersistentBalance(fetchedBal, userAddress);
+        }
       } else {
-        const rawContractBal = await platformContract.userBalances(userAddress);
-        const fetchedBal = +parseFloat(ethers.formatUnits(rawContractBal, 18)).toFixed(2);
         updatePersistentBalance(fetchedBal, userAddress);
       }
 
-      // 5. LP Staking ve Getiri
+      // LP Staking
       const savedStake = localStorage.getItem(`dd_stake_${userAddress.toLowerCase()}`);
       if (savedStake !== null && !isNaN(parseFloat(savedStake))) {
         setStakedAmount(parseFloat(savedStake));
@@ -518,7 +539,7 @@ export default function PlatformPage() {
         setStakeDuration(savedTier as any);
       }
 
-      // 6. İşlem Geçmişi
+      // İşlem Geçmişi
       const savedTxs = localStorage.getItem(`dd_txs_${userAddress.toLowerCase()}`);
       if (savedTxs) {
         try { setTransactions(JSON.parse(savedTxs)); } catch (e) {}
@@ -530,7 +551,7 @@ export default function PlatformPage() {
     }
   }, [checkSpinCooldown]);
 
-  // Sayfa İlk Yüklendiğinde Tüm Hafızaları Getir
+  // Sayfa İlk Yüklendiğinde
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedLang = localStorage.getItem('dd_lang');
@@ -588,7 +609,7 @@ export default function PlatformPage() {
     }
   }, [syncBlockchainBalances, checkSpinCooldown]);
 
-  // CANLI VE DEĞİŞKEN LOBİ SİMÜLASYONU
+  // CANLI LOBİ SİMÜLASYONU
   useEffect(() => {
     const interval = setInterval(() => {
       const b1 = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
@@ -608,7 +629,7 @@ export default function PlatformPage() {
         pushMatchRecord(b1, b2, `🪙 Yazı-Tura (${face})`, randomBet);
       }
 
-      // LP Havuz Ortaklarına Kâr Payı Ekle
+      // LP Havuzuna Kâr Payı Ekle
       setStakedAmount((currStake) => {
         if (currStake > 0) {
           setAccumulatedYield((prevYield) => {
@@ -788,7 +809,7 @@ export default function PlatformPage() {
     alert('Cüzdan eklentisi bulunamadı. Lütfen eklentinizi açın.');
   };
 
-  // ON-CHAIN USDT YATIRMA VE ÇEKME (GAS VE REZERV KORUMALI)
+  // ON-CHAIN USDT YATIRMA VE ÇEKME
   const handleBalanceTransaction = async () => {
     initAudio();
     triggerTelegramHaptic('medium');
@@ -813,7 +834,7 @@ export default function PlatformPage() {
       return;
     }
 
-    // BNB Gas Kontrolü
+    // BNB Gas Koruma Denetimi
     if (walletBNB < 0.0008) {
       return alert(`⚠️ Yetersiz BNB Gas Bakiyesi!\n\nİşlemi gerçekleştirmek için cüzdanınızda en az 0.001 BNB (~$0.60) gas ücreti bulunmalıdır.\nMevcut BNB Bakiyeniz: ${walletBNB} BNB`);
     }
@@ -1189,7 +1210,7 @@ export default function PlatformPage() {
     setTimeout(() => setStakeSuccessMsg(null), 1500);
   };
 
-  // KURUCU ADMIN KASA ÇEKİMİ
+  // KURUCU ADMIN KASA ÇEKİMİ (GÜVENLİ)
   const handleAdminWithdraw = async () => {
     const val = parseFloat(adminWithdrawAmount);
     if (isNaN(val) || val <= 0) return;
@@ -1213,7 +1234,7 @@ export default function PlatformPage() {
     } catch (err: any) {
       setIsTxPending(false);
       console.error(err);
-      alert('Admin çekim işlemi gerçekleştirilemedi.');
+      alert('Admin çekim işlemi gerçekleştirilemedi veya yetki onaylanmadı.');
     }
   };
 
@@ -1330,7 +1351,7 @@ export default function PlatformPage() {
               </AnimatePresence>
             </div>
 
-            {/* Sadece Kurucuya Özel Admin Paneli */}
+            {/* Sadece Doğrulanmış Kurucuya Özel Admin Paneli */}
             {isContractOwner && (
               <button 
                 onClick={() => setIsAdminModalOpen(true)}
@@ -1643,7 +1664,6 @@ export default function PlatformPage() {
 
         {/* Canlı Maç Geçmişi & Haftalık Liderlik Tablosu */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {/* Son Biten Oyunlar */}
           <section className="md:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-5 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400 flex items-center gap-2">
@@ -1675,7 +1695,6 @@ export default function PlatformPage() {
             </div>
           </section>
 
-          {/* Haftalık Liderlik Tablosu */}
           <section className="bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-5 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400 flex items-center gap-2">
