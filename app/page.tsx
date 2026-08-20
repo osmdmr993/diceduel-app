@@ -60,8 +60,9 @@ const PLATFORM_ABI = [
 
 let socket: Socket;
 
+// Güvenlik: Checksum & Tamper Doğrulayıcı
 const generateTamperProofHash = (addr: string, bal: number): string => {
-  const payload = `${addr.toLowerCase()}_${bal.toFixed(2)}_dd_salt_2026_sec`;
+  const payload = `${addr.toLowerCase()}_${bal.toFixed(2)}_dd_salt_2026_sec_shield`;
   return ethers.keccak256(ethers.toUtf8Bytes(payload));
 };
 
@@ -116,7 +117,8 @@ const TRANSLATIONS: Record<string, any> = {
     wrongNetwork: 'Lütfen cüzdanınızı BSC (BNB Chain) Ağına geçirin!',
     cashout: 'Nakit Çek',
     startMines: 'Mayın Tarlasını Başlat',
-    spinRoulette: 'Rulet Çarkını Çevir'
+    spinRoulette: 'Rulet Çarkını Çevir',
+    inGameLock: 'Oyun devam ederken para çekilemez!'
   },
   en: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -166,7 +168,8 @@ const TRANSLATIONS: Record<string, any> = {
     wrongNetwork: 'Please switch network to BSC (BNB Chain)!',
     cashout: 'Cash Out',
     startMines: 'Start Mines Game',
-    spinRoulette: 'Spin Roulette Wheel'
+    spinRoulette: 'Spin Roulette Wheel',
+    inGameLock: 'Cannot withdraw while game is active!'
   },
   ru: {
     hubTitle: 'DiceDuel Игровая Арена',
@@ -213,7 +216,11 @@ const TRANSLATIONS: Record<string, any> = {
     linkCopied: 'Ссылка скопирована!',
     shareTelegramWin: '🚀 Поделиться в Telegram',
     adminPanel: 'Админ Касса',
-    wrongNetwork: 'Пожалуйста, переключитесь на сеть BSC (BNB Chain)!'
+    wrongNetwork: 'Пожалуйста, переключитесь на сеть BSC (BNB Chain)!',
+    cashout: 'Забрать',
+    startMines: 'Начать Мины',
+    spinRoulette: 'Крутить Рулетку',
+    inGameLock: 'Нельзя вывести во время активной игры!'
   }
 };
 
@@ -270,11 +277,12 @@ export default function PlatformPage() {
   const [adminWithdrawAmount, setAdminWithdrawAmount] = useState<string>('10');
   const [isWrongNetwork, setIsWrongNetwork] = useState<boolean>(false);
 
-  // Bakiye Yönetimi
+  // Bakiye & Güvenlik Kilidi
   const [balance, setBalance] = useState<number>(0.0);
   const [walletUSDT, setWalletUSDT] = useState<number>(0.0);
   const [walletBNB, setWalletBNB] = useState<number>(0.0);
   const [betInput, setBetInput] = useState<string>('1.0');
+  const [isGameLocked, setIsGameLocked] = useState<boolean>(false); // Reentrancy & Double-spend Shield
   
   // Canlı Lobi Odaları (2-6 Dinamik)
   const [rooms, setRooms] = useState<Room[]>([
@@ -299,7 +307,7 @@ export default function PlatformPage() {
   const [rouletteChoice, setRouletteChoice] = useState<'RED' | 'BLACK' | 'GREEN'>('RED');
   const [rouletteResult, setRouletteResult] = useState<string | null>(null);
 
-  // ZIRHLI & HİLESİZ MAYIN TARLASI DURUMU (ZERO-KNOWLEDGE MINES)
+  // ZIRHLI MAYIN TARLASI (Zero-Knowledge Mines)
   const [minesActive, setMinesActive] = useState<boolean>(false);
   const [minesField, setMinesField] = useState<Array<{ id: number; revealed: boolean; state: 'hidden' | 'gem' | 'mine' }>>([]);
   const [revealedCount, setRevealedCount] = useState<number>(0);
@@ -341,6 +349,7 @@ export default function PlatformPage() {
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const rollSoundIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastActionTimeRef = useRef<number>(0);
 
   // Kasa / LP Staking
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -366,6 +375,14 @@ export default function PlatformPage() {
         else tg.HapticFeedback.impactOccurred(style);
       }
     } catch (e) {}
+  };
+
+  // Güvenli İstek Sınırlayıcı (Throttle / Anti-Spam)
+  const isRateLimited = (): boolean => {
+    const now = Date.now();
+    if (now - lastActionTimeRef.current < 400) return true;
+    lastActionTimeRef.current = now;
+    return false;
   };
 
   const updatePersistentBalance = (newBal: number, userAddr?: string) => {
@@ -674,7 +691,6 @@ export default function PlatformPage() {
     return () => clearInterval(interval);
   }, [account]);
 
-  // Ses Motoru
   const initAudio = () => {
     if (!audioCtxRef.current && typeof window !== 'undefined') {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
@@ -751,6 +767,7 @@ export default function PlatformPage() {
   };
 
   const changeTab = (tType: 'dice' | 'coinflip' | 'roulette' | 'mines') => {
+    if (isGameLocked) return alert(t.inGameLock);
     setActiveTab(tType);
     if (typeof window !== 'undefined') localStorage.setItem('dd_tab', tType);
     triggerTelegramHaptic('light');
@@ -823,8 +840,11 @@ export default function PlatformPage() {
     alert('Cüzdan eklentisi bulunamadı. Lütfen eklentinizi açın.');
   };
 
-  // ON-CHAIN USDT YATIRMA VE ÇEKME
+  // ON-CHAIN USDT YATIRMA VE ÇEKME (ZIRHLI GÜVENLİK KORUMASI)
   const handleBalanceTransaction = async () => {
+    if (isRateLimited()) return;
+    if (isGameLocked) return alert(t.inGameLock);
+
     initAudio();
     triggerTelegramHaptic('medium');
     const val = parseFloat(modalAmount);
@@ -914,11 +934,12 @@ export default function PlatformPage() {
     }
   };
 
-  // 1. ZAR DÜELLOSU
+  // 1. ZAR DÜELLOSU MOTORU
   const executeDiceDuel = (amount: number, opponentName: string) => {
     setIsWaitingMatch(false);
     setIsRolling(true);
     isRollingRef.current = true;
+    setIsGameLocked(true);
 
     if (rollSoundIntervalRef.current) clearInterval(rollSoundIntervalRef.current);
     rollSoundIntervalRef.current = setInterval(playClickSound, 110);
@@ -929,6 +950,7 @@ export default function PlatformPage() {
       if (rollSoundIntervalRef.current) clearInterval(rollSoundIntervalRef.current);
       isRollingRef.current = false;
       setIsRolling(false);
+      setIsGameLocked(false);
 
       const isPlayerWin = Math.random() < 0.40;
       let p1 = isPlayerWin ? Math.floor(Math.random() * 40) + 60 : Math.floor(Math.random() * 50) + 1;
@@ -960,6 +982,9 @@ export default function PlatformPage() {
   };
 
   const handleOpenRoom = () => {
+    if (isRateLimited()) return;
+    if (isGameLocked) return alert(t.inGameLock);
+
     const amount = parseFloat(betInput);
     if (isNaN(amount) || amount < MIN_BET) return alert(`Minimum bahis ${MIN_BET} USDT olmalıdır!`);
     if (amount > MAX_PLAYER_BET) return alert(`Maksimum bahis sınırı ${MAX_PLAYER_BET} USDT'dir!`);
@@ -968,6 +993,7 @@ export default function PlatformPage() {
     initAudio();
     triggerTelegramHaptic('heavy');
     currentBetRef.current = amount;
+    setIsGameLocked(true);
     const nBal = +(balance - amount).toFixed(2);
     updatePersistentBalance(nBal);
     
@@ -997,11 +1023,14 @@ export default function PlatformPage() {
   };
 
   const handleJoinRoom = (room: Room) => {
+    if (isRateLimited()) return;
+    if (isGameLocked) return alert(t.inGameLock);
     if (room.betAmount > balance) return alert('Yetersiz bakiye! Lütfen kasaya USDT yatırın.');
 
     initAudio();
     triggerTelegramHaptic('heavy');
     currentBetRef.current = room.betAmount;
+    setIsGameLocked(true);
     const nBal = +(balance - room.betAmount).toFixed(2);
     updatePersistentBalance(nBal);
     
@@ -1014,6 +1043,7 @@ export default function PlatformPage() {
     setIsWaitingMatch(false);
     setIsRolling(true);
     setCoinResult(null);
+    setIsGameLocked(true);
 
     if (rollSoundIntervalRef.current) clearInterval(rollSoundIntervalRef.current);
     rollSoundIntervalRef.current = setInterval(playClickSound, 100);
@@ -1023,6 +1053,7 @@ export default function PlatformPage() {
     setTimeout(() => {
       if (rollSoundIntervalRef.current) clearInterval(rollSoundIntervalRef.current);
       setIsRolling(false);
+      setIsGameLocked(false);
 
       const isPlayerWin = Math.random() < 0.40;
       let landed: 'YAZI' | 'TURA' = isPlayerWin ? coinChoice : (coinChoice === 'YAZI' ? 'TURA' : 'YAZI');
@@ -1054,6 +1085,9 @@ export default function PlatformPage() {
   };
 
   const handleStartCoinFlipDuel = () => {
+    if (isRateLimited()) return;
+    if (isGameLocked) return alert(t.inGameLock);
+
     const amount = parseFloat(betInput);
     if (isNaN(amount) || amount < MIN_BET) return alert(`Minimum bahis ${MIN_BET} USDT olmalıdır!`);
     if (amount > MAX_PLAYER_BET) return alert(`Maksimum bahis sınırı ${MAX_PLAYER_BET} USDT'dir!`);
@@ -1062,6 +1096,7 @@ export default function PlatformPage() {
     initAudio();
     triggerTelegramHaptic('heavy');
     currentBetRef.current = amount;
+    setIsGameLocked(true);
     const nBal = +(balance - amount).toFixed(2);
     updatePersistentBalance(nBal);
 
@@ -1090,6 +1125,9 @@ export default function PlatformPage() {
 
   // 3. KIRMIZI / SİYAH RULET MOTORU
   const handleStartRoulette = () => {
+    if (isRateLimited()) return;
+    if (isGameLocked) return alert(t.inGameLock);
+
     const amount = parseFloat(betInput);
     if (isNaN(amount) || amount < MIN_BET) return alert(`Minimum bahis ${MIN_BET} USDT olmalıdır!`);
     if (amount > MAX_PLAYER_BET) return alert(`Maksimum bahis sınırı ${MAX_PLAYER_BET} USDT'dir!`);
@@ -1098,6 +1136,7 @@ export default function PlatformPage() {
     initAudio();
     triggerTelegramHaptic('heavy');
     currentBetRef.current = amount;
+    setIsGameLocked(true);
     const nBal = +(balance - amount).toFixed(2);
     updatePersistentBalance(nBal);
 
@@ -1114,6 +1153,7 @@ export default function PlatformPage() {
     setTimeout(() => {
       if (rollSoundIntervalRef.current) clearInterval(rollSoundIntervalRef.current);
       setIsRolling(false);
+      setIsGameLocked(false);
 
       const isPlayerWin = Math.random() < 0.40;
       let landedColor: 'RED' | 'BLACK' | 'GREEN';
@@ -1154,6 +1194,9 @@ export default function PlatformPage() {
 
   // 4. ZIRHLI & HİLESİZ MAYIN TARLASI (ZERO-KNOWLEDGE ON-CLICK RNG)
   const handleStartMines = () => {
+    if (isRateLimited()) return;
+    if (isGameLocked) return alert(t.inGameLock);
+
     const amount = parseFloat(betInput);
     if (isNaN(amount) || amount < MIN_BET) return alert(`Minimum bahis ${MIN_BET} USDT olmalıdır!`);
     if (amount > MAX_PLAYER_BET) return alert(`Maksimum bahis sınırı ${MAX_PLAYER_BET} USDT'dir!`);
@@ -1162,10 +1205,11 @@ export default function PlatformPage() {
     initAudio();
     triggerTelegramHaptic('heavy');
     setMinesBetAmount(amount);
+    setIsGameLocked(true);
     const nBal = +(balance - amount).toFixed(2);
     updatePersistentBalance(nBal);
 
-    // Mayınlar hafızaya peşinen yazılmaz!
+    // Mayınlar belleğe peşinen yazılmaz!
     const cleanGrid = Array.from({ length: 25 }, (_, i) => ({
       id: i,
       revealed: false,
@@ -1180,6 +1224,7 @@ export default function PlatformPage() {
 
   const handleRevealTile = (index: number) => {
     if (!minesActive || minesGameOver || minesField[index].revealed) return;
+    if (isRateLimited()) return;
 
     initAudio();
     
@@ -1192,6 +1237,7 @@ export default function PlatformPage() {
       playLoseSound();
       setMinesGameOver(true);
       setMinesActive(false);
+      setIsGameLocked(false);
       
       setMinesField((prev) => prev.map((t, idx) => {
         if (idx === index) return { ...t, revealed: true, state: 'mine' };
@@ -1216,6 +1262,7 @@ export default function PlatformPage() {
 
   const handleCashoutMines = () => {
     if (!minesActive || revealedCount === 0) return;
+    if (isRateLimited()) return;
 
     const multiplier = MINES_MULTIPLIERS[Math.min(revealedCount - 1, MINES_MULTIPLIERS.length - 1)];
     const winPayout = +(minesBetAmount * multiplier).toFixed(2);
@@ -1230,12 +1277,15 @@ export default function PlatformPage() {
 
     setMinesActive(false);
     setMinesGameOver(true);
+    setIsGameLocked(false);
     setMinesField((prev) => prev.map((t) => ({ ...t, revealed: true, state: t.state === 'gem' ? 'gem' : Math.random() < 0.3 ? 'mine' : 'gem' })));
   };
 
   // 24 SAAT KORUMALI & 5 KADEMELİ GÜNLÜK ÇARK
   const handleSpinWheel = () => {
     if (!canSpin || isSpinning) return;
+    if (isRateLimited()) return;
+
     initAudio();
     triggerTelegramHaptic('medium');
     setIsSpinning(true);
@@ -1300,6 +1350,7 @@ export default function PlatformPage() {
 
   // LP STAKE EKLEME, ÇEKME VE KÂR PAYI ALMA
   const handleStakeAdd = () => {
+    if (isRateLimited()) return;
     const val = parseFloat(stakeInput);
     if (isNaN(val) || val <= 0 || val > balance) return alert('Yetersiz bakiye!');
     const nBal = +(balance - val).toFixed(2);
@@ -1319,6 +1370,7 @@ export default function PlatformPage() {
   };
 
   const handleUnstake = () => {
+    if (isRateLimited()) return;
     if (stakedAmount <= 0) return alert('Havuza kilitli USDT bulunmuyor!');
     const nBal = +(balance + stakedAmount).toFixed(2);
     const unstakedVal = stakedAmount;
@@ -1332,6 +1384,7 @@ export default function PlatformPage() {
   };
 
   const handleClaimYield = () => {
+    if (isRateLimited()) return;
     if (accumulatedYield <= 0) return;
     const nBal = +(balance + accumulatedYield).toFixed(2);
     const claimVal = accumulatedYield;
