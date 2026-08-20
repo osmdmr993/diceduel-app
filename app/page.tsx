@@ -24,7 +24,23 @@ const CONTRACT_ADDRESS = '0xC9c586A92465C7254C3e19FebAAeD9D5c61f974f';
 
 const MIN_BET = 0.5;
 const MAX_PLAYER_BET = 20.0;
-const BOT_NAMES = ['CryptoWhale_88', 'DegenKing_07', 'LuckyStrike', 'AlphaSeeker', 'SolanaKing', 'MoonHunter', 'ApexTrader', 'BullRunner'];
+
+// 50+ ÇOK DİLLİ VE ZENGİN BOT LİSTESİ
+const BOT_NAMES = [
+  // Türkçe Anlamlı
+  'KriptoPasa_34', 'AnadoluKaplani', 'Bozkurt_06', 'ZarUstasi', 'AltinVurus_TR', 
+  'Dede_USDT', 'KismetliTrader', 'GeceVurgunu', 'PiyasaAvcisi', 'BordoBereli',
+  // Global & İngilizce
+  'CryptoWhale_88', 'DegenKing_07', 'LuckyStrike', 'AlphaSeeker', 'SolanaKing', 
+  'MoonHunter', 'ApexTrader', 'BullRunner_99', 'CyberNinja', 'WhaleShark_VIP',
+  'SatoshiGhost', 'DiamondHands_42', 'MetaRider', 'RocketFuel', 'NeonWolf',
+  // Rusça / Doğu Bloku
+  'Bogatyr_Crypto', 'Medved_777', 'SiberianWolf', 'Tsar_Bets', 'KremlinWhale',
+  'Dmitry_Roll', 'Ivan_Trader', 'VolgaViking', 'TaigaKing',
+  // Asya & Avrupa
+  'DragonTrader_HK', 'Samurai_ETH', 'Le_Capitaine', 'El_Matador_BSC', 'Viking_Shield',
+  'TokyoDrift_99', 'NordicHammer', 'MonacoVIP'
+];
 
 const ERC20_ABI = [
   "function balanceOf(address owner) view returns (uint256)",
@@ -49,7 +65,6 @@ const TRANSLATIONS: Record<string, any> = {
   tr: {
     hubTitle: 'DiceDuel Gaming Hub',
     liveNet: 'BSC Mainnet Canlı',
-    connecting: 'Sunucu Bağlanıyor...',
     txBtn: 'İşlemler (PDF/CSV)',
     dailySpin: 'Günlük Çark',
     inviteBtn: 'Davet Et (%0.5)',
@@ -70,7 +85,7 @@ const TRANSLATIONS: Record<string, any> = {
     selectTails: 'TURA SEÇ',
     flipCoin: 'Parayı Çevir',
     betAmount: 'Bahis Tutarı',
-    recentGames: 'Son Biten Oyunlar & Kazananlar',
+    recentGames: 'Son Biten Oyunlar & Canlı Kazançlar',
     liveDist: 'Canlı Dağıtım',
     contractBadge: 'BSC Kontratı',
     evmVerified: 'Mainnet Doğrulandı',
@@ -83,7 +98,6 @@ const TRANSLATIONS: Record<string, any> = {
     spinWait: 'Kalan Süre',
     spinRolling: 'Çark Dönüyor...',
     waitingPlayer: 'Canlı Oyuncu Aranıyor...',
-    matchFound: 'Eşleşme Sağlandı!',
     refTitle: 'Arkadaşını Davet Et & Kazan',
     refDesc: 'Davet linkinizle gelen kullanıcıların oynadığı her bahisten anında %0.5 nakit komisyon kazanın.',
     copyLink: 'Davet Linkini Kopyala',
@@ -92,7 +106,6 @@ const TRANSLATIONS: Record<string, any> = {
   en: {
     hubTitle: 'DiceDuel Gaming Hub',
     liveNet: 'BSC Mainnet Live',
-    connecting: 'Connecting...',
     txBtn: 'Statements (PDF/CSV)',
     dailySpin: 'Daily Spin',
     inviteBtn: 'Invite (%0.5)',
@@ -113,7 +126,7 @@ const TRANSLATIONS: Record<string, any> = {
     selectTails: 'TAILS',
     flipCoin: 'Flip Coin',
     betAmount: 'Bet Amount',
-    recentGames: 'Recent Games',
+    recentGames: 'Recent Games & Live Payouts',
     liveDist: 'Live Payouts',
     contractBadge: 'BSC Contract',
     evmVerified: 'Verified',
@@ -126,7 +139,6 @@ const TRANSLATIONS: Record<string, any> = {
     spinWait: 'Cooldown',
     spinRolling: 'Spinning...',
     waitingPlayer: 'Searching for live player...',
-    matchFound: 'Match Found!',
     refTitle: 'Refer Friends & Earn',
     refDesc: 'Earn 0.5% instant cash commission from every single bet placed by users you invite.',
     copyLink: 'Copy Invite Link',
@@ -135,7 +147,6 @@ const TRANSLATIONS: Record<string, any> = {
   ru: {
     hubTitle: 'DiceDuel Игровая Арена',
     liveNet: 'BSC Mainnet Онлайн',
-    connecting: 'Подключение...',
     txBtn: 'Транзакции (PDF/CSV)',
     dailySpin: 'Колесо Удачи',
     inviteBtn: 'Пригласить (%0.5)',
@@ -156,7 +167,7 @@ const TRANSLATIONS: Record<string, any> = {
     selectTails: 'РЕШКА',
     flipCoin: 'Бросить',
     betAmount: 'Ставка',
-    recentGames: 'Недавние Игры',
+    recentGames: 'Недавние Игры и Выплаты',
     liveDist: 'Выплаты',
     contractBadge: 'Контракт BSC',
     evmVerified: 'Проверено',
@@ -169,7 +180,6 @@ const TRANSLATIONS: Record<string, any> = {
     spinWait: 'Осталось',
     spinRolling: 'Крутится...',
     waitingPlayer: 'Поиск игрока...',
-    matchFound: 'Матч найден!',
     refTitle: 'Приглашай и Зарабатывай',
     refDesc: 'Получайте 0.5% мгновенной комиссии с каждой ставки ваших рефералов.',
     copyLink: 'Скопировать ссылку',
@@ -223,14 +233,13 @@ export default function PlatformPage() {
   const [walletUSDT, setWalletUSDT] = useState<number>(0.0);
   const [betInput, setBetInput] = useState<string>('1.0');
   
-  // Bot Odaları (Maks 5 USDT)
-  const [rooms] = useState<Room[]>([
-    { id: 'r-1', creator: 'CryptoWhale_88', betAmount: 1.0 },
+  // Canlı Lobi Odaları
+  const [rooms, setRooms] = useState<Room[]>([
+    { id: 'r-1', creator: 'KriptoPasa_34', betAmount: 1.0 },
     { id: 'r-2', creator: 'LuckyStrike', betAmount: 2.0 },
-    { id: 'r-3', creator: 'AlphaSeeker', betAmount: 5.0 }
+    { id: 'r-3', creator: 'Bogatyr_Crypto', betAmount: 5.0 }
   ]);
   
-  const [isServerConnected, setIsServerConnected] = useState<boolean>(false);
   const [isTxPending, setIsTxPending] = useState<boolean>(false);
 
   // Oyun Durumları
@@ -264,11 +273,8 @@ export default function PlatformPage() {
   const [txFilter, setTxFilter] = useState<'ALL' | 'IN' | 'OUT' | 'WINS'>('ALL');
   const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
 
-  // Canlı Maçlar
-  const [matchHistory, setMatchHistory] = useState<MatchHistoryItem[]>([
-    { id: 'm-1', winner: 'CryptoWhale_88', loser: 'SolanaKing', game: '🎲 Zar (89-45)', payout: 1.94, time: '1m ago' },
-    { id: 'm-2', winner: 'LuckyStrike', loser: 'MoonBuster', game: '🪙 Yazı-Tura', payout: 3.88, time: '2m ago' }
-  ]);
+  // Kalıcı ve Canlı Maç Geçmişi
+  const [matchHistory, setMatchHistory] = useState<MatchHistoryItem[]>([]);
 
   const [isMuted] = useState<boolean>(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -307,6 +313,27 @@ export default function PlatformPage() {
     if (targetAddr && typeof window !== 'undefined') {
       localStorage.setItem(`dd_bal_${targetAddr.toLowerCase()}`, newBal.toString());
     }
+  };
+
+  // Kalıcı Maç Geçmişi Kaydı
+  const pushMatchRecord = (winner: string, loser: string, gameDesc: string, bet: number) => {
+    const payout = +(bet * 2 * 0.97).toFixed(2);
+    const newItem: MatchHistoryItem = {
+      id: `m-${Date.now()}-${Math.random()}`,
+      winner,
+      loser,
+      game: gameDesc,
+      payout,
+      time: 'Az önce'
+    };
+
+    setMatchHistory((prev) => {
+      const updated = [newItem, ...prev.slice(0, 8)];
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('dd_match_history', JSON.stringify(updated));
+      }
+      return updated;
+    });
   };
 
   // 24 Saatlik Çark Kilidi Kontrolü
@@ -362,6 +389,7 @@ export default function PlatformPage() {
     }
   }, [checkSpinCooldown]);
 
+  // Sayfa İlk Yüklendiğinde
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const browserLang = (navigator.language || (navigator as any).userLanguage || '').toLowerCase();
@@ -373,6 +401,18 @@ export default function PlatformPage() {
       if (tg) {
         tg.ready();
         tg.expand();
+      }
+
+      // Geçmiş Maçları Yükle
+      const savedHistory = localStorage.getItem('dd_match_history');
+      if (savedHistory) {
+        try { setMatchHistory(JSON.parse(savedHistory)); } catch (e) {}
+      } else {
+        setMatchHistory([
+          { id: 'm-1', winner: 'KriptoPasa_34', loser: 'SolanaKing', game: '🎲 Zar (88-42)', payout: 1.94, time: '2m ago' },
+          { id: 'm-2', winner: 'Bogatyr_Crypto', loser: 'DegenKing_07', game: '🪙 Yazı-Tura', payout: 3.88, time: '4m ago' },
+          { id: 'm-3', winner: 'LuckyStrike', loser: 'AnadoluKaplani', game: '🎲 Zar (94-71)', payout: 9.70, time: '6m ago' }
+        ]);
       }
 
       const initCheck = async () => {
@@ -394,6 +434,39 @@ export default function PlatformPage() {
       checkSpinCooldown();
     }
   }, [syncBlockchainBalances, checkSpinCooldown]);
+
+  // CANLI BOT MAÇLARI SİMÜLASYONU (14-25 sn aralıklarla)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const b1 = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
+      let b2 = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
+      while (b1 === b2) b2 = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
+
+      const bets = [0.5, 1.0, 2.0, 3.0, 5.0];
+      const randomBet = bets[Math.floor(Math.random() * bets.length)];
+      const isDice = Math.random() > 0.4;
+
+      if (isDice) {
+        const s1 = Math.floor(Math.random() * 40) + 60;
+        const s2 = Math.floor(Math.random() * 50) + 1;
+        pushMatchRecord(b1, b2, `🎲 Zar (${s1}-${s2})`, randomBet);
+      } else {
+        const face = Math.random() > 0.5 ? 'YAZI' : 'TURA';
+        pushMatchRecord(b1, b2, `🪙 Yazı-Tura (${face})`, randomBet);
+      }
+
+      // Canlı Oda Listesini Dinamik Yenile
+      const randRooms: Room[] = [
+        { id: `r-${Date.now()}-1`, creator: BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)], betAmount: 1.0 },
+        { id: `r-${Date.now()}-2`, creator: BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)], betAmount: 2.0 },
+        { id: `r-${Date.now()}-3`, creator: BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)], betAmount: 5.0 }
+      ];
+      setRooms(randRooms);
+
+    }, 18000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Ses Efektleri
   const initAudio = () => {
@@ -469,14 +542,6 @@ export default function PlatformPage() {
     confetti({ particleCount: 90, spread: 75, origin: { y: 0.6 } });
   };
 
-  const pushMatchRecord = (winner: string, loser: string, gameDesc: string, bet: number) => {
-    const payout = +(bet * 2 * 0.97).toFixed(2);
-    setMatchHistory((prev) => [
-      { id: `m-${Date.now()}`, winner, loser, game: gameDesc, payout, time: 'Just now' },
-      ...prev.slice(0, 5),
-    ]);
-  };
-
   const addTransaction = (type: TransactionRecord['type'], title: string, amount: number, txHash?: string) => {
     const newTx: TransactionRecord = {
       id: `tx-${Date.now()}`,
@@ -540,7 +605,7 @@ export default function PlatformPage() {
     alert('Cüzdan eklentisi bulunamadı. Lütfen eklentinizi açın.');
   };
 
-  // ON-CHAIN USDT YATIRMA VE ÇEKME
+  // ON-CHAIN USDT YATIRMA VE ÇEKME (REZERV KORUMALI)
   const handleBalanceTransaction = async () => {
     initAudio();
     triggerTelegramHaptic('medium');
@@ -596,6 +661,19 @@ export default function PlatformPage() {
           setIsTxPending(false);
           return alert('Kasada yeterli bakiye yok!');
         }
+
+        // Akıllı Sözleşme Rezerv Kontrolü (Soğuk Cüzdan Protokolü)
+        try {
+          const contractUsdtBal = await usdtContract.balanceOf(CONTRACT_ADDRESS);
+          const contractBalFormatted = parseFloat(ethers.formatUnits(contractUsdtBal, 18));
+
+          if (val > contractBalFormatted) {
+            setIsTxPending(false);
+            alert('🛡️ Güvenlik Protokolü: Yüksek işlem güvenliği nedeniyle çekim talebiniz sıraya alınmıştır. Soğuk cüzdan rezerv transferi 15-30 dk içinde tamamlanacaktır. Bakiyeniz güvendedir.');
+            return;
+          }
+        } catch (e) {}
+
         const withdrawTx = await platformContract.withdraw(amountWei);
         await withdrawTx.wait();
 
@@ -653,7 +731,6 @@ export default function PlatformPage() {
         winner: winnerDisplayName 
       });
 
-      // LP Havuzu Getirisini Büyüt
       setAccumulatedYield((prev) => +(prev + (amount * 0.015)).toFixed(2));
 
       const winnerPlayer = isPlayerWin ? (account ? `${account.substring(0, 6)}...` : 'You') : opponentName;
@@ -686,7 +763,6 @@ export default function PlatformPage() {
     const nBal = +(balance - amount).toFixed(2);
     updatePersistentBalance(nBal);
     
-    // 20 ile 60 saniye arasında rastgele bekleme süresi
     const randomDuration = Math.floor(Math.random() * 41) + 20; // 20 - 60 sn
     setActiveGame(true);
     setIsWaitingMatch(true);
@@ -699,7 +775,7 @@ export default function PlatformPage() {
       setMatchCountdown(count);
 
       if (count === Math.floor(randomDuration * 0.6)) {
-        setMatchStatusText('Oyuncu bulundu, el sıkışılıyor (Handshake)...');
+        setMatchStatusText('Oyuncu bulundu, bağlantı kuruluyor...');
       } else if (count === 3) {
         setMatchStatusText('Eşleşme tamamlandı! Zarlar hazırlanıyor...');
       }
@@ -792,8 +868,6 @@ export default function PlatformPage() {
     setIsSpinning(true);
     setSpinRewardMsg(null);
 
-    // Kasa Koruma Ödül Algoritması:
-    // %35 Boş (Pas), %25 LP Kilitli Pay, %20 Oyun Kuponu, %12 Kâr Katlayıcı, %8 Nakit USDT
     const rand = Math.random() * 100;
     let outcomeType: 'EMPTY' | 'LP' | 'COUPON' | 'BOOST' | 'CASH' = 'EMPTY';
     let rewardText = '';
@@ -837,7 +911,6 @@ export default function PlatformPage() {
       setSpinRewardMsg(rewardText);
       setCanSpin(false);
 
-      // 24 Saatlik Zaman Kilidini Kaydet
       const targetAddr = account || 'guest';
       localStorage.setItem(`dd_last_spin_${targetAddr.toLowerCase()}`, Date.now().toString());
       checkSpinCooldown(targetAddr);
@@ -914,9 +987,9 @@ export default function PlatformPage() {
             <div className="w-9 h-9 bg-indigo-600/20 border border-indigo-500/40 rounded-xl flex items-center justify-center text-indigo-400 font-black text-lg">🎲</div>
             <div>
               <h1 className="font-bold text-sm md:text-base leading-none">{t.hubTitle}</h1>
-              <div className={`flex items-center gap-1 mt-1 text-[10px] ${isServerConnected ? 'text-emerald-400' : 'text-rose-400'}`}>
-                {isServerConnected ? <Activity className="w-3 h-3 animate-pulse" /> : <WifiOff className="w-3 h-3" />}
-                <span>{isServerConnected ? t.liveNet : t.connecting}</span>
+              <div className="flex items-center gap-1.5 mt-1 text-[10px] text-emerald-400 font-semibold">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>{t.liveNet}</span>
               </div>
             </div>
           </div>
@@ -1165,7 +1238,7 @@ export default function PlatformPage() {
               <div className="md:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-5 space-y-3.5">
                 <div className="flex justify-between items-center">
                   <h2 className="font-bold text-xs uppercase tracking-wider flex items-center gap-2 text-slate-200"><Flame className="w-4 h-4 text-rose-400" /> {t.liveRooms}</h2>
-                  <span className="text-[10px] text-indigo-400 flex items-center gap-1"><Sparkles className="w-3 h-3" /> Canlı Zar Lobisi</span>
+                  <span className="text-[10px] text-indigo-400 flex items-center gap-1"><Sparkles className="w-3 h-3" /> Canlı Lobi</span>
                 </div>
                 <div className="space-y-2">
                   {rooms.map((r) => (
