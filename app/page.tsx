@@ -11,7 +11,7 @@ import {
   Coins, FileCode2, Share2, Copy,
   History, Gift, CircleDot, Dices, Send,
   ReceiptText, Download, Printer,
-  MessageCircle, Info, ChevronDown, Loader2, Clock, Lock, Unlock
+  MessageCircle, Info, ChevronDown, Loader2, Clock, Lock, Unlock, Zap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -24,7 +24,7 @@ const CONTRACT_ADDRESS = '0xC9c586A92465C7254C3e19FebAAeD9D5c61f974f';
 
 const MIN_BET = 0.5;
 const MAX_PLAYER_BET = 20.0;
-const BOT_NAMES = ['CryptoWhale_88', 'DegenKing_07', 'LuckyStrike', 'AlphaSeeker', 'SolanaKing', 'MoonHunter'];
+const BOT_NAMES = ['CryptoWhale_88', 'DegenKing_07', 'LuckyStrike', 'AlphaSeeker', 'SolanaKing', 'MoonHunter', 'ApexTrader', 'BullRunner'];
 
 const ERC20_ABI = [
   "function balanceOf(address owner) view returns (uint256)",
@@ -78,11 +78,11 @@ const TRANSLATIONS: Record<string, any> = {
     stakeTitle: 'Kasa Ortaklığı & LP Staking',
     poolGuideTitle: 'Kasa Havuzu (LP) Nasıl Çalışır?',
     poolGuideText: 'Platformda oynanan tüm oyunlardan %3 ev komisyonu kesilir. Bu komisyonun yarısından fazlası havuz ortaklarına anlık kâr payı olarak dağıtılır.',
-    dailySpinNote: 'Her 24 saatte bir ücretsiz çevirin!',
+    dailySpinNote: 'Her 24 saatte bir şansınızı deneyin!',
     spinBtn: 'Ücretsiz Çevir',
-    spinWait: 'Yarın Tekrar Gel (24 Saat)',
+    spinWait: 'Kalan Süre',
     spinRolling: 'Çark Dönüyor...',
-    waitingPlayer: 'Gerçek Oyuncu Aranıyor...',
+    waitingPlayer: 'Canlı Oyuncu Aranıyor...',
     matchFound: 'Eşleşme Sağlandı!',
     refTitle: 'Arkadaşını Davet Et & Kazan',
     refDesc: 'Davet linkinizle gelen kullanıcıların oynadığı her bahisten anında %0.5 nakit komisyon kazanın.',
@@ -121,11 +121,11 @@ const TRANSLATIONS: Record<string, any> = {
     stakeTitle: 'House Bankroll & LP Staking',
     poolGuideTitle: 'How House LP Works?',
     poolGuideText: 'A 3% house edge is collected from all games. More than half is distributed directly to liquidity providers as yield.',
-    dailySpinNote: 'Spin for free every 24 hours!',
+    dailySpinNote: 'Test your luck every 24 hours!',
     spinBtn: 'Free Spin',
-    spinWait: 'Come Back in 24h',
+    spinWait: 'Cooldown',
     spinRolling: 'Spinning...',
-    waitingPlayer: 'Searching for player...',
+    waitingPlayer: 'Searching for live player...',
     matchFound: 'Match Found!',
     refTitle: 'Refer Friends & Earn',
     refDesc: 'Earn 0.5% instant cash commission from every single bet placed by users you invite.',
@@ -166,7 +166,7 @@ const TRANSLATIONS: Record<string, any> = {
     poolGuideText: 'С каждой игры взимается комиссия 3%. Большая ее часть распределяется между поставщиками ликвидности.',
     dailySpinNote: 'Крутите каждые 24 часа!',
     spinBtn: 'Крутить',
-    spinWait: 'Через 24ч',
+    spinWait: 'Осталось',
     spinRolling: 'Крутится...',
     waitingPlayer: 'Поиск игрока...',
     matchFound: 'Матч найден!',
@@ -224,7 +224,7 @@ export default function PlatformPage() {
   const [betInput, setBetInput] = useState<string>('1.0');
   
   // Bot Odaları (Maks 5 USDT)
-  const [rooms, setRooms] = useState<Room[]>([
+  const [rooms] = useState<Room[]>([
     { id: 'r-1', creator: 'CryptoWhale_88', betAmount: 1.0 },
     { id: 'r-2', creator: 'LuckyStrike', betAmount: 2.0 },
     { id: 'r-3', creator: 'AlphaSeeker', betAmount: 5.0 }
@@ -238,6 +238,7 @@ export default function PlatformPage() {
   const [isRolling, setIsRolling] = useState<boolean>(false);
   const [isWaitingMatch, setIsWaitingMatch] = useState<boolean>(false);
   const [matchCountdown, setMatchCountdown] = useState<number>(30);
+  const [matchStatusText, setMatchStatusText] = useState<string>('Ağda eşleşme aranıyor...');
 
   const [coinChoice, setCoinChoice] = useState<'YAZI' | 'TURA'>('YAZI');
   const [coinResult, setCoinResult] = useState<'YAZI' | 'TURA' | null>(null);
@@ -248,10 +249,11 @@ export default function PlatformPage() {
     winner: string | null;
   }>({ opponent: 'Kasa', p1Score: null, p2Score: null, winner: null });
 
-  // Çark & Modallar
+  // 24 Saat Korumalı Günlük Çark
   const [isSpinModalOpen, setIsSpinModalOpen] = useState<boolean>(false);
   const [isSpinning, setIsSpinning] = useState<boolean>(false);
-  const [spinReward, setSpinReward] = useState<number | null>(null);
+  const [spinRewardMsg, setSpinRewardMsg] = useState<string | null>(null);
+  const [spinCooldownText, setSpinCooldownText] = useState<string>('');
   const [canSpin, setCanSpin] = useState<boolean>(true);
   
   const [isReferralModalOpen, setIsReferralModalOpen] = useState<boolean>(false);
@@ -268,7 +270,7 @@ export default function PlatformPage() {
     { id: 'm-2', winner: 'LuckyStrike', loser: 'MoonBuster', game: '🪙 Yazı-Tura', payout: 3.88, time: '2m ago' }
   ]);
 
-  const [isMuted, setIsMuted] = useState<boolean>(false);
+  const [isMuted] = useState<boolean>(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const rollSoundIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -307,7 +309,29 @@ export default function PlatformPage() {
     }
   };
 
-  // Blokzincir Bakiyelerini Çekme
+  // 24 Saatlik Çark Kilidi Kontrolü
+  const checkSpinCooldown = useCallback((userAddr?: string) => {
+    const targetAddr = userAddr || account || 'guest';
+    if (typeof window === 'undefined') return;
+    
+    const lastSpinTime = localStorage.getItem(`dd_last_spin_${targetAddr.toLowerCase()}`);
+    if (lastSpinTime) {
+      const diffMs = Date.now() - parseInt(lastSpinTime, 10);
+      const cooldownMs = 24 * 60 * 60 * 1000;
+      if (diffMs < cooldownMs) {
+        setCanSpin(false);
+        const remainingMs = cooldownMs - diffMs;
+        const hours = Math.floor(remainingMs / (1000 * 60 * 60));
+        const mins = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+        setSpinCooldownText(`${hours}s ${mins}dk`);
+        return;
+      }
+    }
+    setCanSpin(true);
+    setSpinCooldownText('');
+  }, [account]);
+
+  // Blokzincir Bakiyelerini Senkronize Etme
   const syncBlockchainBalances = useCallback(async (userAddress: string) => {
     if (!userAddress || userAddress.length < 10) return;
     try {
@@ -331,10 +355,12 @@ export default function PlatformPage() {
         const fetchedBal = +parseFloat(ethers.formatUnits(rawContractBal, 18)).toFixed(2);
         updatePersistentBalance(fetchedBal, userAddress);
       }
+
+      checkSpinCooldown(userAddress);
     } catch (err) {
       console.error('Bakiye senkronizasyon hatası:', err);
     }
-  }, []);
+  }, [checkSpinCooldown]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -365,8 +391,9 @@ export default function PlatformPage() {
         }
       };
       initCheck();
+      checkSpinCooldown();
     }
-  }, [syncBlockchainBalances]);
+  }, [syncBlockchainBalances, checkSpinCooldown]);
 
   // Ses Efektleri
   const initAudio = () => {
@@ -475,6 +502,7 @@ export default function PlatformPage() {
       setAccount(demoAddr);
       setIsDemoWallet(true);
       updatePersistentBalance(100.0, demoAddr);
+      checkSpinCooldown(demoAddr);
       return;
     }
 
@@ -645,7 +673,7 @@ export default function PlatformPage() {
     }, 4000);
   };
 
-  // ODA AÇMA & 30 SANİYE OYUNCU BEKLEME AKIŞI
+  // ODA AÇMA & 20-60 SANİYE DİNAMİK EŞLEŞME MOTORU
   const handleOpenRoom = () => {
     const amount = parseFloat(betInput);
     if (isNaN(amount) || amount < MIN_BET) return alert(`Minimum bahis ${MIN_BET} USDT olmalıdır!`);
@@ -658,14 +686,24 @@ export default function PlatformPage() {
     const nBal = +(balance - amount).toFixed(2);
     updatePersistentBalance(nBal);
     
+    // 20 ile 60 saniye arasında rastgele bekleme süresi
+    const randomDuration = Math.floor(Math.random() * 41) + 20; // 20 - 60 sn
     setActiveGame(true);
     setIsWaitingMatch(true);
-    setMatchCountdown(30);
+    setMatchCountdown(randomDuration);
+    setMatchStatusText('Ağda benzer bahisli canlı oyuncu aranıyor...');
 
-    let count = 30;
+    let count = randomDuration;
     const interval = setInterval(() => {
       count--;
       setMatchCountdown(count);
+
+      if (count === Math.floor(randomDuration * 0.6)) {
+        setMatchStatusText('Oyuncu bulundu, el sıkışılıyor (Handshake)...');
+      } else if (count === 3) {
+        setMatchStatusText('Eşleşme tamamlandı! Zarlar hazırlanıyor...');
+      }
+
       if (count <= 0) {
         clearInterval(interval);
         const randomBot = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
@@ -674,7 +712,7 @@ export default function PlatformPage() {
     }, 1000);
   };
 
-  // MEVCUT BOT ODASINA KATILMA
+  // MEVCUT ODAYA KATILMA
   const handleJoinRoom = (room: Room) => {
     if (room.betAmount > balance) return alert('Yetersiz bakiye! Lütfen kasaya USDT yatırın.');
 
@@ -746,20 +784,46 @@ export default function PlatformPage() {
     }, 3500);
   };
 
-  // Günlük Çark
+  // 24 SAAT KORUMALI & 5 KADEMELİ GÜNLÜK ÇARK
   const handleSpinWheel = () => {
     if (!canSpin || isSpinning) return;
     initAudio();
     triggerTelegramHaptic('medium');
     setIsSpinning(true);
+    setSpinRewardMsg(null);
 
+    // Kasa Koruma Ödül Algoritması:
+    // %35 Boş (Pas), %25 LP Kilitli Pay, %20 Oyun Kuponu, %12 Kâr Katlayıcı, %8 Nakit USDT
     const rand = Math.random() * 100;
-    let chosen = 0.05;
-    if (rand < 45) chosen = 0.05;
-    else if (rand < 80) chosen = 0.10;
-    else if (rand < 95) chosen = 0.25;
-    else if (rand < 99) chosen = 0.50;
-    else chosen = 1.00;
+    let outcomeType: 'EMPTY' | 'LP' | 'COUPON' | 'BOOST' | 'CASH' = 'EMPTY';
+    let rewardText = '';
+
+    if (rand < 35) {
+      outcomeType = 'EMPTY';
+      rewardText = '❌ Pas! Şansını yarın tekrar dene.';
+    } else if (rand < 60) {
+      outcomeType = 'LP';
+      rewardText = '💎 +0.50 USDT Kasa LP Payı Kazandın!';
+      setStakedAmount((prev) => +(prev + 0.50).toFixed(2));
+      addTransaction('SPIN', 'LP Havuz Payı Bonusu', 0.50);
+    } else if (rand < 80) {
+      outcomeType = 'COUPON';
+      rewardText = '🎟️ +0.50 USDT Oyun Bonusu Eklendi!';
+      const nBal = +(balance + 0.50).toFixed(2);
+      updatePersistentBalance(nBal);
+      addTransaction('SPIN', '0.50 USDT Oyun Kuponu', 0.50);
+    } else if (rand < 92) {
+      outcomeType = 'BOOST';
+      rewardText = '📈 24 Saatlik %1.5 Ekstra Komisyon İndirimi Aktif!';
+      addTransaction('SPIN', 'VIP Kâr Katlayıcı', 0.00);
+    } else {
+      outcomeType = 'CASH';
+      const cashVal = Math.random() > 0.5 ? 0.25 : 0.10;
+      rewardText = `💰 +${cashVal.toFixed(2)} USDT Nakit Bakiye!`;
+      const nBal = +(balance + cashVal).toFixed(2);
+      updatePersistentBalance(nBal);
+      addTransaction('SPIN', `Nakit Çark Ödülü`, cashVal);
+    }
 
     let ticks = 0;
     const tickInterval = setInterval(() => {
@@ -770,13 +834,20 @@ export default function PlatformPage() {
 
     setTimeout(() => {
       setIsSpinning(false);
-      setSpinReward(chosen);
-      const nBal = +(balance + chosen).toFixed(2);
-      updatePersistentBalance(nBal);
+      setSpinRewardMsg(rewardText);
       setCanSpin(false);
-      triggerConfetti();
-      playWinSound();
-      addTransaction('SPIN', 'Günlük Çark Ödülü', chosen);
+
+      // 24 Saatlik Zaman Kilidini Kaydet
+      const targetAddr = account || 'guest';
+      localStorage.setItem(`dd_last_spin_${targetAddr.toLowerCase()}`, Date.now().toString());
+      checkSpinCooldown(targetAddr);
+
+      if (outcomeType !== 'EMPTY') {
+        triggerConfetti();
+        playWinSound();
+      } else {
+        playLoseSound();
+      }
     }, 3500);
   };
 
@@ -913,14 +984,14 @@ export default function PlatformPage() {
               <span className="hidden sm:inline">{t.txBtn}</span>
             </button>
 
-            {/* Günlük Çark */}
+            {/* 24 Saat Korumalı Günlük Çark */}
             <button 
               onClick={() => { setIsSpinModalOpen(true); triggerTelegramHaptic('medium'); }}
               className="flex items-center gap-1.5 px-2.5 py-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-xl text-xs font-bold text-amber-400 transition active:scale-95 shadow-sm"
             >
               <Gift className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">{t.dailySpin}</span>
-              {canSpin && <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>}
+              {canSpin ? <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span> : <span className="text-[9px] text-slate-400">({spinCooldownText})</span>}
             </button>
 
             {/* Canlı Destek */}
@@ -998,7 +1069,8 @@ export default function PlatformPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-base text-white">{t.waitingPlayer}</h3>
-                  <p className="text-xs text-slate-400 mt-1">Eşleşme için kalan süre: <span className="text-amber-400 font-bold">{matchCountdown}s</span></p>
+                  <p className="text-xs text-indigo-400 font-semibold mt-1">{matchStatusText}</p>
+                  <p className="text-[11px] text-slate-400 mt-2">Maksimum bekleme süresi: <span className="text-amber-400 font-bold">{matchCountdown}s</span></p>
                 </div>
               </div>
             ) : (
@@ -1411,23 +1483,30 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 5. Günlük Çark Modalı */}
+        {/* 5. 24 Saat Korumalı Günlük Çark Modalı */}
         <AnimatePresence>
           {isSpinModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-slate-900 border border-slate-800 rounded-3xl p-5 w-full max-w-sm shadow-2xl relative text-center">
                 <button onClick={() => setIsSpinModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white transition"><X className="w-5 h-5" /></button>
                 <h3 className="font-bold text-base text-white mb-0.5 flex items-center justify-center gap-2"><Gift className="w-4 h-4 text-amber-400" /> {t.dailySpin}</h3>
-                <p className="text-[11px] text-slate-400 mb-4">{t.dailySpinNote}</p>
+                <p className="text-[11px] text-slate-400 mb-3">{t.dailySpinNote}</p>
+
                 <div className="flex justify-center my-3">
                   <motion.div animate={isSpinning ? { rotate: [0, 1440] } : {}} transition={{ duration: 3.5, ease: "easeOut" }} className="w-32 h-32 rounded-full border-4 border-amber-500 bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-950 flex items-center justify-center text-3xl font-black shadow-2xl relative">
                     🎁
                     <div className="absolute top-0 w-2.5 h-2.5 bg-amber-400 rotate-45 -translate-y-1"></div>
                   </motion.div>
                 </div>
-                {spinReward && <div className="p-2.5 bg-emerald-950/60 border border-emerald-800/60 rounded-xl my-2 text-emerald-300 font-bold text-xs flex items-center justify-center gap-1.5"><Sparkles className="w-4 h-4 text-amber-400" /> +{spinReward.toFixed(2)} USDT!</div>}
+
+                {spinRewardMsg && (
+                  <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-xl my-2 text-amber-300 font-bold text-xs flex items-center justify-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-amber-400" /> {spinRewardMsg}
+                  </div>
+                )}
+
                 <button onClick={handleSpinWheel} disabled={!canSpin || isSpinning} className="w-full mt-2 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs rounded-xl transition shadow-lg disabled:opacity-40">
-                  {isSpinning ? t.spinRolling : canSpin ? t.spinBtn : t.spinWait}
+                  {isSpinning ? t.spinRolling : canSpin ? t.spinBtn : `${t.spinWait}: ${spinCooldownText}`}
                 </button>
               </motion.div>
             </div>
