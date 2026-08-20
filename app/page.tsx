@@ -274,7 +274,7 @@ export default function PlatformPage() {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const rollSoundIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Kasa / LP Staking
+  // Kasa / LP Staking (Tam Kalıcı Hafıza)
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [modalTab, setModalTab] = useState<'deposit' | 'withdraw'>('deposit');
   const [modalAmount, setModalAmount] = useState<string>('1.0');
@@ -306,6 +306,19 @@ export default function PlatformPage() {
     setBalance(newBal);
     if (targetAddr && typeof window !== 'undefined') {
       localStorage.setItem(`dd_bal_${targetAddr.toLowerCase()}`, newBal.toString());
+    }
+  };
+
+  // Kalıcı LP Staking Güncelleyici
+  const updatePersistentStake = (newStake: number, newYield?: number, userAddr?: string) => {
+    const targetAddr = userAddr || account || 'guest';
+    setStakedAmount(newStake);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`dd_stake_${targetAddr.toLowerCase()}`, newStake.toString());
+      if (newYield !== undefined) {
+        setAccumulatedYield(newYield);
+        localStorage.setItem(`dd_yield_${targetAddr.toLowerCase()}`, newYield.toString());
+      }
     }
   };
 
@@ -374,7 +387,7 @@ export default function PlatformPage() {
     setSpinCooldownText('');
   }, [account]);
 
-  // Blokzincir Bakiyelerini Senkronize Etme & İşlem Geçmişini Yükleme
+  // Blokzincir ve Kalıcı Verileri Senkronize Etme
   const syncBlockchainBalances = useCallback(async (userAddress: string) => {
     if (!userAddress || userAddress.length < 10) return;
     try {
@@ -388,7 +401,7 @@ export default function PlatformPage() {
       const rawWalletBal = await usdtContract.balanceOf(userAddress);
       setWalletUSDT(+parseFloat(ethers.formatUnits(rawWalletBal, 18)).toFixed(2));
 
-      // Hafızadaki kazançlı bakiyeyi kontrol et
+      // 1. Oyun Bakiyesi
       const savedBal = localStorage.getItem(`dd_bal_${userAddress.toLowerCase()}`);
       if (savedBal !== null && !isNaN(parseFloat(savedBal))) {
         setBalance(parseFloat(savedBal));
@@ -399,7 +412,21 @@ export default function PlatformPage() {
         updatePersistentBalance(fetchedBal, userAddress);
       }
 
-      // Kullanıcıya özel işlem geçmişini yükle
+      // 2. LP Staking ve Getiri Hafızası
+      const savedStake = localStorage.getItem(`dd_stake_${userAddress.toLowerCase()}`);
+      if (savedStake !== null && !isNaN(parseFloat(savedStake))) {
+        setStakedAmount(parseFloat(savedStake));
+      }
+      const savedYield = localStorage.getItem(`dd_yield_${userAddress.toLowerCase()}`);
+      if (savedYield !== null && !isNaN(parseFloat(savedYield))) {
+        setAccumulatedYield(parseFloat(savedYield));
+      }
+      const savedTier = localStorage.getItem(`dd_stake_tier_${userAddress.toLowerCase()}`);
+      if (savedTier) {
+        setStakeDuration(savedTier as any);
+      }
+
+      // 3. İşlem Geçmişi
       const savedTxs = localStorage.getItem(`dd_txs_${userAddress.toLowerCase()}`);
       if (savedTxs) {
         try { setTransactions(JSON.parse(savedTxs)); } catch (e) {}
@@ -477,6 +504,21 @@ export default function PlatformPage() {
         pushMatchRecord(b1, b2, `🪙 Yazı-Tura (${face})`, randomBet);
       }
 
+      // Her bot maçında LP havuz ortaklarına otomatik kâr payı ekle
+      setStakedAmount((currStake) => {
+        if (currStake > 0) {
+          setAccumulatedYield((prevYield) => {
+            const newY = +(prevYield + (randomBet * 0.015)).toFixed(2);
+            if (typeof window !== 'undefined') {
+              const targetAddr = account || 'guest';
+              localStorage.setItem(`dd_yield_${targetAddr.toLowerCase()}`, newY.toString());
+            }
+            return newY;
+          });
+        }
+        return currStake;
+      });
+
       const randRooms: Room[] = [
         { id: `r-${Date.now()}-1`, creator: BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)], betAmount: 1.0 },
         { id: `r-${Date.now()}-2`, creator: BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)], betAmount: 2.0 },
@@ -487,7 +529,7 @@ export default function PlatformPage() {
     }, 18000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [account]);
 
   // Ses Efektleri
   const initAudio = () => {
@@ -739,7 +781,11 @@ export default function PlatformPage() {
         winner: winnerDisplayName 
       });
 
-      setAccumulatedYield((prev) => +(prev + (amount * 0.015)).toFixed(2));
+      // LP Ortaklarına Kâr Payı Ekle ve Kaydet
+      if (stakedAmount > 0) {
+        const newY = +(accumulatedYield + (amount * 0.015)).toFixed(2);
+        updatePersistentStake(stakedAmount, newY);
+      }
 
       const winnerPlayer = isPlayerWin ? (account ? `${account.substring(0, 6)}...` : 'You') : opponentName;
       const loserPlayer = isPlayerWin ? opponentName : (account ? `${account.substring(0, 6)}...` : 'You');
@@ -771,7 +817,7 @@ export default function PlatformPage() {
     const nBal = +(balance - amount).toFixed(2);
     updatePersistentBalance(nBal);
     
-    const randomDuration = Math.floor(Math.random() * 41) + 20; // 20 - 60 sn
+    const randomDuration = Math.floor(Math.random() * 41) + 20;
     setActiveGame(true);
     setIsWaitingMatch(true);
     setMatchCountdown(randomDuration);
@@ -849,7 +895,10 @@ export default function PlatformPage() {
       const winnerName = isPlayerWin ? (lang === 'tr' ? 'Sen' : 'You') : houseName;
       setGameResult({ opponent: houseName, p1Score: coinChoice, p2Score: landed, winner: winnerName });
 
-      setAccumulatedYield((prev) => +(prev + (amount * 0.015)).toFixed(2));
+      if (stakedAmount > 0) {
+        const newY = +(accumulatedYield + (amount * 0.015)).toFixed(2);
+        updatePersistentStake(stakedAmount, newY);
+      }
 
       const winnerPlayer = isPlayerWin ? (account ? `${account.substring(0, 6)}...` : 'You') : houseName;
       const loserPlayer = isPlayerWin ? houseName : (account ? `${account.substring(0, 6)}...` : 'You');
@@ -886,7 +935,8 @@ export default function PlatformPage() {
     } else if (rand < 60) {
       outcomeType = 'LP';
       rewardText = '💎 +0.50 USDT Kasa LP Payı Kazandın!';
-      setStakedAmount((prev) => +(prev + 0.50).toFixed(2));
+      const nStake = +(stakedAmount + 0.50).toFixed(2);
+      updatePersistentStake(nStake);
       addTransaction('SPIN', 'LP Havuz Payı Bonusu', 0.50);
     } else if (rand < 80) {
       outcomeType = 'COUPON';
@@ -932,25 +982,49 @@ export default function PlatformPage() {
     }, 3500);
   };
 
-  // LP Stake Ekleme & Kâr Çekme
+  // LP STAKE EKLEME, ÇEKME VE KÂR PAYI ALMA (TAM KALICI)
   const handleStakeAdd = () => {
     const val = parseFloat(stakeInput);
     if (isNaN(val) || val <= 0 || val > balance) return alert('Yetersiz bakiye!');
     const nBal = +(balance - val).toFixed(2);
+    const nStake = +(stakedAmount + val).toFixed(2);
+
     updatePersistentBalance(nBal);
-    setStakedAmount((prev) => +(prev + val).toFixed(2));
+    updatePersistentStake(nStake);
+
+    if (typeof window !== 'undefined') {
+      const targetAddr = account || 'guest';
+      localStorage.setItem(`dd_stake_tier_${targetAddr.toLowerCase()}`, stakeDuration);
+    }
+
     setStakeSuccessMsg(`+${val} USDT Havuza Kilitlendi (${stakeDuration.toUpperCase()})!`);
     addTransaction('WITHDRAW', `LP Havuzu Kilidi (${stakeDuration})`, val);
+    setTimeout(() => setStakeSuccessMsg(null), 1500);
+  };
+
+  const handleUnstake = () => {
+    if (stakedAmount <= 0) return alert('Havuza kilitli USDT bulunmuyor!');
+    const nBal = +(balance + stakedAmount).toFixed(2);
+    const unstakedVal = stakedAmount;
+
+    updatePersistentBalance(nBal);
+    updatePersistentStake(0.0);
+
+    setStakeSuccessMsg(`+${unstakedVal.toFixed(2)} USDT Havuzdan Kasaya Çekildi!`);
+    addTransaction('DEPOSIT', `LP Havuz Kilidi Açma`, unstakedVal);
     setTimeout(() => setStakeSuccessMsg(null), 1500);
   };
 
   const handleClaimYield = () => {
     if (accumulatedYield <= 0) return;
     const nBal = +(balance + accumulatedYield).toFixed(2);
+    const claimVal = accumulatedYield;
+
     updatePersistentBalance(nBal);
-    setStakeSuccessMsg(`+${accumulatedYield.toFixed(2)} USDT Kasa Payı Çekildi!`);
-    addTransaction('REF_COMMISSION', 'Kasa Komisyon Payı', +accumulatedYield.toFixed(2));
-    setAccumulatedYield(0);
+    updatePersistentStake(stakedAmount, 0.0);
+
+    setStakeSuccessMsg(`+${claimVal.toFixed(2)} USDT Kasa Payı Çekildi!`);
+    addTransaction('REF_COMMISSION', 'Kasa Komisyon Payı', claimVal);
     setTimeout(() => setStakeSuccessMsg(null), 1500);
   };
 
@@ -1053,6 +1127,7 @@ export default function PlatformPage() {
             >
               <Coins className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">LP Havuzu</span>
+              {stakedAmount > 0 && <span className="text-[10px] bg-emerald-950 text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-800">{stakedAmount.toFixed(1)} USDT</span>}
               {accumulatedYield > 0 && <span className="text-[10px] font-black text-amber-400">+{accumulatedYield.toFixed(2)}</span>}
             </button>
 
@@ -1421,7 +1496,7 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 2. Gelişmiş LP Staking Modalı */}
+        {/* 2. Gelişmiş LP Staking Modalı (Kalıcı ve Tam Donanımlı) */}
         <AnimatePresence>
           {isStakeModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
@@ -1465,9 +1540,16 @@ export default function PlatformPage() {
                   </div>
                 </div>
 
-                <button onClick={handleClaimYield} disabled={accumulatedYield <= 0} className="w-full py-2 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition disabled:opacity-40">
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" /> Biriken Komisyon Payını Çek ({accumulatedYield.toFixed(2)} USDT)
-                </button>
+                <div className="flex gap-2">
+                  <button onClick={handleClaimYield} disabled={accumulatedYield <= 0} className="flex-1 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition disabled:opacity-40">
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-400" /> Kâr Payını Çek ({accumulatedYield.toFixed(2)})
+                  </button>
+                  {stakedAmount > 0 && (
+                    <button onClick={handleUnstake} className="px-3 py-2 bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/40 text-rose-300 rounded-xl text-xs font-bold transition">
+                      Kilidi Aç
+                    </button>
+                  )}
+                </div>
 
                 <div className="space-y-2 pt-2 border-t border-slate-800">
                   <label className="text-[11px] text-slate-300 font-bold block">Havuza Ortak Ol (USDT Kitle)</label>
@@ -1629,7 +1711,7 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 7. İşlemler Geçmişi (PDF & CSV Kalıcı Liste) */}
+        {/* 7. İşlemler Geçmişi (PDF & CSV) */}
         <AnimatePresence>
           {isTxModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
