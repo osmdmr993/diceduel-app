@@ -1,3 +1,4 @@
+import { TRANSLATIONS, LANG_OPTIONS } from './translations';
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
