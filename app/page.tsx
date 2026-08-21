@@ -12,7 +12,7 @@ import {
   History, Gift, CircleDot, Dices, Send,
   ReceiptText, Download, Printer,
   MessageCircle, Info, ChevronDown, Loader2, Clock, Lock, Unlock, ExternalLink, 
-  Volume2, VolumeX, Crown, AlertTriangle, Medal, Bomb, Gem, Play, ShieldAlert, Timer
+  Volume2, VolumeX, Crown, AlertTriangle, Medal, Bomb, Gem, Play, ShieldAlert, Timer, Users
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -195,7 +195,10 @@ const TRANSLATIONS: Record<string, any> = {
     maxBetLabel: 'Maximaler Einsatz',
     withdrawPendingAlert: 'Sicherheitsprotokoll: Alle Auszahlungen unterliegen einer manuellen Prüfung. Ihre Anfrage wurde empfangen und wird innerhalb von 24 Stunden an Ihr Wallet überwiesen.',
     pendingStatus: 'Ausstehend',
-    walletRequiredForSpin: 'Bitte verbinden Sie zuerst Ihr Wallet, um am Glücksrad teilzunehmen!'
+    walletRequiredForSpin: 'Bitte verbinden Sie zuerst Ihr Wallet, um am Glücksrad teilzunehmen!',
+    refStatsTotalInvites: 'Eingeladene Freunde',
+    refStatsTotalEarned: 'Gesamtprovision',
+    refBonusNotice: '⚠️ Bedingung: Beide Parteien müssen ihre Wallets verbinden, um den Bonus (+0.50 USDT) zu aktivieren.'
   },
   en: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -310,7 +313,10 @@ const TRANSLATIONS: Record<string, any> = {
     maxBetLabel: 'Max Bet',
     withdrawPendingAlert: 'Security Protocol: All withdrawals are subject to a manual review process. Your request has been received and will be transferred to your wallet within 24 hours.',
     pendingStatus: 'Pending',
-    walletRequiredForSpin: 'Please connect your wallet first before spinning the wheel!'
+    walletRequiredForSpin: 'Please connect your wallet first before spinning the wheel!',
+    refStatsTotalInvites: 'Invited Friends',
+    refStatsTotalEarned: 'Total Commission',
+    refBonusNotice: '⚠️ Condition: Both parties must connect their wallets to unlock and claim the bonus (+0.50 USDT).'
   },
   es: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -425,7 +431,10 @@ const TRANSLATIONS: Record<string, any> = {
     maxBetLabel: 'Apuesta Máxima',
     withdrawPendingAlert: 'Protocolo de Seguridad: Todos los retiros están sujetos a un proceso de revisión manual. Su solicitud ha sido recibida y será transferida en 24 horas.',
     pendingStatus: 'Pendiente',
-    walletRequiredForSpin: '¡Por favor, conecta tu wallet antes de girar la ruleta!'
+    walletRequiredForSpin: '¡Por favor, conecta tu wallet antes de girar la ruleta!',
+    refStatsTotalInvites: 'Amigos invitados',
+    refStatsTotalEarned: 'Comisión total',
+    refBonusNotice: '⚠️ Condición: Ambas partes deben conectar sus wallets para desbloquear y reclamar el bono (+0.50 USDT).'
   },
   fr: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -540,7 +549,10 @@ const TRANSLATIONS: Record<string, any> = {
     maxBetLabel: 'Mise Maximale',
     withdrawPendingAlert: 'Protocole de sécurité : Tous les retraits sont soumis à un examen manuel. Votre demande a été reçue et sera traitée dans les 24 heures.',
     pendingStatus: 'En attente',
-    walletRequiredForSpin: 'Veuillez connecter votre portefeuille avant de faire tourner la roue !'
+    walletRequiredForSpin: 'Veuillez connecter votre portefeuille avant de faire tourner la roue !',
+    refStatsTotalInvites: 'Amis invités',
+    refStatsTotalEarned: 'Commission totale',
+    refBonusNotice: '⚠️ Condition : Les deux parties doivent connecter leurs portefeuilles pour débloquer le bonus (+0.50 USDT).'
   },
   nl: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -655,7 +667,10 @@ const TRANSLATIONS: Record<string, any> = {
     maxBetLabel: 'Maximale Inzet',
     withdrawPendingAlert: 'Beveiligingsprotocol: Alle opnames worden handmatig gecontroleerd. Uw aanvraag is ontvangen en wordt binnen 24 uur overgemaakt.',
     pendingStatus: 'In afwachting',
-    walletRequiredForSpin: 'Verbind eerst uw portemonnee voordat u aan het rad draait!'
+    walletRequiredForSpin: 'Verbind eerst uw portemonnee voordat u aan het rad draait!',
+    refStatsTotalInvites: 'Genodigde vrienden',
+    refStatsTotalEarned: 'Totale commissie',
+    refBonusNotice: '⚠️ Voorwaarde: Beide partijen moeten their portefeuilles verbinden om de bonus (+0.50 USDT) te claimen.'
   },
   ru: {
     hubTitle: 'DiceDuel Игровая Арена',
@@ -765,7 +780,10 @@ const TRANSLATIONS: Record<string, any> = {
     maxBetLabel: 'Макс. ставка',
     withdrawPendingAlert: 'Протокол безопасности: Все выводы проверяются вручную. Ваша заявка получена и будет обработана в течение 24 часов.',
     pendingStatus: 'В ожидании',
-    walletRequiredForSpin: 'Пожалуйста, подключите кошелек перед вращением колеса!'
+    walletRequiredForSpin: 'Пожалуйста, подключите кошелек перед вращением колеса!',
+    refStatsTotalInvites: 'Приглашенные друзья',
+    refStatsTotalEarned: 'Общая комиссия',
+    refBonusNotice: '⚠️ Условие: Обе стороны должны подключить кошельки для получения бонуса (+0.50 USDT).'
   },
   tr: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -855,7 +873,7 @@ const TRANSLATIONS: Record<string, any> = {
     claimYieldBtn: 'Kâr Payını Çek',
     unlockBtn: 'Kilidi Aç',
     joinPoolLabel: 'Havuza Ortak Ol (USDT Kitle)',
-    becomePartnerBtn: 'Ortak Ol',
+    becomePartnerBtn: 'Word Partner',
     inviteLinkTitle: 'Özel Davet Bağlantınız:',
     selectWalletTitle: 'BSC Mainnet cüzdanınızı seçin:',
     binanceWalletDesc: 'Binance App & Extension',
@@ -880,7 +898,10 @@ const TRANSLATIONS: Record<string, any> = {
     maxBetLabel: 'Maksimum Bahis',
     withdrawPendingAlert: 'Güvenlik Protokolü: Tüm çekim işlemleri manuel onay sürecine tabidir. Talebiniz alınmış olup, 24 saat içerisinde cüzdanınıza aktarılacaktır.',
     pendingStatus: 'Bekliyor',
-    walletRequiredForSpin: 'Lütfen çarkı çevirmeden önce cüzdanınızı bağlayın!'
+    walletRequiredForSpin: 'Lütfen çarkı çevirmeden önce cüzdanınızı bağlayın!',
+    refStatsTotalInvites: 'Davet Edilen Arkadaş',
+    refStatsTotalEarned: 'Toplam Komisyon',
+    refBonusNotice: '⚠️ Şart: Bonusu (+0.50 USDT) aktif edebilmek için hem davet edenin hem de gelen arkadaşın cüzdanını bağlaması zorunludur.'
   }
 };
 
@@ -990,6 +1011,8 @@ export default function PlatformPage() {
    
   const [isReferralModalOpen, setIsReferralModalOpen] = useState<boolean>(false);
   const [refCopied, setRefCopied] = useState<boolean>(false);
+  const [totalInvites, setTotalInvites] = useState<number>(0);
+  const [totalRefEarnings, setTotalRefEarnings] = useState<number>(0.0);
 
   const [isSupportModalOpen, setIsSupportModalOpen] = useState<boolean>(false);
   const [isTxModalOpen, setIsTxModalOpen] = useState<boolean>(false);
@@ -1253,6 +1276,37 @@ export default function PlatformPage() {
       }
 
       updatePersistentBalance(currentBal, userAddress);
+
+      // REFERANS / INVITE KONTROLÜ (Cüzdan bağlandığında ödül aktifleşir)
+      if (typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const refParam = urlParams.get('ref');
+        const claimedRef = localStorage.getItem(`dd_ref_claimed_${userAddress.toLowerCase()}`);
+
+        if (refParam && !claimedRef && refParam.toLowerCase() !== userAddress.toLowerCase()) {
+          // Davet edilen kişi cüzdanını bağladı, +0.50 USDT hoş geldin bonusu ver
+          currentBal += 0.50;
+          updatePersistentBalance(currentBal, userAddress);
+          addTransaction('REF_COMMISSION', 'Hoş Geldin Davet Bonusu', 0.50, undefined, userAddress);
+          localStorage.setItem(`dd_ref_claimed_${userAddress.toLowerCase()}`, 'true');
+
+          // Davet eden kişinin istatistiklerini güncelle (Simülasyon / Yerel Sayaç)
+          const inviterKey = `dd_invites_${refParam.toLowerCase()}`;
+          const currentInvites = parseInt(localStorage.getItem(inviterKey) || '0', 10) + 1;
+          localStorage.setItem(inviterKey, currentInvites.toString());
+
+          const inviterEarningsKey = `dd_ref_earnings_${refParam.toLowerCase()}`;
+          const currentEarnings = parseFloat(localStorage.getItem(inviterEarningsKey) || '0.0') + 0.50;
+          localStorage.setItem(inviterEarningsKey, currentEarnings.toString());
+        }
+
+        // Kullanıcının kendi davet istatistiklerini yükle
+        const myInvites = localStorage.getItem(`dd_invites_${userAddress.toLowerCase()}`);
+        if (myInvites) setTotalInvites(parseInt(myInvites, 10));
+
+        const myEarnings = localStorage.getItem(`dd_ref_earnings_${userAddress.toLowerCase()}`);
+        if (myEarnings) setTotalRefEarnings(parseFloat(myEarnings));
+      }
 
       const savedStake = localStorage.getItem(`dd_stake_${userAddress.toLowerCase()}`);
       if (savedStake !== null && !isNaN(parseFloat(savedStake))) {
@@ -2163,11 +2217,11 @@ export default function PlatformPage() {
   };
 
   const handleCopyRef = () => {
-    if (balance < 0.5 && transactions.length === 0) {
-      alert(t.sybilError);
+    if (!account) {
+      alert(lang === 'tr' ? 'Lütfen önce cüzdanınızı bağlayın!' : 'Please connect your wallet first!');
       return;
     }
-    const refLink = `https://diceduel.fun?ref=${account || '0x26e2'}`;
+    const refLink = `https://diceduel.fun?ref=${account}`;
     navigator.clipboard.writeText(refLink);
     setRefCopied(true);
     triggerTelegramHaptic('success');
@@ -2279,6 +2333,7 @@ export default function PlatformPage() {
             >
               <Share2 className="w-3.5 h-3.5 text-purple-400" />
               <span className="hidden sm:inline">{t.inviteBtn}</span>
+              {totalInvites > 0 && <span className="text-[10px] bg-purple-950 text-purple-300 px-1.5 py-0.5 rounded border border-purple-800">{totalInvites}</span>}
             </button>
 
             <button 
@@ -2958,7 +3013,7 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 4. Arkadaşını Davet Et Modalı */}
+        {/* 4. Arkadaşını Davet Et Modalı & İstatistikler */}
         <AnimatePresence>
           {isReferralModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
@@ -2968,10 +3023,26 @@ export default function PlatformPage() {
                   
                 <p className="text-xs text-slate-300 leading-relaxed">{t.refDesc}</p>
 
+                {/* Referans İstatistik Kutuları */}
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div className="p-3 bg-slate-950 border border-slate-800 rounded-2xl">
+                    <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><Users className="w-3 h-3 text-purple-400" /> {t.refStatsTotalInvites}</span>
+                    <span className="text-sm font-black text-purple-300">{totalInvites} {lang === 'tr' ? 'Kişi' : 'Users'}</span>
+                  </div>
+                  <div className="p-3 bg-slate-950 border border-slate-800 rounded-2xl">
+                    <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><Coins className="w-3 h-3 text-emerald-400" /> {t.refStatsTotalEarned}</span>
+                    <span className="text-sm font-black text-emerald-400">+{totalRefEarnings.toFixed(2)} USDT</span>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-amber-950/30 border border-amber-800/40 rounded-2xl text-[11px] text-amber-200 leading-relaxed">
+                  {t.refBonusNotice}
+                </div>
+
                 <div className="p-3 bg-slate-950 border border-slate-800 rounded-2xl space-y-2">
                   <span className="text-[10px] text-slate-500 block font-semibold">{t.inviteLinkTitle}</span>
                   <div className="flex items-center justify-between bg-slate-900 px-3 py-2 rounded-xl border border-slate-800 text-xs font-mono text-purple-300 truncate">
-                    <span className="truncate">https://diceduel.fun?ref={account ? `${account.substring(0, 6)}...` : '0x26e2'}</span>
+                    <span className="truncate">https://diceduel.fun?ref={account || '0x26e2'}</span>
                   </div>
                   <button onClick={handleCopyRef} className="w-full py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition">
                     <Copy className="w-3.5 h-3.5" /> {refCopied ? t.linkCopied : t.copyLink}
