@@ -1,18 +1,17 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { io, Socket } from 'socket.io-client';
 import confetti from 'canvas-confetti';
 import { ethers } from 'ethers';
 import { 
-  Wallet, Swords, Plus, Flame, TrendingUp, ShieldCheck, 
-  Trophy, RotateCcw, Activity, WifiOff, Sparkles, 
+  Wallet, Swords, Plus, Flame, ShieldCheck, 
+  Trophy, RotateCcw, Sparkles, 
   ArrowDownCircle, ArrowUpCircle, X, CheckCircle2, LogOut,
   Coins, FileCode2, Share2, Copy,
   History, Gift, CircleDot, Dices, Send,
   ReceiptText, Download, Printer,
   MessageCircle, Info, ChevronDown, Loader2, Clock, Lock, Unlock, ExternalLink, 
-  Volume2, VolumeX, Crown, AlertTriangle, Medal, Bomb, Gem, Play, ShieldAlert
+  Volume2, VolumeX, Crown, AlertTriangle, Medal, Bomb, Play, ShieldAlert
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -556,7 +555,6 @@ export default function PlatformPage() {
   const [isRolling, setIsRolling] = useState<boolean>(false);
   const [isWaitingMatch, setIsWaitingMatch] = useState<boolean>(false);
   const [matchCountdown, setMatchCountdown] = useState<number>(30);
-  const [matchStatusText, setMatchStatusText] = useState<string>('');
 
   const [coinChoice, setCoinChoice] = useState<'YAZI' | 'TURA'>('YAZI');
   const [coinResult, setCoinResult] = useState<'YAZI' | 'TURA' | null>(null);
@@ -1262,7 +1260,6 @@ export default function PlatformPage() {
     setActiveGame(true);
     setIsWaitingMatch(true);
     setMatchCountdown(randomDuration);
-    setMatchStatusText(t.waitingPlayer);
 
     let count = randomDuration;
     const interval = setInterval(() => {
@@ -1358,7 +1355,6 @@ export default function PlatformPage() {
     setActiveGame(true);
     setIsWaitingMatch(true);
     setMatchCountdown(randomDuration);
-    setMatchStatusText(t.waitingPlayer);
 
     let count = randomDuration;
     const interval = setInterval(() => {
