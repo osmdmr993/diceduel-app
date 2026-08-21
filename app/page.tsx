@@ -472,7 +472,7 @@ const TRANSLATIONS: Record<string, any> = {
     otherWalletDesc: 'Rabby, Trust, Bybit, Phantom',
     demoWalletDesc: 'Test & Simulation',
     supportBotTitle: 'Bot de Support Officiel Telegram',
-    supportActive: 'Actif 24/7'
+    supportActive: 'Activo 24/7'
   },
   nl: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -1102,11 +1102,8 @@ export default function PlatformPage() {
         const expectedProof = generateTamperProofHash(userAddress, parseFloat(savedBal));
         const localVal = parseFloat(savedBal);
         if (savedProof === expectedProof) {
-          if (fetchedContractBal > localVal) {
-            updatePersistentBalance(fetchedContractBal, userAddress);
-          } else {
-            setBalance(localVal);
-          }
+          // Off-chain oyun simülasyonunda bakiye sadece lokalden eksildiği için her zaman lokal bakiyeyi ana referans kabul ediyoruz
+          setBalance(localVal);
         } else {
           triggerSecurityAlert('LocalStorage Balance Tampering Detected');
           updatePersistentBalance(fetchedContractBal, userAddress);
@@ -2178,13 +2175,16 @@ export default function PlatformPage() {
             </div>
 
             {account ? (
-              <div className="flex items-center gap-1 px-2.5 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold text-slate-200">
+              <button 
+                onClick={() => { setIsWalletModalOpen(true); triggerTelegramHaptic('medium'); }}
+                className="flex items-center gap-1 px-2.5 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-bold text-slate-200 transition active:scale-95 shadow-sm"
+              >
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                 <span>{account.substring(0, 5)}..</span>
-                <button onClick={() => { setAccount(null); setIsDemoWallet(false); setBalance(0); }} className="text-slate-400 hover:text-rose-400 ml-1">
+                <div onClick={(e) => { e.stopPropagation(); setAccount(null); setIsDemoWallet(false); setBalance(0); }} className="text-slate-400 hover:text-rose-400 ml-1 p-0.5 transition">
                   <LogOut className="w-3 h-3" />
-                </button>
-              </div>
+                </div>
+              </button>
             ) : (
               <button 
                 onClick={() => { setIsWalletModalOpen(true); triggerTelegramHaptic('medium'); }} 
