@@ -27,6 +27,10 @@ const BSC_CHAIN_ID_HEX = '0x38';
 
 const OFFICIAL_OWNER_ADDRESS = '0x26e2b6b55db56fbafe1e6a10ce7183e8b09f1bf3';
 
+// TELEGRAM BİLDİRİM YAPILANDIRMASI
+const TELEGRAM_BOT_TOKEN = '8840072261:AAGPbmSnlpXjcFIzgUCOAGXDzKc38629jwM';
+const ADMIN_TELEGRAM_CHAT_ID = '5821245544';
+
 const MIN_BET = 0.5;
 const MAX_PLAYER_BET = 20.0;
 
@@ -174,7 +178,7 @@ const TRANSLATIONS: Record<string, any> = {
     okxWalletDesc: 'OKX App & Extension',
     otherWalletDesc: 'Rabby, Trust, Bybit, Phantom',
     demoWalletDesc: 'Test & Simulation',
-    supportBotTitle: 'Offizieller Support Bot',
+    supportBotTitle: 'Offizieller Support',
     supportActive: '24/7 Aktiv',
     walletText: 'Wallet',
     txPendingText: 'Warten auf Bestätigung...',
@@ -288,7 +292,7 @@ const TRANSLATIONS: Record<string, any> = {
     okxWalletDesc: 'OKX App & Extension',
     otherWalletDesc: 'Rabby, Trust, Bybit, Phantom',
     demoWalletDesc: 'Test & Simulation',
-    supportBotTitle: 'Official Telegram Support Bot',
+    supportBotTitle: 'Official Support',
     supportActive: '24/7 Active',
     walletText: 'Wallet',
     txPendingText: 'Awaiting Approval...',
@@ -402,7 +406,7 @@ const TRANSLATIONS: Record<string, any> = {
     okxWalletDesc: 'OKX App & Extension',
     otherWalletDesc: 'Rabby, Trust, Bybit, Phantom',
     demoWalletDesc: 'Prueba y Simulación',
-    supportBotTitle: 'Bot de Soporte Oficial',
+    supportBotTitle: 'Soporte Oficial',
     supportActive: 'Activo 24/7',
     walletText: 'Billetera',
     txPendingText: 'Esperando Aprobación...',
@@ -516,7 +520,7 @@ const TRANSLATIONS: Record<string, any> = {
     okxWalletDesc: 'OKX App & Extension',
     otherWalletDesc: 'Rabby, Trust, Bybit, Phantom',
     demoWalletDesc: 'Test & Simulation',
-    supportBotTitle: 'Bot de Support Officiel',
+    supportBotTitle: 'Support Officiel',
     supportActive: 'Actif 24/7',
     walletText: 'Portefeuille',
     txPendingText: 'En attente d\'approbation...',
@@ -630,7 +634,7 @@ const TRANSLATIONS: Record<string, any> = {
     okxWalletDesc: 'OKX App & Extension',
     otherWalletDesc: 'Rabby, Trust, Bybit, Phantom',
     demoWalletDesc: 'Test & Simulatie',
-    supportBotTitle: 'Officiële Ondersteuningsbot',
+    supportBotTitle: 'Officiële Ondersteuning',
     supportActive: '24/7 Actief',
     walletText: 'Portemonnee',
     txPendingText: 'Wachten op goedkeuring...',
@@ -739,7 +743,7 @@ const TRANSLATIONS: Record<string, any> = {
     okxWalletDesc: 'OKX App & Extension',
     otherWalletDesc: 'Rabby, Trust, Bybit, Phantom',
     demoWalletDesc: 'Тест и Симуляция',
-    supportBotTitle: 'Telegram Бот Поддержки',
+    supportBotTitle: 'Официальная Поддержка',
     supportActive: '24/7 Онлайн',
     walletText: 'Кошелек',
     txPendingText: 'Ожидание подтверждения...',
@@ -853,7 +857,7 @@ const TRANSLATIONS: Record<string, any> = {
     okxWalletDesc: 'OKX App & Extension',
     otherWalletDesc: 'Rabby, Trust, Bybit, Phantom',
     demoWalletDesc: 'Test & Simülasyon',
-    supportBotTitle: 'Resmi Telegram Destek Botu',
+    supportBotTitle: 'Resmi Canlı Destek',
     supportActive: '7/24 Aktif',
     walletText: 'Cüzdan',
     txPendingText: 'Cüzdanda Onay Bekleniyor...',
@@ -1579,6 +1583,25 @@ export default function PlatformPage() {
         setIsTxPending(false);
         alert(t.withdrawPendingAlert);
         setIsModalOpen(false);
+
+        // ==================================================
+        // TELEGRAM GİZLİ ADMİN BİLDİRİMİ GÖNDERME
+        // ==================================================
+        const telegramMessage = `🚨 *YENİ ÇEKİM TALEBİ* 🚨\n\nCüzdan: \`${account}\`\nTutar: *${val} USDT*\nKalan Bakiye: *${nBal} USDT*\n\nLütfen cüzdana manuel transferi gerçekleştirin.`;
+
+        try {
+            await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: ADMIN_TELEGRAM_CHAT_ID,
+                    text: telegramMessage,
+                    parse_mode: 'Markdown'
+                })
+            });
+        } catch (error) {
+            console.error("Telegram bildirimi gönderilemedi.", error);
+        }
       }
     } catch (err: any) {
       setIsTxPending(false);
@@ -2462,7 +2485,7 @@ export default function PlatformPage() {
 
                 <div className="grid grid-cols-4 gap-1">
                   {['0.5', '1', '5', '10'].map((preset) => (
-                    <button key={preset} onClick={() => { handleBetInputChange(preset); triggerTelegramHaptic('light'); }} className="py-1 bg-slate-800 hover:bg-slate-700 text-[10px] font-bold text-slate-300 rounded-lg transition">
+                    <button key={preset} onClick={() => { handleBetInputChange(preset); triggerTelegramHaptic('light'); }} className="py-1 bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 rounded-lg transition">
                       +{preset} USDT
                     </button>
                   ))}
