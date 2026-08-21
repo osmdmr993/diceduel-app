@@ -194,7 +194,8 @@ const TRANSLATIONS: Record<string, any> = {
     colorBlack: 'SCHWARZ',
     maxBetLabel: 'Maximaler Einsatz',
     withdrawPendingAlert: 'Sicherheitsprotokoll: Alle Auszahlungen unterliegen einer manuellen Prüfung. Ihre Anfrage wurde empfangen und wird innerhalb von 24 Stunden an Ihr Wallet überwiesen.',
-    pendingStatus: 'Ausstehend'
+    pendingStatus: 'Ausstehend',
+    walletRequiredForSpin: 'Bitte verbinden Sie zuerst Ihr Wallet, um am Glücksrad teilzunehmen!'
   },
   en: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -308,7 +309,8 @@ const TRANSLATIONS: Record<string, any> = {
     colorBlack: 'BLACK',
     maxBetLabel: 'Max Bet',
     withdrawPendingAlert: 'Security Protocol: All withdrawals are subject to a manual review process. Your request has been received and will be transferred to your wallet within 24 hours.',
-    pendingStatus: 'Pending'
+    pendingStatus: 'Pending',
+    walletRequiredForSpin: 'Please connect your wallet first before spinning the wheel!'
   },
   es: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -422,7 +424,8 @@ const TRANSLATIONS: Record<string, any> = {
     colorBlack: 'NEGRO',
     maxBetLabel: 'Apuesta Máxima',
     withdrawPendingAlert: 'Protocolo de Seguridad: Todos los retiros están sujetos a un proceso de revisión manual. Su solicitud ha sido recibida y será transferida en 24 horas.',
-    pendingStatus: 'Pendiente'
+    pendingStatus: 'Pendiente',
+    walletRequiredForSpin: '¡Por favor, conecta tu wallet antes de girar la ruleta!'
   },
   fr: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -521,7 +524,7 @@ const TRANSLATIONS: Record<string, any> = {
     otherWalletDesc: 'Rabby, Trust, Bybit, Phantom',
     demoWalletDesc: 'Test & Simulation',
     supportBotTitle: 'Support Officiel',
-    supportActive: 'Actif 24/7',
+    supportActive: '24/7 Active',
     walletText: 'Portefeuille',
     txPendingText: 'En attente d\'approbation...',
     depositAction: 'Déposer sur le contrat',
@@ -536,7 +539,8 @@ const TRANSLATIONS: Record<string, any> = {
     colorBlack: 'NOIR',
     maxBetLabel: 'Mise Maximale',
     withdrawPendingAlert: 'Protocole de sécurité : Tous les retraits sont soumis à un examen manuel. Votre demande a été reçue et sera traitée dans les 24 heures.',
-    pendingStatus: 'En attente'
+    pendingStatus: 'En attente',
+    walletRequiredForSpin: 'Veuillez connecter votre portefeuille avant de faire tourner la roue !'
   },
   nl: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -650,7 +654,8 @@ const TRANSLATIONS: Record<string, any> = {
     colorBlack: 'ZWART',
     maxBetLabel: 'Maximale Inzet',
     withdrawPendingAlert: 'Beveiligingsprotocol: Alle opnames worden handmatig gecontroleerd. Uw aanvraag is ontvangen en wordt binnen 24 uur overgemaakt.',
-    pendingStatus: 'In afwachting'
+    pendingStatus: 'In afwachting',
+    walletRequiredForSpin: 'Verbind eerst uw portemonnee voordat u aan het rad draait!'
   },
   ru: {
     hubTitle: 'DiceDuel Игровая Арена',
@@ -759,7 +764,8 @@ const TRANSLATIONS: Record<string, any> = {
     colorBlack: 'ЧЕРНЫЙ',
     maxBetLabel: 'Макс. ставка',
     withdrawPendingAlert: 'Протокол безопасности: Все выводы проверяются вручную. Ваша заявка получена и будет обработана в течение 24 часов.',
-    pendingStatus: 'В ожидании'
+    pendingStatus: 'В ожидании',
+    walletRequiredForSpin: 'Пожалуйста, подключите кошелек перед вращением колеса!'
   },
   tr: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -825,7 +831,7 @@ const TRANSLATIONS: Record<string, any> = {
     activeRoomsText: 'Aktif Oda',
     restartText: 'Yeniden Başlat',
     allTxs: 'Tümü',
-    inTxs: 'Yatırılanlar',
+    inTxs: 'Tümü',
     outTxs: 'Çekilenler',
     winTxs: 'Kazançlar',
     lossTxs: 'Kayıplar',
@@ -873,7 +879,8 @@ const TRANSLATIONS: Record<string, any> = {
     colorBlack: 'SİYAH',
     maxBetLabel: 'Maksimum Bahis',
     withdrawPendingAlert: 'Güvenlik Protokolü: Tüm çekim işlemleri manuel onay sürecine tabidir. Talebiniz alınmış olup, 24 saat içerisinde cüzdanınıza aktarılacaktır.',
-    pendingStatus: 'Bekliyor'
+    pendingStatus: 'Bekliyor',
+    walletRequiredForSpin: 'Lütfen çarkı çevirmeden önce cüzdanınızı bağlayın!'
   }
 };
 
@@ -1955,6 +1962,13 @@ export default function PlatformPage() {
   };
 
   const handleSpinWheel = () => {
+    // Cüzdan kontrolü: Cüzdan bağlı değilse çarkın çevrilmesini engelle ve cüzdan modalını aç
+    if (!account) {
+      setIsSpinModalOpen(false);
+      setIsWalletModalOpen(true);
+      return alert(t.walletRequiredForSpin);
+    }
+
     if (!canSpin || isSpinning) return;
     if (isRateLimited()) return;
 
@@ -2485,7 +2499,7 @@ export default function PlatformPage() {
 
                 <div className="grid grid-cols-4 gap-1">
                   {['0.5', '1', '5', '10'].map((preset) => (
-                    <button key={preset} onClick={() => { handleBetInputChange(preset); triggerTelegramHaptic('light'); }} className="py-1 bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 rounded-lg transition">
+                    <button key={preset} onClick={() => { handleBetInputChange(preset); triggerTelegramHaptic('light'); }} className="py-1 bg-slate-800 hover:bg-slate-700 text-[10px] font-bold text-slate-300 rounded-lg transition">
                       +{preset} USDT
                     </button>
                   ))}
