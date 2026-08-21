@@ -60,6 +60,17 @@ const PLATFORM_ABI = [
 
 let socket: Socket;
 
+// XSS Sanitizasyonu (Zararlı HTML/Script etiketlerini engeller)
+const sanitizeInput = (input: string): string => {
+  if (!input) return '';
+  return input
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;")
+    .replace(/\//g, "&#x2F;");
+};
+
 // Güvenli Checksum & Anti-Tamper
 const generateTamperProofHash = (addr: string, bal: number): string => {
   const payload = `${addr.toLowerCase()}_${bal.toFixed(2)}_dd_salt_2026_sec_ids_shield`;
@@ -69,57 +80,62 @@ const generateTamperProofHash = (addr: string, bal: number): string => {
 const MINES_MULTIPLIERS = [1.14, 1.32, 1.55, 1.85, 2.25, 2.78, 3.50, 4.50, 6.00, 8.50];
 
 const TRANSLATIONS: Record<string, any> = {
-  tr: {
+  de: {
     hubTitle: 'DiceDuel Gaming Hub',
-    liveNet: 'BSC Mainnet Canlı',
-    txBtn: 'İşlemler (PDF/CSV)',
-    dailySpin: 'Günlük Çark',
-    inviteBtn: 'Davet Et (%0.5)',
-    vault: 'Kasa ⚡',
-    connectWallet: 'Cüzdan Bağla',
-    tabDice: '🎲 ZAR DÜELLOSU',
-    tabCoin: '🪙 YAZI - TURA',
-    tabRoulette: '🔴⚫ RULET',
-    tabMines: '💣 MAYIN TARLASI',
-    openRoom: 'Zar Odası Aç',
-    challenge: 'Meydan Oku',
-    liveRooms: 'Canlı Zar Odaları',
-    rollDice: 'Zar At',
-    you: 'Sen',
+    liveNet: 'BSC Mainnet Live',
+    txBtn: 'Transaktionen (PDF/CSV)',
+    dailySpin: 'Glücksrad',
+    inviteBtn: 'Einladen (%0.5)',
+    vault: 'Tresor ⚡',
+    connectWallet: 'Wallet Verbinden',
+    tabDice: '🎲 WÜRFEL DUELL',
+    tabCoin: '🪙 MÜNZWURF',
+    tabRoulette: '🔴⚫ ROULETTE',
+    tabMines: '💣 MINENFELD',
+    openRoom: 'Raum Erstellen',
+    challenge: 'Herausfordern',
+    liveRooms: 'Live Räume',
+    rollDice: 'Würfeln',
+    you: 'Du',
     fairRng: 'Provably Fair RNG',
-    reward: 'Ödül',
-    winner: 'Kazanan',
-    backLobby: 'Lobiye Dön',
-    selectHeads: 'YAZI SEÇ',
-    selectTails: 'TURA SEÇ',
-    flipCoin: 'Parayı Çevir',
-    betAmount: 'Bahis Tutarı',
-    recentGames: 'Son Biten Oyunlar',
-    leaderboardTitle: 'Haftanın Kralları',
-    liveDist: 'Canlı Dağıtım',
-    contractBadge: 'Doğrulanmış BSC Akıllı Sözleşmesi',
-    evmVerified: 'Mainnet Doğrulandı',
-    support: 'Destek & SSS',
-    stakeTitle: 'Kasa Ortaklığı & LP Staking',
-    poolGuideTitle: 'Kasa Havuzu (LP) Nasıl Çalışır?',
-    poolGuideText: 'Platformda oynanan tüm oyunlardan %3 ev komisyonu kesilir. Bu komisyonun yarısından fazlası havuz ortaklarına anlık kâr payı olarak dağıtılır.',
-    dailySpinNote: 'Her 24 saatte bir şansınızı deneyin!',
-    spinBtn: 'Ücretsiz Çevir',
-    spinWait: 'Kalan Süre',
-    spinRolling: 'Çark Dönüyor...',
-    waitingPlayer: 'Canlı Oyuncu Aranıyor...',
-    refTitle: 'Arkadaşını Davet Et & Kazan',
-    refDesc: 'Aktif yatırımcı olan davetlilerinizin oynadığı her bahisten anında %0.5 nakit komisyon kazanın.',
-    copyLink: 'Davet Linkini Kopyala',
-    linkCopied: 'Link Kopyalandı!',
-    shareTelegramWin: '🚀 Zaferini Telegram\'da Paylaş',
-    adminPanel: 'Yönetici Kasası',
-    wrongNetwork: 'Lütfen cüzdanınızı BSC (BNB Chain) Ağına geçirin!',
-    cashout: 'Nakit Çek',
-    startMines: 'Mayın Tarlasını Başlat',
-    spinRoulette: 'Rulet Çarkını Çevir',
-    inGameLock: 'Oyun devam ederken işlem yapılamaz!',
-    sybilError: 'Anti-Sybil Kalkanı: Komisyon kazanmak için cüzdanınızda en az 1 aktif işlem olmalıdır.'
+    reward: 'Belohnung',
+    winner: 'Gewinner',
+    backLobby: 'Zur Lobby',
+    selectHeads: 'KOPF',
+    selectTails: 'ZAHL',
+    flipCoin: 'Duell Starten',
+    coinSub: 'Live PvP Duell • 1.94x Multiplikator',
+    rouletteSub: 'Rot / Schwarz • 1.94x Multiplikator',
+    betAmount: 'Einsatzbetrag',
+    recentGames: 'Letzte Spiele',
+    leaderboardTitle: 'Wöchentliche Champions',
+    weeklyBadge: 'Wöchentlich',
+    winsText: 'Siege',
+    liveDist: 'Live Auszahlungen',
+    contractBadge: 'Verifizierter BSC Smart Contract',
+    evmVerified: 'Verifiziert',
+    support: 'Support & FAQ',
+    lpPoolBtn: 'LP Pool',
+    stakeTitle: 'Bankroll & LP Staking',
+    poolGuideTitle: 'Wie funktioniert der LP Pool?',
+    poolGuideText: '3% Hausgebühr fallen an. Der Großteil wird direkt an LP-Inhaber verteilt.',
+    dailySpinNote: 'Alle 24 Stunden kostenlos drehen!',
+    spinBtn: 'Kostenlos Drehen',
+    spinWait: 'Wartezeit',
+    spinRolling: 'Dreht sich...',
+    waitingPlayer: 'Live-Gegner wird gesucht...',
+    refTitle: 'Freunde Einladen & Verdienen',
+    refDesc: 'Verdiene 0.5% Sofortprovision von allen Wetten deiner Partner.',
+    copyLink: 'Link Kopieren',
+    linkCopied: 'Kopiert!',
+    shareTelegramWin: 'Gewinn auf Telegram Teilen',
+    adminPanel: 'Haus Admin',
+    wrongNetwork: 'Bitte zu BSC Mainnet wechseln!',
+    cashout: 'Auszahlen',
+    startMines: 'Minenfeld Starten',
+    spinRoulette: 'Roulette Drehen',
+    inGameLock: 'Aktion während des Spiels gesperrt!',
+    sybilError: 'Anti-Sybil: Mindestens 1 aktive Transaktion erforderlich.'
   },
   en: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -145,13 +161,18 @@ const TRANSLATIONS: Record<string, any> = {
     selectHeads: 'HEADS',
     selectTails: 'TAILS',
     flipCoin: 'Flip Coin',
+    coinSub: 'Live PvP Duel • 1.94x Multiplier',
+    rouletteSub: 'Red / Black • 1.94x Multiplier',
     betAmount: 'Bet Amount',
     recentGames: 'Recent Games',
     leaderboardTitle: 'Weekly Champions',
+    weeklyBadge: 'Weekly',
+    winsText: 'Wins',
     liveDist: 'Live Payouts',
     contractBadge: 'Verified BSC Smart Contract',
     evmVerified: 'Verified',
     support: 'Support',
+    lpPoolBtn: 'LP Pool',
     stakeTitle: 'House Bankroll & LP Staking',
     poolGuideTitle: 'How House LP Works?',
     poolGuideText: 'A 3% house edge is collected from all games. More than half is distributed directly to liquidity providers as yield.',
@@ -164,7 +185,7 @@ const TRANSLATIONS: Record<string, any> = {
     refDesc: 'Earn 0.5% instant cash commission from active invited traders.',
     copyLink: 'Copy Invite Link',
     linkCopied: 'Link Copied!',
-    shareTelegramWin: '🚀 Brag on Telegram',
+    shareTelegramWin: 'Brag on Telegram',
     adminPanel: 'House Admin',
     wrongNetwork: 'Please switch network to BSC (BNB Chain)!',
     cashout: 'Cash Out',
@@ -172,6 +193,177 @@ const TRANSLATIONS: Record<string, any> = {
     spinRoulette: 'Spin Roulette Wheel',
     inGameLock: 'Cannot act while game is active!',
     sybilError: 'Anti-Sybil Shield: Wallet must have active volume to earn commissions.'
+  },
+  es: {
+    hubTitle: 'DiceDuel Gaming Hub',
+    liveNet: 'BSC Mainnet En Vivo',
+    txBtn: 'Transacciones (PDF/CSV)',
+    dailySpin: 'Giro Diario',
+    inviteBtn: 'Invitar (%0.5)',
+    vault: 'Bóveda ⚡',
+    connectWallet: 'Conectar Wallet',
+    tabDice: '🎲 DUELO DE DADOS',
+    tabCoin: '🪙 CARA O CRUZ',
+    tabRoulette: '🔴⚫ RULETA',
+    tabMines: '💣 BUSCAMINAS',
+    openRoom: 'Crear Sala',
+    challenge: 'Desafiar',
+    liveRooms: 'Salas en Vivo',
+    rollDice: 'Lanzar Dados',
+    you: 'Tú',
+    fairRng: 'Provably Fair RNG',
+    reward: 'Premio',
+    winner: 'Ganador',
+    backLobby: 'Volver al Lobby',
+    selectHeads: 'CARA',
+    selectTails: 'CRUZ',
+    flipCoin: 'Iniciar Duelo',
+    coinSub: 'Duelo PvP en Vivo • Multiplicador 1.94x',
+    rouletteSub: 'Rojo / Negro • Multiplicador 1.94x',
+    betAmount: 'Monto de Apuesta',
+    recentGames: 'Juegos Recientes',
+    leaderboardTitle: 'Campeones Semanales',
+    weeklyBadge: 'Semanal',
+    winsText: 'Victorias',
+    liveDist: 'Pagos en Vivo',
+    contractBadge: 'Contrato Inteligente BSC Verificado',
+    evmVerified: 'Verificado',
+    support: 'Soporte',
+    lpPoolBtn: 'Pool LP',
+    stakeTitle: 'Bóveda y Staking LP',
+    poolGuideTitle: '¿Cómo funciona el Pool LP?',
+    poolGuideText: 'Se cobra un 3% de comisión. La mayoría se reparte entre los proveedores de liquidez.',
+    dailySpinNote: '¡Gira gratis cada 24 horas!',
+    spinBtn: 'Giro Gratis',
+    spinWait: 'Espera',
+    spinRolling: 'Girando...',
+    waitingPlayer: 'Buscando oponente...',
+    refTitle: 'Invita y Gana',
+    refDesc: 'Gana 0.5% de comisión instantánea de tus referidos.',
+    copyLink: 'Copiar Enlace',
+    linkCopied: '¡Copiado!',
+    shareTelegramWin: 'Compartir en Telegram',
+    adminPanel: 'Admin Bóveda',
+    wrongNetwork: '¡Cambia a la red BSC Mainnet!',
+    cashout: 'Cobrar',
+    startMines: 'Iniciar Buscaminas',
+    spinRoulette: 'Girar Ruleta',
+    inGameLock: '¡Bloqueado durante el juego!',
+    sybilError: 'Anti-Sybil: Se requiere al menos 1 transacción activa.'
+  },
+  fr: {
+    hubTitle: 'DiceDuel Gaming Hub',
+    liveNet: 'BSC Mainnet En Direct',
+    txBtn: 'Relevé (PDF/CSV)',
+    dailySpin: 'Roue Quotidienne',
+    inviteBtn: 'Inviter (%0.5)',
+    vault: 'Coffre ⚡',
+    connectWallet: 'Connecter Wallet',
+    tabDice: '🎲 DUEL DE DES',
+    tabCoin: '🪙 PILE OU FACE',
+    tabRoulette: '🔴⚫ ROULETTE',
+    tabMines: '💣 DEMINEUR',
+    openRoom: 'Creer une Salle',
+    challenge: 'Defier',
+    liveRooms: 'Salles en Direct',
+    rollDice: 'Lancer',
+    you: 'Vous',
+    fairRng: 'Provably Fair RNG',
+    reward: 'Recompense',
+    winner: 'Gagnant',
+    backLobby: 'Lobby',
+    selectHeads: 'FACE',
+    selectTails: 'PILE',
+    flipCoin: 'Lancer',
+    coinSub: 'Duel PvP en Direct • Multiplicateur 1.94x',
+    rouletteSub: 'Rouge / Noir • Multiplicateur 1.94x',
+    betAmount: 'Mise',
+    recentGames: 'Dernieres Parties',
+    leaderboardTitle: 'Champions de la Semaine',
+    weeklyBadge: 'Hebdomadaire',
+    winsText: 'Victoires',
+    liveDist: 'Paiements Directs',
+    contractBadge: 'Smart Contract BSC Verifie',
+    evmVerified: 'Verifie',
+    support: 'Support',
+    lpPoolBtn: 'Pool LP',
+    stakeTitle: 'Staking LP & Coffre',
+    poolGuideTitle: 'Comment fonctionne le Pool LP?',
+    poolGuideText: 'Une commission de 3% est prelevee et redistribuee aux stakers.',
+    dailySpinNote: 'Tentez votre chance toutes les 24h !',
+    spinBtn: 'Tour Gratuit',
+    spinWait: 'Attente',
+    spinRolling: 'Tourne...',
+    waitingPlayer: 'Recherche adversaire...',
+    refTitle: 'Parrainez et Gagnez',
+    refDesc: 'Gagnez 0.5% de commission sur vos filleuls actifs.',
+    copyLink: 'Copier le Lien',
+    linkCopied: 'Copie !',
+    shareTelegramWin: 'Partager sur Telegram',
+    adminPanel: 'Admin Coffre',
+    wrongNetwork: 'Veuillez basculer sur le reseau BSC !',
+    cashout: 'Encaisser',
+    startMines: 'Demarrer Demineur',
+    spinRoulette: 'Tourner',
+    inGameLock: 'Action impossible pendant la partie !',
+    sybilError: 'Anti-Sybil: Au moins 1 transaction active requise.'
+  },
+  nl: {
+    hubTitle: 'DiceDuel Gaming Hub',
+    liveNet: 'BSC Mainnet Live',
+    txBtn: 'Transacties (PDF/CSV)',
+    dailySpin: 'Dagelijks Rad',
+    inviteBtn: 'Uitnodigen (%0.5)',
+    vault: 'Kluis ⚡',
+    connectWallet: 'Wallet Koppelen',
+    tabDice: '🎲 DOBBEL DUEL',
+    tabCoin: '🪙 KOP OF MUNT',
+    tabRoulette: '🔴⚫ ROULETTE',
+    tabMines: '💣 MIJNENVELD',
+    openRoom: 'Kamer Maken',
+    challenge: 'Uitdagen',
+    liveRooms: 'Live Kamers',
+    rollDice: 'Dobbelen',
+    you: 'Jij',
+    fairRng: 'Provably Fair RNG',
+    reward: 'Beloning',
+    winner: 'Winnaar',
+    backLobby: 'Lobby',
+    selectHeads: 'KOP',
+    selectTails: 'MUNT',
+    flipCoin: 'Start Duel',
+    coinSub: 'Live PvP Duel • 1.94x Vermenigvuldiger',
+    rouletteSub: 'Rood / Zwart • 1.94x Vermenigvuldiger',
+    betAmount: 'Inzetbedrag',
+    recentGames: 'Recente Spellen',
+    leaderboardTitle: 'Wekelijkse Kampioenen',
+    weeklyBadge: 'Wekelijks',
+    winsText: 'Overwinningen',
+    liveDist: 'Live Uitbetalingen',
+    contractBadge: 'Geverifieerd BSC Smart Contract',
+    evmVerified: 'Geverifieerd',
+    support: 'Ondersteuning',
+    lpPoolBtn: 'LP Pool',
+    stakeTitle: 'Bankroll & LP Staking',
+    poolGuideTitle: 'Hoe werkt de LP Pool?',
+    poolGuideText: '3% commissie wordt ingehouden en verdeeld onder LP-houders.',
+    dailySpinNote: 'Draai elke 24 uur gratis!',
+    spinBtn: 'Gratis Draaien',
+    spinWait: 'Wachttijd',
+    spinRolling: 'Draait...',
+    waitingPlayer: 'Speler zoeken...',
+    refTitle: 'Vrienden Uitnodigen & Verdienen',
+    refDesc: 'Verdien direct 0.5% commissie op alle inzetten van genodigden.',
+    copyLink: 'Kopieer Link',
+    linkCopied: 'Gekopieerd!',
+    shareTelegramWin: 'Deel op Telegram',
+    adminPanel: 'Kluis Beheer',
+    wrongNetwork: 'Schakel over naar BSC Mainnet!',
+    cashout: 'Uitbetalen',
+    startMines: 'Start Mijnenveld',
+    spinRoulette: 'Draai Roulette',
+    inGameLock: 'Vergrendeld tijdens het spel!',
+    sybilError: 'Anti-Sybil: Minimaal 1 actieve transactie vereist.'
   },
   ru: {
     hubTitle: 'DiceDuel Игровая Арена',
@@ -197,13 +389,18 @@ const TRANSLATIONS: Record<string, any> = {
     selectHeads: 'ОРЕЛ',
     selectTails: 'РЕШКА',
     flipCoin: 'Бросить',
+    coinSub: 'PvP Дуэль в Реальном Времени • 1.94x',
+    rouletteSub: 'Красное / Черное • Множитель 1.94x',
     betAmount: 'Ставка',
     recentGames: 'Недавние Игры',
     leaderboardTitle: 'Топ Игроков',
+    weeklyBadge: 'Неделя',
+    winsText: 'Побед',
     liveDist: 'Выплаты',
     contractBadge: 'Контракт BSC',
     evmVerified: 'Проверено',
     support: 'Поддержка',
+    lpPoolBtn: 'LP Пул',
     stakeTitle: 'Пул Ликвидности (LP)',
     poolGuideTitle: 'Как работает Пул (LP)?',
     poolGuideText: 'С каждой игры взимается комиссия 3%. Большая ее часть распределяется между поставщиками ликвидности.',
@@ -216,16 +413,77 @@ const TRANSLATIONS: Record<string, any> = {
     refDesc: 'Получайте 0.5% комиссии от активных рефералов.',
     copyLink: 'Скопировать ссылку',
     linkCopied: 'Ссылка скопирована!',
-    shareTelegramWin: '🚀 Поделиться в Telegram',
+    shareTelegramWin: 'Поделиться в Telegram',
     adminPanel: 'Админ Касса',
     wrongNetwork: 'Пожалуйста, переключитесь на сеть BSC (BNB Chain)!'
+  },
+  tr: {
+    hubTitle: 'DiceDuel Gaming Hub',
+    liveNet: 'BSC Mainnet Canlı',
+    txBtn: 'İşlemler (PDF/CSV)',
+    dailySpin: 'Günlük Çark',
+    inviteBtn: 'Davet Et (%0.5)',
+    vault: 'Kasa ⚡',
+    connectWallet: 'Cüzdan Bağla',
+    tabDice: '🎲 ZAR DÜELLOSU',
+    tabCoin: '🪙 YAZI - TURA',
+    tabRoulette: '🔴⚫ RULET',
+    tabMines: '💣 MAYIN TARLASI',
+    openRoom: 'Zar Odası Aç',
+    challenge: 'Meydan Oku',
+    liveRooms: 'Canlı Zar Odaları',
+    rollDice: 'Zar At',
+    you: 'Sen',
+    fairRng: 'Provably Fair RNG',
+    reward: 'Ödül',
+    winner: 'Kazanan',
+    backLobby: 'Lobiye Dön',
+    selectHeads: 'YAZI SEÇ',
+    selectTails: 'TURA SEÇ',
+    flipCoin: 'Parayı Çevir',
+    coinSub: 'Canlı Oyuncu Eşleşmeli Düello • 1.94x Çarpan',
+    rouletteSub: 'Kırmızı / Siyah • 1.94x Çarpan',
+    betAmount: 'Bahis Tutarı',
+    recentGames: 'Son Biten Oyunlar',
+    leaderboardTitle: 'Haftanın Kralları',
+    weeklyBadge: 'Haftalık',
+    winsText: 'Galibiyet',
+    liveDist: 'Canlı Dağıtım',
+    contractBadge: 'Doğrulanmış BSC Akıllı Sözleşmesi',
+    evmVerified: 'Mainnet Doğrulandı',
+    support: 'Destek & SSS',
+    lpPoolBtn: 'LP Havuzu',
+    stakeTitle: 'Kasa Ortaklığı & LP Staking',
+    poolGuideTitle: 'Kasa Havuzu (LP) Nasıl Çalışır?',
+    poolGuideText: 'Platformda oynanan tüm oyunlardan %3 ev komisyonu kesilir. Bu komisyonun yarısından fazlası havuz ortaklarına anlık kâr payı olarak dağıtılır.',
+    dailySpinNote: 'Her 24 saatte bir şansınızı deneyin!',
+    spinBtn: 'Ücretsiz Çevir',
+    spinWait: 'Kalan Süre',
+    spinRolling: 'Çark Dönüyor...',
+    waitingPlayer: 'Canlı Oyuncu Aranıyor...',
+    refTitle: 'Arkadaşını Davet Et & Kazan',
+    refDesc: 'Aktif yatırımcı olan davetlilerinizin oynadığı her bahisten anında %0.5 nakit komisyon kazanın.',
+    copyLink: 'Davet Linkini Kopyala',
+    linkCopied: 'Link Kopyalandı!',
+    shareTelegramWin: 'Zaferini Telegram\'da Paylaş',
+    adminPanel: 'Yönetici Kasası',
+    wrongNetwork: 'Lütfen cüzdanınızı BSC (BNB Chain) Ağına geçirin!',
+    cashout: 'Nakit Çek',
+    startMines: 'Mayın Tarlasını Başlat',
+    spinRoulette: 'Rulet Çarkını Çevir',
+    inGameLock: 'Oyun devam ederken işlem yapılamaz!',
+    sybilError: 'Anti-Sybil Kalkanı: Komisyon kazanmak için cüzdanınızda en az 1 aktif işlem olmalıdır.'
   }
 };
 
 const LANG_OPTIONS = [
-  { code: 'tr', label: 'Türkçe', flag: '🇹🇷' },
+  { code: 'de', label: 'Deutsch', flag: '🇩🇪' },
   { code: 'en', label: 'English', flag: '🇺🇸' },
-  { code: 'ru', label: 'Русский', flag: '🇷🇺' }
+  { code: 'es', label: 'Español', flag: '🇪🇸' },
+  { code: 'fr', label: 'Français', flag: '🇫🇷' },
+  { code: 'nl', label: 'Nederlands', flag: '🇳🇱' },
+  { code: 'ru', label: 'Русский', flag: '🇷🇺' },
+  { code: 'tr', label: 'Türkçe', flag: '🇹🇷' }
 ];
 
 interface Room {
@@ -374,7 +632,7 @@ export default function PlatformPage() {
     } catch (e) {}
   };
 
-  // 🚨 SALDIRI TESPİT SİSTEMİ (IDS - Discord/Telegram Webhook Alert Simülasyonu)
+  // 🚨 SALDIRI TESPİT SİSTEMİ (IDS)
   const triggerSecurityAlert = (threatType: string) => {
     const alertMsg = `🚨 IDS SECURITY ALERT: [${threatType}] detected from Wallet: ${account || 'Unknown'}`;
     console.error(alertMsg);
@@ -417,10 +675,11 @@ export default function PlatformPage() {
 
   const addTransaction = (type: TransactionRecord['type'], title: string, amount: number, txHash?: string, userAddr?: string) => {
     const targetAddr = userAddr || account || 'guest';
+    const cleanTitle = sanitizeInput(title);
     const newTx: TransactionRecord = {
       id: `tx-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       type,
-      title,
+      title: cleanTitle,
       amount,
       date: new Date().toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
       txHash: txHash || `0x${Array.from({ length: 8 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}...${Array.from({ length: 4 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`,
@@ -438,11 +697,15 @@ export default function PlatformPage() {
 
   const pushMatchRecord = (winner: string, loser: string, gameDesc: string, bet: number) => {
     const payout = +(bet * 2 * 0.97).toFixed(2);
+    const cleanWinner = sanitizeInput(winner);
+    const cleanLoser = sanitizeInput(loser);
+    const cleanGame = sanitizeInput(gameDesc);
+
     const newItem: MatchHistoryItem = {
       id: `m-${Date.now()}-${Math.random()}`,
-      winner,
-      loser,
-      game: gameDesc,
+      winner: cleanWinner,
+      loser: cleanLoser,
+      game: cleanGame,
       payout,
       time: 'Az önce'
     };
@@ -594,10 +857,14 @@ export default function PlatformPage() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedLang = localStorage.getItem('dd_lang');
-      if (savedLang) setLang(savedLang);
+      if (savedLang && TRANSLATIONS[savedLang]) setLang(savedLang);
       else {
         const browserLang = (navigator.language || (navigator as any).userLanguage || '').toLowerCase();
         if (browserLang.startsWith('tr')) setLang('tr');
+        else if (browserLang.startsWith('de')) setLang('de');
+        else if (browserLang.startsWith('nl')) setLang('nl');
+        else if (browserLang.startsWith('fr')) setLang('fr');
+        else if (browserLang.startsWith('es')) setLang('es');
         else if (browserLang.startsWith('ru')) setLang('ru');
         else setLang('en');
       }
@@ -954,7 +1221,7 @@ export default function PlatformPage() {
     if (rollSoundIntervalRef.current) clearInterval(rollSoundIntervalRef.current);
     rollSoundIntervalRef.current = setInterval(playClickSound, 110);
 
-    setGameResult({ opponent: opponentName, p1Score: null, p2Score: null, winner: null });
+    setGameResult({ opponent: sanitizeInput(opponentName), p1Score: null, p2Score: null, winner: null });
 
     setTimeout(() => {
       if (rollSoundIntervalRef.current) clearInterval(rollSoundIntervalRef.current);
@@ -966,16 +1233,16 @@ export default function PlatformPage() {
       let p1 = isPlayerWin ? Math.floor(Math.random() * 40) + 60 : Math.floor(Math.random() * 50) + 1;
       let p2 = isPlayerWin ? Math.floor(Math.random() * 50) + 1 : Math.floor(Math.random() * 40) + 60;
 
-      const winnerDisplayName = isPlayerWin ? (lang === 'tr' ? 'Sen' : 'You') : opponentName;
-      setGameResult({ opponent: opponentName, p1Score: p1, p2Score: p2, winner: winnerDisplayName });
+      const winnerDisplayName = isPlayerWin ? (lang === 'tr' ? 'Sen' : 'You') : sanitizeInput(opponentName);
+      setGameResult({ opponent: sanitizeInput(opponentName), p1Score: p1, p2Score: p2, winner: winnerDisplayName });
 
       if (stakedAmount > 0) {
         const newY = +(accumulatedYield + (amount * 0.015)).toFixed(2);
         updatePersistentStake(stakedAmount, newY);
       }
 
-      const winnerPlayer = isPlayerWin ? (account ? `${account.substring(0, 6)}...` : 'You') : opponentName;
-      const loserPlayer = isPlayerWin ? opponentName : (account ? `${account.substring(0, 6)}...` : 'You');
+      const winnerPlayer = isPlayerWin ? (account ? `${account.substring(0, 6)}...` : 'You') : sanitizeInput(opponentName);
+      const loserPlayer = isPlayerWin ? sanitizeInput(opponentName) : (account ? `${account.substring(0, 6)}...` : 'You');
       pushMatchRecord(winnerPlayer, loserPlayer, `🎲 Zar (${p1}-${p2})`, amount);
 
       if (isPlayerWin) {
@@ -1057,7 +1324,7 @@ export default function PlatformPage() {
     if (rollSoundIntervalRef.current) clearInterval(rollSoundIntervalRef.current);
     rollSoundIntervalRef.current = setInterval(playClickSound, 100);
 
-    setGameResult({ opponent: opponentName, p1Score: coinChoice, p2Score: null, winner: null });
+    setGameResult({ opponent: sanitizeInput(opponentName), p1Score: coinChoice, p2Score: null, winner: null });
 
     setTimeout(() => {
       if (rollSoundIntervalRef.current) clearInterval(rollSoundIntervalRef.current);
@@ -1068,16 +1335,16 @@ export default function PlatformPage() {
       let landed: 'YAZI' | 'TURA' = isPlayerWin ? coinChoice : (coinChoice === 'YAZI' ? 'TURA' : 'YAZI');
 
       setCoinResult(landed);
-      const winnerName = isPlayerWin ? (lang === 'tr' ? 'Sen' : 'You') : opponentName;
-      setGameResult({ opponent: opponentName, p1Score: coinChoice, p2Score: landed, winner: winnerName });
+      const winnerName = isPlayerWin ? (lang === 'tr' ? 'Sen' : 'You') : sanitizeInput(opponentName);
+      setGameResult({ opponent: sanitizeInput(opponentName), p1Score: coinChoice, p2Score: landed, winner: winnerName });
 
       if (stakedAmount > 0) {
         const newY = +(accumulatedYield + (amount * 0.015)).toFixed(2);
         updatePersistentStake(stakedAmount, newY);
       }
 
-      const winnerPlayer = isPlayerWin ? (account ? `${account.substring(0, 6)}...` : 'You') : opponentName;
-      const loserPlayer = isPlayerWin ? opponentName : (account ? `${account.substring(0, 6)}...` : 'You');
+      const winnerPlayer = isPlayerWin ? (account ? `${account.substring(0, 6)}...` : 'You') : sanitizeInput(opponentName);
+      const loserPlayer = isPlayerWin ? sanitizeInput(opponentName) : (account ? `${account.substring(0, 6)}...` : 'You');
       pushMatchRecord(winnerPlayer, loserPlayer, `🪙 Yazı-Tura (${landed})`, amount);
 
       if (isPlayerWin) {
@@ -1448,7 +1715,6 @@ export default function PlatformPage() {
   };
 
   const handleCopyRef = () => {
-    // Anti-Sybil Kalkanı Kontrolü
     if (balance < 0.5 && transactions.length === 0) {
       alert(t.sybilError);
       return;
@@ -1475,7 +1741,6 @@ export default function PlatformPage() {
     <main className="min-h-screen bg-slate-950 text-slate-100 p-3 md:p-8 font-sans select-none">
       <div className="max-w-4xl mx-auto space-y-5">
         
-        {/* IDS Güvenlik Alarm Bildirimi */}
         {securityAlertMsg && (
           <div className="flex items-center gap-2 p-3 bg-amber-950/90 border border-amber-600 rounded-2xl text-xs text-amber-200 animate-bounce">
             <ShieldAlert className="w-4 h-4 text-amber-400" />
@@ -1483,7 +1748,6 @@ export default function PlatformPage() {
           </div>
         )}
 
-        {/* Yanlış Ağ Uyarısı */}
         {isWrongNetwork && (
           <div className="flex items-center justify-between p-3 bg-rose-950/80 border border-rose-800 rounded-2xl text-xs text-rose-200">
             <div className="flex items-center gap-2">
@@ -1533,7 +1797,7 @@ export default function PlatformPage() {
                     initial={{ opacity: 0, y: -5 }} 
                     animate={{ opacity: 1, y: 0 }} 
                     exit={{ opacity: 0, y: -5 }} 
-                    className="absolute right-0 top-full mt-1.5 bg-slate-900 border border-slate-800 rounded-2xl p-1.5 shadow-2xl z-50 min-w-[130px] space-y-1"
+                    className="absolute right-0 top-full mt-1.5 bg-slate-900 border border-slate-800 rounded-2xl p-1.5 shadow-2xl z-50 min-w-[140px] space-y-1"
                   >
                     {LANG_OPTIONS.map(opt => (
                       <button
@@ -1925,7 +2189,6 @@ export default function PlatformPage() {
               </button>
             </div>
           ) : (
-            /* ZIRHLI MAYIN TARLASI PENCERESİ */
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 md:p-6 max-w-lg mx-auto space-y-4 shadow-2xl">
               <div className="flex justify-between items-center pb-2 border-b border-slate-800">
                 <div className="flex items-center gap-2">
