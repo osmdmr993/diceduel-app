@@ -1,4 +1,4 @@
-// translations.js - 7 Dil Desteği Paketi
+// translations.js - Hatasız ve Güvenli 7 Dil Paketi
 
 export const TRANSLATIONS = {
   tr: {
@@ -49,7 +49,7 @@ export const TRANSLATIONS = {
     refDesc: 'Aktif yatırımcı olan davetlilerinizin oynadığı her bahisten anında %0.5 nakit komisyon kazanın.',
     copyLink: 'Davet Linkini Kopyala',
     linkCopied: 'Link Kopyalandı!',
-    shareTelegramWin: 'Zaferini Telegram da Paylaş',
+    shareTelegramWin: 'Zaferini Telegramda Paylaş',
     adminPanel: 'Admin',
     wrongNetwork: 'Lütfen cüzdanınızı BSC (BNB Chain) Ağına geçirin!',
     cashout: 'Nakit Çek',
@@ -95,7 +95,7 @@ export const TRANSLATIONS = {
     support: 'Support',
     lpPoolBtn: 'LP Pool',
     stakeTitle: 'House Bankroll & LP Staking',
-    poolGuideTitle: 'How House LP Works?',
+    poolGuideTitle: 'How House LP Works',
     poolGuideText: 'A 3% house edge is collected from all games. More than half is distributed directly to liquidity providers as yield.',
     dailySpinNote: 'Test your luck every 24 hours!',
     spinBtn: 'Free Spin',
@@ -152,7 +152,7 @@ export const TRANSLATIONS = {
     support: 'Support & FAQ',
     lpPoolBtn: 'LP Pool',
     stakeTitle: 'Bankroll & LP Staking',
-    poolGuideTitle: 'Wie funktioniert der LP Pool?',
+    poolGuideTitle: 'Wie funktioniert der LP Pool',
     poolGuideText: '3% Hausgebühr fallen an. Der Großteil wird direkt an LP-Inhaber verteilt.',
     dailySpinNote: 'Alle 24 Stunden kostenlos drehen!',
     spinBtn: 'Kostenlos Drehen',
@@ -209,7 +209,7 @@ export const TRANSLATIONS = {
     support: 'Soporte',
     lpPoolBtn: 'Pool LP',
     stakeTitle: 'Bóveda y Staking LP',
-    poolGuideTitle: '¿Cómo funciona el Pool LP?',
+    poolGuideTitle: 'Como funciona el Pool LP',
     poolGuideText: 'Se cobra un 3% de comisión. La mayoría se reparte entre los proveedores de liquidez.',
     dailySpinNote: '¡Gira gratis cada 24 horas!',
     spinBtn: 'Giro Gratis',
@@ -266,7 +266,7 @@ export const TRANSLATIONS = {
     support: 'Support',
     lpPoolBtn: 'Pool LP',
     stakeTitle: 'Staking LP & Coffre',
-    poolGuideTitle: 'Comment fonctionne le Pool LP?',
+    poolGuideTitle: 'Comment fonctionne le Pool LP',
     poolGuideText: 'Une commission de 3% est prelevee et redistribuee aux stakers.',
     dailySpinNote: 'Tentez votre chance toutes les 24h !',
     spinBtn: 'Tour Gratuit',
@@ -323,7 +323,7 @@ export const TRANSLATIONS = {
     support: 'Ondersteuning',
     lpPoolBtn: 'LP Pool',
     stakeTitle: 'Bankroll & LP Staking',
-    poolGuideTitle: 'Hoe werkt de LP Pool?',
+    poolGuideTitle: 'Hoe werkt de LP Pool',
     poolGuideText: '3% commissie wordt ingehouden en verdeeld onder LP-houders.',
     dailySpinNote: 'Draai elke 24 uur gratis!',
     spinBtn: 'Gratis Draaien',
@@ -380,7 +380,7 @@ export const TRANSLATIONS = {
     support: 'Поддержка',
     lpPoolBtn: 'LP Пул',
     stakeTitle: 'Пул Ликвидности (LP)',
-    poolGuideTitle: 'Как работает Пул (LP)?',
+    poolGuideTitle: 'Как работает Пул (LP)',
     poolGuideText: 'С каждой игры взимается комиссия 3%. Большая ее часть распределяется между поставщиками ликвидности.',
     dailySpinNote: 'Крутите каждые 24 часа!',
     spinBtn: 'Крутить',
