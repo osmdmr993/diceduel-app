@@ -56,7 +56,7 @@ const PLATFORM_ABI = [
   "function withdrawHouseEdge(uint256 amount) external"
 ];
 
-// Donanım Kriptografik Rastgelelik Motoru (CSPRNG)
+// Donanım Kriptografik Rastgelelik (CSPRNG)
 const getCryptoRandom = (): number => {
   if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
     const array = new Uint32Array(1);
@@ -74,7 +74,7 @@ const generateTamperProofHash = (addr: string, bal: number): string => {
 
 const MINES_MULTIPLIERS = [1.14, 1.32, 1.55, 1.85, 2.25, 2.78, 3.50, 4.50, 6.00, 8.50];
 
-// Alfabetik Sıralanmış Dil Listesi (A-Z)
+// Alfabetik Sıralanmış 7 Dil Paketi (A-Z)
 const LANG_OPTIONS = [
   { code: 'de', label: 'Deutsch', flag: '🇩🇪' },
   { code: 'en', label: 'English', flag: '🇺🇸' },
@@ -265,17 +265,17 @@ const TRANSLATIONS: Record<string, any> = {
     inviteBtn: 'Inviter (%0.5)',
     vault: 'Coffre ⚡',
     connectWallet: 'Connecter Wallet',
-    tabDice: '🎲 DUEL DE DÉS',
+    tabDice: '🎲 DUEL DE DES',
     tabCoin: '🪙 PILE OU FACE',
     tabRoulette: '🔴⚫ ROULETTE',
     tabMines: '💣 DEMINEUR',
-    openRoom: 'Créer une Salle',
-    challenge: 'Défier',
+    openRoom: 'Creer une Salle',
+    challenge: 'Defier',
     liveRooms: 'Salles en Direct',
-    rollDice: 'Lancer les Dés',
+    rollDice: 'Lancer les Des',
     you: 'Vous',
     fairRng: 'Provably Fair RNG',
-    reward: 'Récompense',
+    reward: 'Recompense',
     winner: 'Gagnant',
     backLobby: 'Retour au Lobby',
     selectHeads: 'FACE',
@@ -284,32 +284,32 @@ const TRANSLATIONS: Record<string, any> = {
     coinSub: 'Duel PvP en Direct • Multiplicateur 1.94x',
     rouletteSub: 'Rouge / Noir • Multiplicateur 1.94x',
     betAmount: 'Mise',
-    recentGames: 'Dernières Parties',
+    recentGames: 'Dernieres Parties',
     leaderboardTitle: 'Champions de la Semaine',
     weeklyBadge: 'Hebdomadaire',
     winsText: 'Victoires',
     liveDist: 'Paiements Directs',
-    contractBadge: 'Smart Contract BSC Vérifié',
-    evmVerified: 'Vérifié',
+    contractBadge: 'Smart Contract BSC Verifie',
+    evmVerified: 'Verifie',
     support: 'Support',
     lpPoolBtn: 'Pool LP',
     stakeTitle: 'Staking LP & Coffre',
     poolGuideTitle: 'Comment fonctionne le Pool LP?',
-    poolGuideText: 'Une commission de 3% est prélevée et redistribuée aux stakers.',
+    poolGuideText: 'Une commission de 3% est prelevee et redistribuee aux stakers.',
     dailySpinNote: 'Tentez votre chance toutes les 24h !',
     spinBtn: 'Tour Gratuit',
     spinWait: 'Attente',
     spinRolling: 'Tourne...',
-    waitingPlayer: 'Recherche d\'adversaire...',
+    waitingPlayer: 'Recherche adversaire...',
     refTitle: 'Parrainez et Gagnez',
     refDesc: 'Gagnez 0.5% de commission sur vos filleuls actifs.',
     copyLink: 'Copier le Lien',
-    linkCopied: 'Copié !',
+    linkCopied: 'Copie !',
     shareTelegramWin: '🚀 Partager sur Telegram',
     adminPanel: 'Admin Coffre',
-    wrongNetwork: 'Veuillez basculer sur le réseau BSC !',
+    wrongNetwork: 'Veuillez basculer sur le reseau BSC !',
     cashout: 'Encaisser',
-    startMines: 'Démarrer Démineur',
+    startMines: 'Demarrer Demineur',
     spinRoulette: 'Tourner la Roulette',
     inGameLock: 'Action impossible pendant la partie !',
     sybilError: 'Anti-Sybil: Au moins 1 transaction active requise.'
@@ -2254,7 +2254,7 @@ export default function PlatformPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <AnimatePresence>
                 {matchHistory.map((m) => (
-                  <motion.div key={m.id} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-2.5 bg-slate-950 border border-slate-800/80 rounded-xl flex items-center justify-between shadow-sm">
+                  <motion.div key={m.id} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="p-2.5 bg-slate-950 border border-slate-800/80 rounded-xl flex items-center justify-between shadow-sm">
                     <div className="space-y-0.5">
                       <div className="flex items-center gap-1 text-xs font-bold text-slate-200">
                         <Trophy className="w-3.5 h-3.5 text-amber-400" />
