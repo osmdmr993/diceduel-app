@@ -831,7 +831,7 @@ const TRANSLATIONS: Record<string, any> = {
     activeRoomsText: 'Aktif Oda',
     restartText: 'Yeniden Başlat',
     allTxs: 'Tümü',
-    inTxs: 'Tümü',
+    inTxs: 'Yatırılanlar',
     outTxs: 'Çekilenler',
     winTxs: 'Kazançlar',
     lossTxs: 'Kayıplar',
@@ -917,6 +917,7 @@ interface TransactionRecord {
   date: string;
   txHash: string;
   status: 'COMPLETED' | 'SUCCESS' | 'PENDING';
+  timestamp?: number;
 }
 
 interface LeaderboardUser {
@@ -1084,7 +1085,8 @@ export default function PlatformPage() {
       amount,
       date: new Date().toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
       txHash: txHash || `0x${Array.from({ length: 8 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}...${Array.from({ length: 4 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`,
-      status: forceStatus || 'COMPLETED'
+      status: forceStatus || 'COMPLETED',
+      timestamp: Date.now()
     };
 
     setTransactions((prev) => {
@@ -1214,18 +1216,43 @@ export default function PlatformPage() {
       const rawContractBal = await platformContract.userBalances(userAddress);
       const fetchedContractBal = +parseFloat(ethers.formatUnits(rawContractBal, 18)).toFixed(2);
 
+      let currentBal = fetchedContractBal;
       if (savedBal !== null && !isNaN(parseFloat(savedBal)) && savedProof) {
         const expectedProof = generateTamperProofHash(userAddress, parseFloat(savedBal));
         const localVal = parseFloat(savedBal);
         if (savedProof === expectedProof) {
-          setBalance(localVal);
+          currentBal = localVal;
         } else {
           triggerSecurityAlert('LocalStorage Balance Tampering Detected');
-          updatePersistentBalance(fetchedContractBal, userAddress);
         }
-      } else {
-        updatePersistentBalance(fetchedContractBal, userAddress);
       }
+
+      // 24 SAAT GEÇEN BEKLEYEN ÇEKİMLERİ OTOMATİK İADE KONTROLÜ
+      const savedTxsStr = localStorage.getItem(`dd_txs_${userAddress.toLowerCase()}`);
+      if (savedTxsStr) {
+        try {
+          let txsList: TransactionRecord[] = JSON.parse(savedTxsStr);
+          const now = Date.now();
+          const oneDayMs = 24 * 60 * 60 * 1000;
+          let refundAmount = 0;
+
+          txsList = txsList.map(tx => {
+            if (tx.status === 'PENDING' && tx.type === 'WITHDRAW' && tx.timestamp && (now - tx.timestamp > oneDayMs)) {
+              refundAmount += tx.amount;
+              return { ...tx, status: 'COMPLETED', title: `${tx.title} (Süresi Doldu - İade Edildi)` };
+            }
+            return tx;
+          });
+
+          if (refundAmount > 0) {
+            currentBal += refundAmount;
+            localStorage.setItem(`dd_txs_${userAddress.toLowerCase()}`, JSON.stringify(txsList));
+            setTransactions(txsList);
+          }
+        } catch (e) {}
+      }
+
+      updatePersistentBalance(currentBal, userAddress);
 
       const savedStake = localStorage.getItem(`dd_stake_${userAddress.toLowerCase()}`);
       if (savedStake !== null && !isNaN(parseFloat(savedStake))) {
@@ -1582,7 +1609,7 @@ export default function PlatformPage() {
           return alert('Kasada yeterli bakiye yok!');
         }
 
-        // ÇEKİM TALEBİ: 24 Saat Manuel İnceleme Uyarısı (Blokzincire Gitmez)
+        // ÇEKİM TALEBİ: 24 Saat Manuel İnceleme Uyarısı
         const nBal = +(balance - val).toFixed(2);
         updatePersistentBalance(nBal);
         addTransaction('WITHDRAW', t.withdrawAction, val, 'Bekliyor', account, 'PENDING');
@@ -1962,7 +1989,6 @@ export default function PlatformPage() {
   };
 
   const handleSpinWheel = () => {
-    // Cüzdan kontrolü: Cüzdan bağlı değilse çarkın çevrilmesini engelle ve cüzdan modalını aç
     if (!account) {
       setIsSpinModalOpen(false);
       setIsWalletModalOpen(true);
@@ -2108,7 +2134,7 @@ export default function PlatformPage() {
     } catch (err: any) {
       setIsTxPending(false);
       console.error(err);
-      alert('Admin çekim işlemi başarısız! Hata nedeni: Kontratta yeterli on-chain (zincir-içi) komisyon birikmemiş olabilir veya cüzdan yetkiniz yok. (Oyunlar off-chain oynandığı için backend senkronizasyonu gerekebilir)');
+      alert('Admin çekim işlemi başarısız!');
     }
   };
 
