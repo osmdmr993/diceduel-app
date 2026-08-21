@@ -198,7 +198,8 @@ const TRANSLATIONS: Record<string, any> = {
     walletRequiredForSpin: 'Bitte verbinden Sie zuerst Ihr Wallet, um am Glücksrad teilzunehmen!',
     refStatsTotalInvites: 'Eingeladene Freunde',
     refStatsTotalEarned: 'Gesamtprovision',
-    refBonusNotice: '⚠️ Bedingung: Beide Parteien müssen ihre Wallets verbinden, um den Bonus (+0.50 USDT) zu aktivieren.'
+    refBonusNotice: '⚠️ Bedingung: Beide Parteien müssen ihre Wallets verbinden, um den Bonus (+0.50 USDT) zu aktivieren.',
+    stakeRequiredAlert: '⚠️ Sie müssen zuerst USDT im LP Pool staken (sperren), um Kâr-Auszahlungen beanspruchen zu können!'
   },
   en: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -316,7 +317,8 @@ const TRANSLATIONS: Record<string, any> = {
     walletRequiredForSpin: 'Please connect your wallet first before spinning the wheel!',
     refStatsTotalInvites: 'Invited Friends',
     refStatsTotalEarned: 'Total Commission',
-    refBonusNotice: '⚠️ Condition: Both parties must connect their wallets to unlock and claim the bonus (+0.50 USDT).'
+    refBonusNotice: '⚠️ Condition: Both parties must connect their wallets to unlock and claim the bonus (+0.50 USDT).',
+    stakeRequiredAlert: '⚠️ You must first stake USDT in the LP Pool to claim yield rewards!'
   },
   es: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -434,7 +436,8 @@ const TRANSLATIONS: Record<string, any> = {
     walletRequiredForSpin: '¡Por favor, conecta tu wallet antes de girar la ruleta!',
     refStatsTotalInvites: 'Amigos invitados',
     refStatsTotalEarned: 'Comisión total',
-    refBonusNotice: '⚠️ Condición: Ambas partes deben conectar sus wallets para desbloquear y reclamar el bono (+0.50 USDT).'
+    refBonusNotice: '⚠️ Condición: Ambas partes deben conectar sus wallets para desbloquear y reclamar el bono (+0.50 USDT).',
+    stakeRequiredAlert: '⚠️ ¡Debes hacer stake de USDT en el Pool LP para reclamar recompensas!'
   },
   fr: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -552,7 +555,8 @@ const TRANSLATIONS: Record<string, any> = {
     walletRequiredForSpin: 'Veuillez connecter votre portefeuille avant de faire tourner la roue !',
     refStatsTotalInvites: 'Amis invités',
     refStatsTotalEarned: 'Commission totale',
-    refBonusNotice: '⚠️ Condition : Les deux parties doivent connecter leurs portefeuilles pour débloquer le bonus (+0.50 USDT).'
+    refBonusNotice: '⚠️ Condition : Les deux parties doivent connecter leurs portefeuilles pour débloquer le bonus (+0.50 USDT).',
+    stakeRequiredAlert: '⚠️ Vous devez d\'abord staker des USDT dans le Pool LP pour réclamer vos gains !'
   },
   nl: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -670,7 +674,8 @@ const TRANSLATIONS: Record<string, any> = {
     walletRequiredForSpin: 'Verbind eerst uw portemonnee voordat u aan het rad draait!',
     refStatsTotalInvites: 'Genodigde vrienden',
     refStatsTotalEarned: 'Totale commissie',
-    refBonusNotice: '⚠️ Voorwaarde: Beide partijen moeten their portefeuilles verbinden om de bonus (+0.50 USDT) te claimen.'
+    refBonusNotice: '⚠️ Voorwaarde: Beide partijen moeten their portefeuilles verbinden om de bonus (+0.50 USDT) te claimen.',
+    stakeRequiredAlert: '⚠️ U moet eerst USDT staken in de LP Pool om rendementsbeloningen te claimen!'
   },
   ru: {
     hubTitle: 'DiceDuel Игровая Арена',
@@ -783,7 +788,8 @@ const TRANSLATIONS: Record<string, any> = {
     walletRequiredForSpin: 'Пожалуйста, подключите кошелек перед вращением колеса!',
     refStatsTotalInvites: 'Приглашенные друзья',
     refStatsTotalEarned: 'Общая комиссия',
-    refBonusNotice: '⚠️ Условие: Обе стороны должны подключить кошельки для получения бонуса (+0.50 USDT).'
+    refBonusNotice: '⚠️ Условие: Обе стороны должны подключить кошельки для получения бонуса (+0.50 USDT).',
+    stakeRequiredAlert: '⚠️ Сначала вы должны застейкать USDT в пуле LP, чтобы забрать доход!'
   },
   tr: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -901,7 +907,8 @@ const TRANSLATIONS: Record<string, any> = {
     walletRequiredForSpin: 'Lütfen çarkı çevirmeden önce cüzdanınızı bağlayın!',
     refStatsTotalInvites: 'Davet Edilen Arkadaş',
     refStatsTotalEarned: 'Toplam Komisyon',
-    refBonusNotice: '⚠️ Şart: Bonusu (+0.50 USDT) aktif edebilmek için hem davet edenin hem de gelen arkadaşın cüzdanını bağlaması zorunludur.'
+    refBonusNotice: '⚠️ Şart: Bonusu (+0.50 USDT) aktif edebilmek için hem davet edenin hem de gelen arkadaşın cüzdanını bağlaması zorunludur.',
+    stakeRequiredAlert: '⚠️ Kâr payını çekebilmek için önce LP Havuzuna USDT kilitlemelisiniz!'
   }
 };
 
@@ -1277,20 +1284,18 @@ export default function PlatformPage() {
 
       updatePersistentBalance(currentBal, userAddress);
 
-      // REFERANS / INVITE KONTROLÜ (Cüzdan bağlandığında ödül aktifleşir)
+      // REFERANS / INVITE KONTROLÜ
       if (typeof window !== 'undefined') {
         const urlParams = new URLSearchParams(window.location.search);
         const refParam = urlParams.get('ref');
         const claimedRef = localStorage.getItem(`dd_ref_claimed_${userAddress.toLowerCase()}`);
 
         if (refParam && !claimedRef && refParam.toLowerCase() !== userAddress.toLowerCase()) {
-          // Davet edilen kişi cüzdanını bağladı, +0.50 USDT hoş geldin bonusu ver
           currentBal += 0.50;
           updatePersistentBalance(currentBal, userAddress);
           addTransaction('REF_COMMISSION', 'Hoş Geldin Davet Bonusu', 0.50, undefined, userAddress);
           localStorage.setItem(`dd_ref_claimed_${userAddress.toLowerCase()}`, 'true');
 
-          // Davet eden kişinin istatistiklerini güncelle (Simülasyon / Yerel Sayaç)
           const inviterKey = `dd_invites_${refParam.toLowerCase()}`;
           const currentInvites = parseInt(localStorage.getItem(inviterKey) || '0', 10) + 1;
           localStorage.setItem(inviterKey, currentInvites.toString());
@@ -1300,7 +1305,6 @@ export default function PlatformPage() {
           localStorage.setItem(inviterEarningsKey, currentEarnings.toString());
         }
 
-        // Kullanıcının kendi davet istatistiklerini yükle
         const myInvites = localStorage.getItem(`dd_invites_${userAddress.toLowerCase()}`);
         if (myInvites) setTotalInvites(parseInt(myInvites, 10));
 
@@ -2150,7 +2154,13 @@ export default function PlatformPage() {
 
   const handleClaimYield = () => {
     if (isRateLimited()) return;
+    // TEDBİR: Havuzda aktif stake (anapara) yoksa kâr payı çekimine izin verilmez!
+    if (stakedAmount <= 0) {
+      alert(t.stakeRequiredAlert);
+      return;
+    }
     if (accumulatedYield <= 0) return;
+
     const nBal = +(balance + accumulatedYield).toFixed(2);
     const claimVal = accumulatedYield;
 
@@ -2158,7 +2168,7 @@ export default function PlatformPage() {
     updatePersistentStake(stakedAmount, 0.0);
 
     setStakeSuccessMsg(`+${claimVal.toFixed(2)} USDT Kasa Payı Çekildi!`);
-    addTransaction('REF_COMMISSION', 'Kasa Komisyon Payı', claimVal);
+    addTransaction('REF_COMMISSION', 'LP Havuz Kâr Payı', claimVal);
     setTimeout(() => setStakeSuccessMsg(null), 1500);
   };
 
