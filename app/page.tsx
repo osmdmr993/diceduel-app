@@ -141,41 +141,54 @@ const TRANSLATIONS: Record<string, any> = {
     minBetText: 'Min:',
     activeRoomsText: 'Aktive Räume',
     restartText: 'Neu Starten',
-    allTxs: 'Tümü',
-    inTxs: 'Yatırılanlar',
-    outTxs: 'Çekilenler',
-    winTxs: 'Kazançlar',
+    allTxs: 'Alle',
+    inTxs: 'Einzahlungen',
+    outTxs: 'Auszahlungen',
+    winTxs: 'Gewinne',
     lossTxs: 'Verluste',
-    noTxs: 'Henüz kayıtlı bir işlem bulunmuyor.',
-    vaultMgmt: 'Kasa Yönetimi',
-    depositUsdt: 'USDT Yatır',
-    withdrawUsdt: 'USDT Çek',
-    amountLabel: 'Tutar',
-    adminPanelTitle: 'Kurucu Kasa Gelir Paneli',
-    adminPanelDesc: 'Platformda oynanan tüm oyunların %3 ev komisyonu akıllı sözleşmede birikir. Buradan dilediğiniz tutarı tek tıkla şahsi Binance cüzdanınıza aktarabilirsiniz.',
-    adminWithdrawLabel: 'Çekilecek Kasa Geliri (USDT)',
-    adminBtnText: 'Kasa Gelirini Cüzdana Aktar (BscScan On-Chain)',
-    flexibleStake: 'Esnek',
-    instantWithdraw: 'Anında Çekim',
-    days7: '7 Gün',
-    bonusProfit: '+Bonus Kâr',
-    days30: '30 Gün',
-    maxProfit: 'Maksimum Kâr',
-    lockedTotal: 'Kilitli Toplam',
-    accumulatedComm: 'Biriken Komisyon',
-    claimYieldBtn: 'Kâr Payını Çek',
-    unlockBtn: 'Kilidi Aç',
-    joinPoolLabel: 'Havuza Ortak Ol (USDT Kitle)',
-    becomePartnerBtn: 'Ortak Ol',
-    inviteLinkTitle: 'Özel Davet Bağlantınız:',
-    selectWalletTitle: 'BSC Mainnet cüzdanınızı seçin:',
+    noTxs: 'Noch keine Transaktionen vorhanden.',
+    vaultMgmt: 'Tresor Verwaltung',
+    depositUsdt: 'USDT Einzahlen',
+    withdrawUsdt: 'USDT Auszahlen',
+    amountLabel: 'Betrag',
+    adminPanelTitle: 'Gründer Einnahmen',
+    adminPanelDesc: '3% Hausgebühr sammeln sich im Smart Contract. Hier kannst du den Betrag auf dein Binance Wallet übertragen.',
+    adminWithdrawLabel: 'Einnahmen abheben (USDT)',
+    adminBtnText: 'Zum Wallet übertragen (BscScan)',
+    flexibleStake: 'Flexibel',
+    instantWithdraw: 'Sofortige Auszahlung',
+    days7: '7 Tage',
+    bonusProfit: '+Bonus Gewinn',
+    days30: '30 Tage',
+    maxProfit: 'Max. Gewinn',
+    lockedTotal: 'Gesperrt',
+    accumulatedComm: 'Gesammelte Provision',
+    claimYieldBtn: 'Rendite abheben',
+    unlockBtn: 'Entsperren',
+    joinPoolLabel: 'Pool Beitreten (USDT)',
+    becomePartnerBtn: 'Partner Werden',
+    inviteLinkTitle: 'Dein Einladungslink:',
+    selectWalletTitle: 'Wähle dein BSC Wallet:',
     binanceWalletDesc: 'Binance App & Extension',
     metamaskWalletDesc: 'EVM & Extension',
     okxWalletDesc: 'OKX App & Extension',
     otherWalletDesc: 'Rabby, Trust, Bybit, Phantom',
-    demoWalletDesc: 'Test & Simülasyon',
-    supportBotTitle: 'Resmi Telegram Destek Botu',
-    supportActive: '7/24 Aktif'
+    demoWalletDesc: 'Test & Simulation',
+    supportBotTitle: 'Offizieller Support Bot',
+    supportActive: '24/7 Aktiv',
+    walletText: 'Wallet',
+    txPendingText: 'Warten auf Bestätigung...',
+    depositAction: 'Auf Vertrag einzahlen',
+    withdrawAction: 'Auszahlen',
+    popularBadge: 'Beliebt',
+    universalBadge: 'Universal',
+    testBadge: 'Testen',
+    liveLobby: 'Live Lobby',
+    adminPrivilegeTitle: 'Plattform-Eigentümer aktiv',
+    colorRed: 'ROT',
+    colorGreen: 'GRÜN (0/00)',
+    colorBlack: 'SCHWARZ',
+    maxBetLabel: 'Maximaler Einsatz'
   },
   en: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -253,7 +266,7 @@ const TRANSLATIONS: Record<string, any> = {
     adminPanelTitle: 'Founder Revenue Panel',
     adminPanelDesc: 'A 3% house edge from all games accumulates in the smart contract. You can transfer any amount to your personal Binance wallet with a single click.',
     adminWithdrawLabel: 'Withdraw Revenue (USDT)',
-    adminBtnText: 'Transfer Revenue to Wallet (BscScan On-Chain)',
+    adminBtnText: 'Transfer Revenue to Wallet (BscScan)',
     flexibleStake: 'Flexible',
     instantWithdraw: 'Instant Withdrawal',
     days7: '7 Days',
@@ -274,7 +287,20 @@ const TRANSLATIONS: Record<string, any> = {
     otherWalletDesc: 'Rabby, Trust, Bybit, Phantom',
     demoWalletDesc: 'Test & Simulation',
     supportBotTitle: 'Official Telegram Support Bot',
-    supportActive: '24/7 Active'
+    supportActive: '24/7 Active',
+    walletText: 'Wallet',
+    txPendingText: 'Awaiting Approval...',
+    depositAction: 'Deposit to Contract',
+    withdrawAction: 'Withdraw to Wallet',
+    popularBadge: 'Popular',
+    universalBadge: 'Universal',
+    testBadge: 'Test',
+    liveLobby: 'Live Lobby',
+    adminPrivilegeTitle: 'Platform Owner Privilege Active',
+    colorRed: 'RED',
+    colorGreen: 'GREEN (0/00)',
+    colorBlack: 'BLACK',
+    maxBetLabel: 'Max Bet'
   },
   es: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -349,10 +375,10 @@ const TRANSLATIONS: Record<string, any> = {
     depositUsdt: 'Depositar USDT',
     withdrawUsdt: 'Retirar USDT',
     amountLabel: 'Cantidad',
-    adminPanelTitle: 'Panel de Ingresos del Fundador',
+    adminPanelTitle: 'Panel de Ingresos',
     adminPanelDesc: 'Una comisión del 3% de todos los juegos se acumula en el contrato inteligente.',
     adminWithdrawLabel: 'Retirar Ingresos (USDT)',
-    adminBtnText: 'Transferir a la Wallet (BscScan On-Chain)',
+    adminBtnText: 'Transferir a la Wallet (BscScan)',
     flexibleStake: 'Flexible',
     instantWithdraw: 'Retiro Instantáneo',
     days7: '7 Días',
@@ -366,14 +392,27 @@ const TRANSLATIONS: Record<string, any> = {
     joinPoolLabel: 'Unirse al Pool (Bloquear USDT)',
     becomePartnerBtn: 'Ser Socio',
     inviteLinkTitle: 'Tu Enlace de Invitación:',
-    selectWalletTitle: 'Selecciona tu wallet de BSC:',
+    selectWalletTitle: 'Selecciona tu wallet BSC:',
     binanceWalletDesc: 'Binance App & Extension',
     metamaskWalletDesc: 'EVM & Extension',
     okxWalletDesc: 'OKX App & Extension',
     otherWalletDesc: 'Rabby, Trust, Bybit, Phantom',
     demoWalletDesc: 'Prueba y Simulación',
-    supportBotTitle: 'Bot de Soporte Oficial en Telegram',
-    supportActive: 'Activo 24/7'
+    supportBotTitle: 'Bot de Soporte Oficial',
+    supportActive: 'Activo 24/7',
+    walletText: 'Billetera',
+    txPendingText: 'Esperando Aprobación...',
+    depositAction: 'Depositar en el Contrato',
+    withdrawAction: 'Retirar a la Billetera',
+    popularBadge: 'Popular',
+    universalBadge: 'Universal',
+    testBadge: 'Prueba',
+    liveLobby: 'Lobby en Vivo',
+    adminPrivilegeTitle: 'Privilegio de Propietario',
+    colorRed: 'ROJO',
+    colorGreen: 'VERDE (0/00)',
+    colorBlack: 'NEGRO',
+    maxBetLabel: 'Apuesta Máxima'
   },
   fr: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -448,10 +487,10 @@ const TRANSLATIONS: Record<string, any> = {
     depositUsdt: 'Déposer USDT',
     withdrawUsdt: 'Retirer USDT',
     amountLabel: 'Montant',
-    adminPanelTitle: 'Panneau des Revenus Fondateur',
+    adminPanelTitle: 'Panneau des Revenus',
     adminPanelDesc: 'Une commission de 3% est accumulée dans le contrat.',
     adminWithdrawLabel: 'Retirer les Revenus (USDT)',
-    adminBtnText: 'Transférer au Wallet (BscScan On-Chain)',
+    adminBtnText: 'Transférer au Wallet (BscScan)',
     flexibleStake: 'Flexible',
     instantWithdraw: 'Retrait Instantané',
     days7: '7 Jours',
@@ -462,17 +501,30 @@ const TRANSLATIONS: Record<string, any> = {
     accumulatedComm: 'Commission Cumulée',
     claimYieldBtn: 'Réclamer le Rendement',
     unlockBtn: 'Débloquer',
-    joinPoolLabel: 'Rejoindre le Pool (Bloquer USDT)',
+    joinPoolLabel: 'Rejoindre le Pool (USDT)',
     becomePartnerBtn: 'Devenir Partenaire',
-    inviteLinkTitle: 'Votre Lien de Parrainage:',
+    inviteLinkTitle: 'Lien de Parrainage:',
     selectWalletTitle: 'Sélectionnez votre wallet BSC:',
     binanceWalletDesc: 'Binance App & Extension',
     metamaskWalletDesc: 'EVM & Extension',
     okxWalletDesc: 'OKX App & Extension',
     otherWalletDesc: 'Rabby, Trust, Bybit, Phantom',
     demoWalletDesc: 'Test & Simulation',
-    supportBotTitle: 'Bot de Support Officiel Telegram',
-    supportActive: 'Activo 24/7'
+    supportBotTitle: 'Bot de Support Officiel',
+    supportActive: 'Actif 24/7',
+    walletText: 'Portefeuille',
+    txPendingText: 'En attente d\'approbation...',
+    depositAction: 'Déposer sur le contrat',
+    withdrawAction: 'Retirer vers Portefeuille',
+    popularBadge: 'Populaire',
+    universalBadge: 'Universel',
+    testBadge: 'Essai',
+    liveLobby: 'Lobby en Direct',
+    adminPrivilegeTitle: 'Privilège de Propriétaire',
+    colorRed: 'ROUGE',
+    colorGreen: 'VERT (0/00)',
+    colorBlack: 'NOIR',
+    maxBetLabel: 'Mise Maximale'
   },
   nl: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -547,10 +599,10 @@ const TRANSLATIONS: Record<string, any> = {
     depositUsdt: 'Stort USDT',
     withdrawUsdt: 'Opnemen USDT',
     amountLabel: 'Bedrag',
-    adminPanelTitle: 'Oprichter Inkomsten Paneel',
+    adminPanelTitle: 'Oprichter Inkomsten',
     adminPanelDesc: 'Een huisvoordeel van 3% wordt verzameld in het contract.',
     adminWithdrawLabel: 'Inkomsten Opnemen (USDT)',
-    adminBtnText: 'Overmaken naar Wallet (BscScan On-Chain)',
+    adminBtnText: 'Overmaken naar Wallet (BscScan)',
     flexibleStake: 'Flexibel',
     instantWithdraw: 'Directe Opname',
     days7: '7 Dagen',
@@ -561,17 +613,30 @@ const TRANSLATIONS: Record<string, any> = {
     accumulatedComm: 'Opgelopen Commissie',
     claimYieldBtn: 'Claim Rendement',
     unlockBtn: 'Ontgrendelen',
-    joinPoolLabel: 'Deelnemen aan Pool (USDT Vergrendelen)',
+    joinPoolLabel: 'Deelnemen aan Pool (USDT)',
     becomePartnerBtn: 'Word Partner',
-    inviteLinkTitle: 'Uw Speciale Uitnodigingslink:',
-    selectWalletTitle: 'Selecteer uw BSC Mainnet wallet:',
+    inviteLinkTitle: 'Uitnodigingslink:',
+    selectWalletTitle: 'Selecteer uw BSC wallet:',
     binanceWalletDesc: 'Binance App & Extension',
     metamaskWalletDesc: 'EVM & Extension',
     okxWalletDesc: 'OKX App & Extension',
     otherWalletDesc: 'Rabby, Trust, Bybit, Phantom',
     demoWalletDesc: 'Test & Simulatie',
-    supportBotTitle: 'Officiële Telegram Ondersteuningsbot',
-    supportActive: '24/7 Actief'
+    supportBotTitle: 'Officiële Ondersteuningsbot',
+    supportActive: '24/7 Actief',
+    walletText: 'Portemonnee',
+    txPendingText: 'Wachten op goedkeuring...',
+    depositAction: 'Storten op contract',
+    withdrawAction: 'Opnemen naar Portemonnee',
+    popularBadge: 'Populair',
+    universalBadge: 'Universeel',
+    testBadge: 'Test',
+    liveLobby: 'Live Lobby',
+    adminPrivilegeTitle: 'Eigenaarsrechten Actief',
+    colorRed: 'ROOD',
+    colorGreen: 'GROEN (0/00)',
+    colorBlack: 'ZWART',
+    maxBetLabel: 'Maximale Inzet'
   },
   ru: {
     hubTitle: 'DiceDuel Игровая Арена',
@@ -623,7 +688,7 @@ const TRANSLATIONS: Record<string, any> = {
     linkCopied: 'Ссылка скопирована!',
     shareTelegramWin: 'Поделиться в Telegram',
     adminPanel: 'Админ Касса',
-    wrongNetwork: 'Пожалуйста, переключитесь на сеть BSC (BNB Chain)!',
+    wrongNetwork: 'Пожалуйста, переключитесь на сеть BSC!',
     coinSubText: 'PvP Дуэль в Реальном Времени • 1.94x',
     rouletteSubText: 'Красное / Черное • Множитель 1.94x',
     minesSubText: 'Честный генератор RNG',
@@ -644,7 +709,7 @@ const TRANSLATIONS: Record<string, any> = {
     adminPanelTitle: 'Панель Доходов Создателя',
     adminPanelDesc: 'Комиссия 3% собирается в смарт-контракте.',
     adminWithdrawLabel: 'Вывод Дохода (USDT)',
-    adminBtnText: 'Перевести на Кошелек (BscScan On-Chain)',
+    adminBtnText: 'Перевести на Кошелек (BscScan)',
     flexibleStake: 'Гибкий',
     instantWithdraw: 'Мгновенный вывод',
     days7: '7 Дней',
@@ -655,17 +720,30 @@ const TRANSLATIONS: Record<string, any> = {
     accumulatedComm: 'Накопленная комиссия',
     claimYieldBtn: 'Забрать доход',
     unlockBtn: 'Разблокировать',
-    joinPoolLabel: 'Войти в Пул (Заблокировать USDT)',
+    joinPoolLabel: 'Войти в Пул (USDT)',
     becomePartnerBtn: 'Стать Партнером',
-    inviteLinkTitle: 'Ваша Реферальная Ссылка:',
+    inviteLinkTitle: 'Ваша Ссылка:',
     selectWalletTitle: 'Выберите кошелек BSC:',
     binanceWalletDesc: 'Binance App & Extension',
     metamaskWalletDesc: 'EVM & Extension',
     okxWalletDesc: 'OKX App & Extension',
     otherWalletDesc: 'Rabby, Trust, Bybit, Phantom',
     demoWalletDesc: 'Тест и Симуляция',
-    supportBotTitle: 'Официальный Telegram Бот Поддержки',
-    supportActive: '24/7 Онлайн'
+    supportBotTitle: 'Telegram Бот Поддержки',
+    supportActive: '24/7 Онлайн',
+    walletText: 'Кошелек',
+    txPendingText: 'Ожидание подтверждения...',
+    depositAction: 'Внести в контракт',
+    withdrawAction: 'Вывести на кошелек',
+    popularBadge: 'Популярный',
+    universalBadge: 'Универсальный',
+    testBadge: 'Тест',
+    liveLobby: 'Живое Лобби',
+    adminPrivilegeTitle: 'Права Владельца',
+    colorRed: 'КРАСНЫЙ',
+    colorGreen: 'ЗЕЛЕНЫЙ (0/00)',
+    colorBlack: 'ЧЕРНЫЙ',
+    maxBetLabel: 'Макс. ставка'
   },
   tr: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -764,7 +842,20 @@ const TRANSLATIONS: Record<string, any> = {
     otherWalletDesc: 'Rabby, Trust, Bybit, Phantom',
     demoWalletDesc: 'Test & Simülasyon',
     supportBotTitle: 'Resmi Telegram Destek Botu',
-    supportActive: '7/24 Aktif'
+    supportActive: '7/24 Aktif',
+    walletText: 'Cüzdan',
+    txPendingText: 'Cüzdanda Onay Bekleniyor...',
+    depositAction: 'Kontrata USDT Aktar',
+    withdrawAction: 'Kontrattan Cüzdana Çek',
+    popularBadge: 'Popüler',
+    universalBadge: 'Evrensel',
+    testBadge: 'Deneme',
+    liveLobby: 'Canlı Lobi',
+    adminPrivilegeTitle: 'Platform Sahibi Yetkisi Devrede',
+    colorRed: 'KIRMIZI',
+    colorGreen: 'YEŞİL (0/00)',
+    colorBlack: 'SİYAH',
+    maxBetLabel: 'Maksimum Bahis'
   }
 };
 
@@ -1102,7 +1193,6 @@ export default function PlatformPage() {
         const expectedProof = generateTamperProofHash(userAddress, parseFloat(savedBal));
         const localVal = parseFloat(savedBal);
         if (savedProof === expectedProof) {
-          // Off-chain oyun simülasyonunda bakiye sadece lokalden eksildiği için her zaman lokal bakiyeyi ana referans kabul ediyoruz
           setBalance(localVal);
         } else {
           triggerSecurityAlert('LocalStorage Balance Tampering Detected');
@@ -1954,7 +2044,6 @@ export default function PlatformPage() {
   };
 
   const handleAdminWithdraw = async () => {
-    // Virgül (,) ile girilen sayıları Nokta (.) formatına çeviriyoruz ki parseInt/ethers hata vermesin!
     const valStr = adminWithdrawAmount.replace(',', '.');
     const val = parseFloat(valStr);
     
@@ -1994,9 +2083,9 @@ export default function PlatformPage() {
   const exportToCSV = () => {
     triggerTelegramHaptic('medium');
     const headers = 'ID,Islem Turu,Detay,Tutar (USDT),Tarih,Islem Hashi,Durum\n';
-    const rows = transactions.map(t => {
-      const amountPrefix = (t.type === 'WITHDRAW' || t.type === 'GAME_LOSS') ? '-' : '+';
-      return `"${t.id}","${t.type}","${t.title}","${amountPrefix}${t.amount.toFixed(2)}","${t.date}","${t.txHash}","${t.status}"`
+    const rows = transactions.map(t_rec => {
+      const amountPrefix = (t_rec.type === 'WITHDRAW' || t_rec.type === 'GAME_LOSS') ? '-' : '+';
+      return `"${t_rec.id}","${t_rec.type}","${t_rec.title}","${amountPrefix}${t_rec.amount.toFixed(2)}","${t_rec.date}","${t_rec.txHash}","${t_rec.status}"`
     }).join('\n');
     const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -2385,14 +2474,14 @@ export default function PlatformPage() {
               <div className="md:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-5 space-y-3.5">
                 <div className="flex justify-between items-center">
                   <h2 className="font-bold text-xs uppercase tracking-wider flex items-center gap-2 text-slate-200"><Flame className="w-4 h-4 text-rose-400" /> {t.liveRooms} ({rooms.length} {t.activeRoomsText})</h2>
-                  <span className="text-[10px] text-indigo-400 flex items-center gap-1"><Sparkles className="w-3 h-3" /> Canlı Lobi</span>
+                  <span className="text-[10px] text-indigo-400 flex items-center gap-1"><Sparkles className="w-3 h-3" /> {t.liveLobby}</span>
                 </div>
                 <div className="space-y-2">
                   {rooms.map((r) => (
                     <div key={r.id} className="flex items-center justify-between p-3 bg-slate-950 border border-slate-800 rounded-xl hover:border-slate-700 transition">
                       <div className="space-y-0.5">
                         <span className="text-xs font-semibold text-slate-200">{r.creator}</span>
-                        <div className="text-[9px] text-slate-500">Maksimum Bahis: 5.00 USDT</div>
+                        <div className="text-[9px] text-slate-500">{t.maxBetLabel}: 5.00 USDT</div>
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="text-xs font-bold text-amber-400">{r.betAmount.toFixed(2)} USDT</span>
@@ -2456,9 +2545,9 @@ export default function PlatformPage() {
               </div>
 
               <div className="grid grid-cols-3 gap-2">
-                <button onClick={() => { setRouletteChoice('RED'); triggerTelegramHaptic('light'); }} className={`py-3 rounded-2xl font-black text-xs border transition ${rouletteChoice === 'RED' ? 'bg-rose-600 border-rose-400 text-white shadow-lg shadow-rose-600/30' : 'bg-slate-950 border-slate-800 text-slate-400'}`}>🔴 KIRMIZI</button>
-                <button onClick={() => { setRouletteChoice('GREEN'); triggerTelegramHaptic('light'); }} className={`py-3 rounded-2xl font-black text-xs border transition ${rouletteChoice === 'GREEN' ? 'bg-emerald-600 border-emerald-400 text-white shadow-lg shadow-emerald-600/30' : 'bg-slate-950 border-slate-800 text-slate-400'}`}>🟢 YEŞİL (0/00)</button>
-                <button onClick={() => { setRouletteChoice('BLACK'); triggerTelegramHaptic('light'); }} className={`py-3 rounded-2xl font-black text-xs border transition ${rouletteChoice === 'BLACK' ? 'bg-slate-800 border-slate-600 text-white shadow-lg' : 'bg-slate-950 border-slate-800 text-slate-400'}`}>⚫ SİYAH</button>
+                <button onClick={() => { setRouletteChoice('RED'); triggerTelegramHaptic('light'); }} className={`py-3 rounded-2xl font-black text-xs border transition ${rouletteChoice === 'RED' ? 'bg-rose-600 border-rose-400 text-white shadow-lg shadow-rose-600/30' : 'bg-slate-950 border-slate-800 text-slate-400'}`}>🔴 {t.colorRed}</button>
+                <button onClick={() => { setRouletteChoice('GREEN'); triggerTelegramHaptic('light'); }} className={`py-3 rounded-2xl font-black text-xs border transition ${rouletteChoice === 'GREEN' ? 'bg-emerald-600 border-emerald-400 text-white shadow-lg shadow-emerald-600/30' : 'bg-slate-950 border-slate-800 text-slate-400'}`}>🟢 {t.colorGreen}</button>
+                <button onClick={() => { setRouletteChoice('BLACK'); triggerTelegramHaptic('light'); }} className={`py-3 rounded-2xl font-black text-xs border transition ${rouletteChoice === 'BLACK' ? 'bg-slate-800 border-slate-600 text-white shadow-lg' : 'bg-slate-950 border-slate-800 text-slate-400'}`}>⚫ {t.colorBlack}</button>
               </div>
 
               <div className="relative">
@@ -2665,7 +2754,7 @@ export default function PlatformPage() {
                 <div className="space-y-3">
                   <div className="flex justify-between text-[11px] text-slate-400 font-medium">
                     <span>{t.amountLabel}</span>
-                    {!isDemoWallet && account && <span>Cüzdan: {walletUSDT} USDT (BNB: {walletBNB})</span>}
+                    {!isDemoWallet && account && <span>{t.walletText}: {walletUSDT} USDT (BNB: {walletBNB})</span>}
                   </div>
                   <div className="relative">
                     <input 
@@ -2692,7 +2781,7 @@ export default function PlatformPage() {
                     className={`w-full py-2.5 rounded-xl font-bold text-xs text-white shadow-lg transition active:scale-95 flex items-center justify-center gap-2 ${modalTab === 'deposit' ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/20' : 'bg-rose-600 hover:bg-rose-500 shadow-rose-600/20'} disabled:opacity-50`}
                   >
                     {isTxPending && <Loader2 className="w-4 h-4 animate-spin" />}
-                    {isTxPending ? 'Cüzdanda Onay Bekleniyor...' : modalTab === 'deposit' ? 'Kontrata USDT Aktar' : 'Kontrattan Cüzdana Çek'}
+                    {isTxPending ? t.txPendingText : modalTab === 'deposit' ? t.depositAction : t.withdrawAction}
                   </button>
                 </div>
               </motion.div>
@@ -2709,7 +2798,7 @@ export default function PlatformPage() {
                 <h3 className="font-bold text-base text-amber-300 flex items-center gap-2"><Crown className="w-5 h-5 text-amber-400" /> {t.adminPanelTitle}</h3>
                   
                 <div className="p-3 bg-amber-950/30 border border-amber-800/40 rounded-2xl text-xs space-y-1.5 text-slate-300">
-                  <div className="font-bold text-amber-300">👑 Platform Sahibi Yetkisi Devrede</div>
+                  <div className="font-bold text-amber-300">👑 {t.adminPrivilegeTitle}</div>
                   <p className="text-[11px] leading-relaxed">{t.adminPanelDesc}</p>
                 </div>
 
@@ -2729,7 +2818,7 @@ export default function PlatformPage() {
                   className="w-full py-2.5 bg-gradient-to-r from-amber-600 to-yellow-500 hover:from-amber-500 hover:to-yellow-400 text-slate-950 font-black text-xs rounded-xl transition shadow-lg shadow-amber-500/20 active:scale-95 flex items-center justify-center gap-1.5 disabled:opacity-50"
                 >
                   {isTxPending && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {isTxPending ? 'Onay Bekleniyor...' : t.adminBtnText}
+                  {isTxPending ? t.txPendingText : t.adminBtnText}
                 </button>
               </motion.div>
             </div>
@@ -2846,7 +2935,7 @@ export default function PlatformPage() {
                         <div className="text-[9px] text-slate-500">{t.binanceWalletDesc}</div>
                       </div>
                     </div>
-                    <span className="text-[9px] bg-amber-950 text-amber-300 px-1.5 py-0.5 rounded border border-amber-800/40">Popüler</span>
+                    <span className="text-[9px] bg-amber-950 text-amber-300 px-1.5 py-0.5 rounded border border-amber-800/40">{t.popularBadge}</span>
                   </button>
 
                   <button onClick={() => handleSelectWallet('metamask')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-orange-950/20 border border-slate-800 rounded-2xl transition">
@@ -2877,7 +2966,7 @@ export default function PlatformPage() {
                         <div className="text-[9px] text-slate-500">{t.otherWalletDesc}</div>
                       </div>
                     </div>
-                    <span className="text-[9px] bg-purple-950 text-purple-300 px-1.5 py-0.5 rounded border border-purple-800/40">Evrensel</span>
+                    <span className="text-[9px] bg-purple-950 text-purple-300 px-1.5 py-0.5 rounded border border-purple-800/40">{t.universalBadge}</span>
                   </button>
 
                   <button onClick={() => handleSelectWallet('demo')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-indigo-950/20 border border-slate-800 rounded-2xl transition">
@@ -2888,7 +2977,7 @@ export default function PlatformPage() {
                         <div className="text-[9px] text-slate-500">{t.demoWalletDesc}</div>
                       </div>
                     </div>
-                    <span className="text-[9px] bg-indigo-950 text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-800/40">Deneme</span>
+                    <span className="text-[9px] bg-indigo-950 text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-800/40">{t.testBadge}</span>
                   </button>
                 </div>
               </motion.div>
