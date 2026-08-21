@@ -145,6 +145,7 @@ const TRANSLATIONS: Record<string, any> = {
     inTxs: 'Yatırılanlar',
     outTxs: 'Çekilenler',
     winTxs: 'Kazançlar',
+    lossTxs: 'Verluste',
     noTxs: 'Henüz kayıtlı bir işlem bulunmuyor.',
     vaultMgmt: 'Kasa Yönetimi',
     depositUsdt: 'USDT Yatır',
@@ -243,6 +244,7 @@ const TRANSLATIONS: Record<string, any> = {
     inTxs: 'Deposits',
     outTxs: 'Withdrawals',
     winTxs: 'Wins',
+    lossTxs: 'Losses',
     noTxs: 'No transaction records found yet.',
     vaultMgmt: 'Vault Management',
     depositUsdt: 'Deposit USDT',
@@ -341,6 +343,7 @@ const TRANSLATIONS: Record<string, any> = {
     inTxs: 'Depósitos',
     outTxs: 'Retiros',
     winTxs: 'Ganancias',
+    lossTxs: 'Pérdidas',
     noTxs: 'Aún no hay registros de transacciones.',
     vaultMgmt: 'Gestión de Bóveda',
     depositUsdt: 'Depositar USDT',
@@ -439,6 +442,7 @@ const TRANSLATIONS: Record<string, any> = {
     inTxs: 'Dépôts',
     outTxs: 'Retraits',
     winTxs: 'Gains',
+    lossTxs: 'Pertes',
     noTxs: 'Aucun historique de transaction.',
     vaultMgmt: 'Gestion du Coffre',
     depositUsdt: 'Déposer USDT',
@@ -537,6 +541,7 @@ const TRANSLATIONS: Record<string, any> = {
     inTxs: 'Stortingen',
     outTxs: 'Opnames',
     winTxs: 'Winsten',
+    lossTxs: 'Verliezen',
     noTxs: 'Nog geen transacties gevonden.',
     vaultMgmt: 'Kluis Beheer',
     depositUsdt: 'Stort USDT',
@@ -630,6 +635,7 @@ const TRANSLATIONS: Record<string, any> = {
     inTxs: 'Депозиты',
     outTxs: 'Выводы',
     winTxs: 'Выигрыши',
+    lossTxs: 'Потери',
     noTxs: 'История транзакций пуста.',
     vaultMgmt: 'Управление Кассой',
     depositUsdt: 'Внести USDT',
@@ -728,6 +734,7 @@ const TRANSLATIONS: Record<string, any> = {
     inTxs: 'Yatırılanlar',
     outTxs: 'Çekilenler',
     winTxs: 'Kazançlar',
+    lossTxs: 'Kayıplar',
     noTxs: 'Henüz kayıtlı bir işlem bulunmuyor.',
     vaultMgmt: 'Kasa Yönetimi',
     depositUsdt: 'USDT Yatır',
@@ -788,7 +795,7 @@ interface MatchHistoryItem {
 
 interface TransactionRecord {
   id: string;
-  type: 'DEPOSIT' | 'WITHDRAW' | 'GAME_WIN' | 'SPIN' | 'REF_COMMISSION';
+  type: 'DEPOSIT' | 'WITHDRAW' | 'GAME_WIN' | 'GAME_LOSS' | 'SPIN' | 'REF_COMMISSION';
   title: string;
   amount: number;
   date: string;
@@ -869,7 +876,7 @@ export default function PlatformPage() {
 
   const [isSupportModalOpen, setIsSupportModalOpen] = useState<boolean>(false);
   const [isTxModalOpen, setIsTxModalOpen] = useState<boolean>(false);
-  const [txFilter, setTxFilter] = useState<'ALL' | 'IN' | 'OUT' | 'WINS'>('ALL');
+  const [txFilter, setTxFilter] = useState<'ALL' | 'IN' | 'OUT' | 'WINS' | 'LOSSES'>('ALL');
    
   const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
   const [matchHistory, setMatchHistory] = useState<MatchHistoryItem[]>([]);
@@ -1000,7 +1007,7 @@ export default function PlatformPage() {
   const checkSpinCooldown = useCallback((userAddr?: string) => {
     const targetAddr = userAddr || account || 'guest';
     if (typeof window === 'undefined') return;
-     
+      
     const lastSpinTime = localStorage.getItem(`dd_last_spin_${targetAddr.toLowerCase()}`);
     if (lastSpinTime) {
       const diffMs = Date.now() - parseInt(lastSpinTime, 10);
@@ -1057,7 +1064,7 @@ export default function PlatformPage() {
 
       const browserProvider = new ethers.BrowserProvider(providerObj);
       const network = await browserProvider.getNetwork();
-       
+        
       if (Number(network.chainId) !== BSC_CHAIN_ID) {
         setIsWrongNetwork(true);
       } else {
@@ -1066,7 +1073,7 @@ export default function PlatformPage() {
 
       const rawBNB = await browserProvider.getBalance(userAddress);
       setWalletBNB(+parseFloat(ethers.formatEther(rawBNB)).toFixed(4));
-       
+        
       const usdtContract = new ethers.Contract(BSC_USDT_ADDRESS, ERC20_ABI, browserProvider);
       const rawWalletBal = await usdtContract.balanceOf(userAddress);
       setWalletUSDT(+parseFloat(ethers.formatUnits(rawWalletBal, 18)).toFixed(2));
@@ -1380,7 +1387,7 @@ export default function PlatformPage() {
       try {
         const browserProvider = new ethers.BrowserProvider(providerToUse);
         const accounts = await browserProvider.send('eth_requestAccounts', []);
-         
+          
         if (accounts && accounts.length > 0) {
           setAccount(accounts[0]);
           setIsDemoWallet(false);
@@ -1403,7 +1410,8 @@ export default function PlatformPage() {
 
     initAudio();
     triggerTelegramHaptic('medium');
-    const val = parseFloat(modalAmount);
+    const valStr = modalAmount.replace(',', '.');
+    const val = parseFloat(valStr);
     if (isNaN(val) || val <= 0) return;
     if (!account) return alert('Lütfen önce cüzdanınızı bağlayın!');
 
@@ -1437,7 +1445,7 @@ export default function PlatformPage() {
 
       const usdtContract = new ethers.Contract(BSC_USDT_ADDRESS, ERC20_ABI, signer);
       const platformContract = new ethers.Contract(CONTRACT_ADDRESS, PLATFORM_ABI, signer);
-      const amountWei = ethers.parseUnits(val.toString(), 18);
+      const amountWei = ethers.parseUnits(valStr, 18);
 
       if (modalTab === 'deposit') {
         const allowance = await usdtContract.allowance(account, CONTRACT_ADDRESS);
@@ -1532,6 +1540,7 @@ export default function PlatformPage() {
         addTransaction('GAME_WIN', `Zar Galibiyeti (${p1} vs ${p2})`, +netWin.toFixed(2));
       } else {
         playLoseSound();
+        addTransaction('GAME_LOSS', `Zar Kaybı (${p1} vs ${p2})`, amount);
       }
     }, 4000);
   };
@@ -1540,7 +1549,7 @@ export default function PlatformPage() {
     if (isRateLimited()) return;
     if (isGameLocked) return alert(t.inGameLock);
 
-    const amount = parseFloat(betInput);
+    const amount = parseFloat(betInput.replace(',', '.'));
     if (isNaN(amount) || amount < MIN_BET) return alert(`Minimum bahis ${MIN_BET} USDT olmalıdır!`);
     if (amount > MAX_PLAYER_BET) return alert(`Maksimum bahis sınırı ${MAX_PLAYER_BET} USDT'dir!`);
     if (amount > balance) return alert('Yetersiz bakiye! Lütfen kasaya USDT yatırın.');
@@ -1551,7 +1560,7 @@ export default function PlatformPage() {
     setIsGameLocked(true);
     const nBal = +(balance - amount).toFixed(2);
     updatePersistentBalance(nBal);
-     
+      
     const randomDuration = Math.floor(Math.random() * 26) + 20;
     setActiveGame(true);
     setIsWaitingMatch(true);
@@ -1588,7 +1597,7 @@ export default function PlatformPage() {
     setIsGameLocked(true);
     const nBal = +(balance - room.betAmount).toFixed(2);
     updatePersistentBalance(nBal);
-     
+      
     setActiveGame(true);
     executeDiceDuel(room.betAmount, room.creator);
   };
@@ -1634,6 +1643,7 @@ export default function PlatformPage() {
         addTransaction('GAME_WIN', `Yazı-Tura Galibiyeti (${landed})`, +netWin.toFixed(2));
       } else {
         playLoseSound();
+        addTransaction('GAME_LOSS', `Yazı-Tura Kaybı (${landed})`, amount);
       }
     }, 3500);
   };
@@ -1642,7 +1652,7 @@ export default function PlatformPage() {
     if (isRateLimited()) return;
     if (isGameLocked) return alert(t.inGameLock);
 
-    const amount = parseFloat(betInput);
+    const amount = parseFloat(betInput.replace(',', '.'));
     if (isNaN(amount) || amount < MIN_BET) return alert(`Minimum bahis ${MIN_BET} USDT olmalıdır!`);
     if (amount > MAX_PLAYER_BET) return alert(`Maksimum bahis sınırı ${MAX_PLAYER_BET} USDT'dir!`);
     if (amount > balance) return alert('Yetersiz bakiye! Lütfen kasaya USDT yatırın.');
@@ -1681,7 +1691,7 @@ export default function PlatformPage() {
     if (isRateLimited()) return;
     if (isGameLocked) return alert(t.inGameLock);
 
-    const amount = parseFloat(betInput);
+    const amount = parseFloat(betInput.replace(',', '.'));
     if (isNaN(amount) || amount < MIN_BET) return alert(`Minimum bahis ${MIN_BET} USDT olmalıdır!`);
     if (amount > MAX_PLAYER_BET) return alert(`Maksimum bahis sınırı ${MAX_PLAYER_BET} USDT'dir!`);
     if (amount > balance) return alert('Yetersiz bakiye! Lütfen kasaya USDT yatırın.');
@@ -1741,6 +1751,7 @@ export default function PlatformPage() {
         addTransaction('GAME_WIN', `Rulet Kazancı (${landedColor})`, +netWin.toFixed(2));
       } else {
         playLoseSound();
+        addTransaction('GAME_LOSS', `Rulet Kaybı (${landedColor})`, amount);
       }
     }, 3800);
   };
@@ -1749,7 +1760,7 @@ export default function PlatformPage() {
     if (isRateLimited()) return;
     if (isGameLocked) return alert(t.inGameLock);
 
-    const amount = parseFloat(betInput);
+    const amount = parseFloat(betInput.replace(',', '.'));
     if (isNaN(amount) || amount < MIN_BET) return alert(`Minimum bahis ${MIN_BET} USDT olmalıdır!`);
     if (amount > MAX_PLAYER_BET) return alert(`Maksimum bahis sınırı ${MAX_PLAYER_BET} USDT'dir!`);
     if (amount > balance) return alert('Yetersiz bakiye! Lütfen kasaya USDT yatırın.');
@@ -1778,7 +1789,7 @@ export default function PlatformPage() {
     if (isRateLimited()) return;
 
     initAudio();
-     
+      
     const currentStep = revealedCount + 1;
     const hitMineChance = currentStep <= 2 ? 0.18 : currentStep <= 4 ? 0.35 : 0.65;
     const isMineHit = Math.random() < hitMineChance;
@@ -1788,14 +1799,15 @@ export default function PlatformPage() {
       setMinesGameOver(true);
       setMinesActive(false);
       setIsGameLocked(false);
-       
+        
       setMinesField((prev) => prev.map((t, idx) => {
         if (idx === index) return { ...t, revealed: true, state: 'mine' };
         if (!t.revealed && Math.random() < 0.25) return { ...t, revealed: true, state: 'mine' };
         return { ...t, revealed: true, state: t.state === 'gem' ? 'gem' : 'hidden' };
       }));
-       
+        
       pushMatchRecord('Kasa', account ? `${account.substring(0, 6)}...` : t.you, `💣 Mayına Basıldı`, minesBetAmount);
+      addTransaction('GAME_LOSS', `Mayın Kaybı (Patladı)`, minesBetAmount);
       return;
     }
 
@@ -1898,7 +1910,7 @@ export default function PlatformPage() {
 
   const handleStakeAdd = () => {
     if (isRateLimited()) return;
-    const val = parseFloat(stakeInput);
+    const val = parseFloat(stakeInput.replace(',', '.'));
     if (isNaN(val) || val <= 0 || val > balance) return alert('Yetersiz bakiye!');
     const nBal = +(balance - val).toFixed(2);
     const nStake = +(stakedAmount + val).toFixed(2);
@@ -1945,8 +1957,12 @@ export default function PlatformPage() {
   };
 
   const handleAdminWithdraw = async () => {
-    const val = parseFloat(adminWithdrawAmount);
+    // Virgül (,) ile girilen sayıları Nokta (.) formatına çeviriyoruz ki parseInt/ethers hata vermesin!
+    const valStr = adminWithdrawAmount.replace(',', '.');
+    const val = parseFloat(valStr);
+    
     if (isNaN(val) || val <= 0) return;
+    
     try {
       setIsTxPending(true);
       const win = window as any;
@@ -1955,7 +1971,7 @@ export default function PlatformPage() {
       const signer = await browserProvider.getSigner();
 
       const platformContract = new ethers.Contract(CONTRACT_ADDRESS, PLATFORM_ABI, signer);
-      const amountWei = ethers.parseUnits(val.toString(), 18);
+      const amountWei = ethers.parseUnits(valStr, 18);
 
       const tx = await platformContract.withdrawHouseEdge(amountWei);
       await tx.wait();
@@ -1967,7 +1983,7 @@ export default function PlatformPage() {
     } catch (err: any) {
       setIsTxPending(false);
       console.error(err);
-      alert('Admin çekim işlemi gerçekleştirilemedi veya yetki onaylanmadı.');
+      alert('Admin çekim işlemi başarısız! Hata nedeni: Kontratta yeterli on-chain (zincir-içi) komisyon birikmemiş olabilir veya cüzdan yetkiniz yok. (Oyunlar off-chain oynandığı için backend senkronizasyonu gerekebilir)');
     }
   };
 
@@ -1981,7 +1997,10 @@ export default function PlatformPage() {
   const exportToCSV = () => {
     triggerTelegramHaptic('medium');
     const headers = 'ID,Islem Turu,Detay,Tutar (USDT),Tarih,Islem Hashi,Durum\n';
-    const rows = transactions.map(t => `"${t.id}","${t.type}","${t.title}","${t.amount}","${t.date}","${t.txHash}","${t.status}"`).join('\n');
+    const rows = transactions.map(t => {
+      const amountPrefix = (t.type === 'WITHDRAW' || t.type === 'GAME_LOSS') ? '-' : '+';
+      return `"${t.id}","${t.type}","${t.title}","${amountPrefix}${t.amount.toFixed(2)}","${t.date}","${t.txHash}","${t.status}"`
+    }).join('\n');
     const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -2008,6 +2027,7 @@ export default function PlatformPage() {
     if (txFilter === 'IN') return trRec.type === 'DEPOSIT';
     if (txFilter === 'OUT') return trRec.type === 'WITHDRAW';
     if (txFilter === 'WINS') return trRec.type === 'GAME_WIN' || trRec.type === 'SPIN';
+    if (txFilter === 'LOSSES') return trRec.type === 'GAME_LOSS';
     return true;
   });
 
@@ -2335,7 +2355,7 @@ export default function PlatformPage() {
                   <h2 className="font-bold text-xs uppercase tracking-wider flex items-center gap-2 text-slate-200"><Plus className="w-4 h-4 text-indigo-400" /> {t.openRoom}</h2>
                   <span className="text-[10px] text-slate-400 font-semibold">{t.minBetText} 0.5 | {t.maxBetText} 20 USDT</span>
                 </div>
-                 
+                  
                 <div className="relative">
                   <input 
                     type="number" 
@@ -2358,7 +2378,7 @@ export default function PlatformPage() {
                 </div>
 
                 <button onClick={handleOpenRoom} className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-indigo-600/20 active:scale-95">
-                  {t.challenge} ({parseFloat(betInput || '0').toFixed(2)} USDT)
+                  {t.challenge} ({parseFloat(betInput.replace(',', '.') || '0').toFixed(2)} USDT)
                 </button>
               </div>
 
@@ -2425,7 +2445,7 @@ export default function PlatformPage() {
               </div>
 
               <button onClick={handleStartCoinFlipDuel} className="w-full py-3 bg-gradient-to-r from-amber-600 to-yellow-500 hover:from-amber-500 hover:to-yellow-400 text-slate-950 font-black text-xs md:text-sm rounded-xl transition shadow-lg shadow-amber-500/20 active:scale-95">
-                🪙 {t.flipCoin} ({(parseFloat(betInput || '0') * 1.94).toFixed(2)} USDT)
+                🪙 {t.flipCoin} ({(parseFloat(betInput.replace(',', '.') || '0') * 1.94).toFixed(2)} USDT)
               </button>
             </div>
           ) : activeTab === 'roulette' ? (
@@ -2463,7 +2483,7 @@ export default function PlatformPage() {
               </div>
 
               <button onClick={handleStartRoulette} className="w-full py-3 bg-gradient-to-r from-rose-600 to-red-500 hover:from-rose-500 hover:to-red-400 text-white font-black text-xs md:text-sm rounded-xl transition shadow-lg shadow-rose-600/20 active:scale-95">
-                🔴 {t.spinRoulette} ({(parseFloat(betInput || '0') * 1.94).toFixed(2)} USDT)
+                🔴 {t.spinRoulette} ({(parseFloat(betInput.replace(',', '.') || '0') * 1.94).toFixed(2)} USDT)
               </button>
             </div>
           ) : (
@@ -2526,7 +2546,7 @@ export default function PlatformPage() {
                   </div>
 
                   <button onClick={handleStartMines} className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-black text-xs md:text-sm rounded-xl transition shadow-lg shadow-emerald-600/20 active:scale-95">
-                    💣 {t.startMines} ({parseFloat(betInput || '0').toFixed(2)} USDT)
+                    💣 {t.startMines} ({parseFloat(betInput.replace(',', '.') || '0').toFixed(2)} USDT)
                   </button>
                 </div>
               )}
@@ -2636,7 +2656,7 @@ export default function PlatformPage() {
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-slate-900 border border-slate-800 rounded-3xl p-5 w-full max-w-md shadow-2xl relative">
                 <button onClick={() => setIsModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white transition"><X className="w-5 h-5" /></button>
                 <h3 className="font-bold text-base text-white mb-3 flex items-center gap-2"><Wallet className="w-5 h-5 text-indigo-400" /> {t.vaultMgmt}</h3>
-                 
+                  
                 <div className="grid grid-cols-2 gap-2 bg-slate-950 p-1 rounded-2xl mb-3 border border-slate-800">
                   <button onClick={() => setModalTab('deposit')} className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition ${modalTab === 'deposit' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}><ArrowDownCircle className="w-4 h-4" /> {t.depositUsdt}</button>
                   <button onClick={() => setModalTab('withdraw')} className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition ${modalTab === 'withdraw' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}><ArrowUpCircle className="w-4 h-4" /> {t.withdrawUsdt}</button>
@@ -2657,7 +2677,7 @@ export default function PlatformPage() {
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-amber-400">USDT</span>
                   </div>
-                   
+                    
                   <div className="grid grid-cols-4 gap-1">
                     {['0.5', '1', '5', '10'].map((preset) => (
                       <button key={preset} onClick={() => setModalAmount(preset)} className="py-1 bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 rounded-lg transition">+{preset} USDT</button>
@@ -2687,7 +2707,7 @@ export default function PlatformPage() {
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-slate-900 border border-amber-500/40 rounded-3xl p-5 w-full max-w-md shadow-2xl relative space-y-4">
                 <button onClick={() => setIsAdminModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white transition"><X className="w-5 h-5" /></button>
                 <h3 className="font-bold text-base text-amber-300 flex items-center gap-2"><Crown className="w-5 h-5 text-amber-400" /> {t.adminPanelTitle}</h3>
-                 
+                  
                 <div className="p-3 bg-amber-950/30 border border-amber-800/40 rounded-2xl text-xs space-y-1.5 text-slate-300">
                   <div className="font-bold text-amber-300">👑 Platform Sahibi Yetkisi Devrede</div>
                   <p className="text-[11px] leading-relaxed">{t.adminPanelDesc}</p>
@@ -2723,7 +2743,7 @@ export default function PlatformPage() {
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-slate-900 border border-slate-800 rounded-3xl p-5 w-full max-w-md shadow-2xl relative space-y-4">
                 <button onClick={() => setIsStakeModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white transition"><X className="w-5 h-5" /></button>
                 <h3 className="font-bold text-base text-white flex items-center gap-2"><Coins className="w-5 h-5 text-emerald-400" /> {t.stakeTitle}</h3>
-                 
+                  
                 <div className="p-3 bg-indigo-950/40 border border-indigo-800/40 rounded-2xl text-xs space-y-1">
                   <div className="font-bold text-indigo-300 flex items-center gap-1.5"><Info className="w-3.5 h-3.5" /> {t.poolGuideTitle}</div>
                   <p className="text-[11px] text-slate-300 leading-relaxed">{t.poolGuideText}</p>
@@ -2791,7 +2811,7 @@ export default function PlatformPage() {
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-slate-900 border border-slate-800 rounded-3xl p-5 w-full max-w-md shadow-2xl relative space-y-4">
                 <button onClick={() => setIsReferralModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white transition"><X className="w-5 h-5" /></button>
                 <h3 className="font-bold text-base text-white flex items-center gap-2"><Share2 className="w-5 h-5 text-purple-400" /> {t.refTitle}</h3>
-                 
+                  
                 <p className="text-xs text-slate-300 leading-relaxed">{t.refDesc}</p>
 
                 <div className="p-3 bg-slate-950 border border-slate-800 rounded-2xl space-y-2">
@@ -2816,7 +2836,7 @@ export default function PlatformPage() {
                 <button onClick={() => setIsWalletModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white transition"><X className="w-5 h-5" /></button>
                 <h3 className="font-bold text-base text-white mb-1 flex items-center gap-2"><Wallet className="w-5 h-5 text-indigo-400" /> {t.connectWallet}</h3>
                 <p className="text-[11px] text-slate-400 mb-3">{t.selectWalletTitle}</p>
-                 
+                  
                 <div className="space-y-1.5 max-h-[60vh] overflow-y-auto pr-1">
                   <button onClick={() => handleSelectWallet('binance')} className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-amber-950/20 border border-slate-800 rounded-2xl transition">
                     <div className="flex items-center gap-2.5">
@@ -2913,7 +2933,7 @@ export default function PlatformPage() {
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-slate-900 border border-slate-800 rounded-3xl p-5 w-full max-w-md shadow-2xl relative space-y-4">
                 <button onClick={() => setIsSupportModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white transition"><X className="w-5 h-5" /></button>
                 <h3 className="font-bold text-base text-white flex items-center gap-2"><MessageCircle className="w-5 h-5 text-sky-400" /> {t.support}</h3>
-                 
+                  
                 <div className="space-y-2 text-xs">
                   <a href="https://t.me/diceduel_fun_bot" target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 bg-slate-950 hover:bg-sky-950/30 border border-slate-800 hover:border-sky-500/50 rounded-2xl transition">
                     <div className="flex items-center gap-2.5">
@@ -2948,8 +2968,14 @@ export default function PlatformPage() {
                   </div>
                 </div>
 
-                <div className="flex gap-1.5">
-                  {[{ id: 'ALL', label: t.allTxs }, { id: 'IN', label: t.inTxs }, { id: 'OUT', label: t.outTxs }, { id: 'WINS', label: t.winTxs }].map(f => (
+                <div className="flex gap-1.5 flex-wrap">
+                  {[
+                    { id: 'ALL', label: t.allTxs }, 
+                    { id: 'IN', label: t.inTxs }, 
+                    { id: 'OUT', label: t.outTxs }, 
+                    { id: 'WINS', label: t.winTxs },
+                    { id: 'LOSSES', label: t.lossTxs || 'Kayıplar' }
+                  ].map(f => (
                     <button key={f.id} onClick={() => setTxFilter(f.id as any)} className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition ${txFilter === f.id ? 'bg-indigo-600 text-white' : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'}`}>{f.label}</button>
                   ))}
                 </div>
@@ -2960,20 +2986,25 @@ export default function PlatformPage() {
                       {t.noTxs}
                     </div>
                   ) : (
-                    filteredTransactions.map(tx => (
-                      <div key={tx.id} className="p-2.5 bg-slate-950 border border-slate-800 rounded-xl flex items-center justify-between">
-                        <div className="flex items-center gap-2.5">
-                          <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs ${tx.type === 'WITHDRAW' ? 'bg-rose-950/60 text-rose-400 border border-rose-800/40' : 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/40'}`}>
-                            {tx.type === 'DEPOSIT' && '📥'}{tx.type === 'WITHDRAW' && '📤'}{tx.type === 'GAME_WIN' && '🏆'}{tx.type === 'SPIN' && '🎁'}{tx.type === 'REF_COMMISSION' && '👥'}
+                    filteredTransactions.map(tx => {
+                      const isNegativeTx = tx.type === 'WITHDRAW' || tx.type === 'GAME_LOSS';
+                      return (
+                        <div key={tx.id} className="p-2.5 bg-slate-950 border border-slate-800 rounded-xl flex items-center justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs ${isNegativeTx ? 'bg-rose-950/60 text-rose-400 border border-rose-800/40' : 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/40'}`}>
+                              {tx.type === 'DEPOSIT' && '📥'}{tx.type === 'WITHDRAW' && '📤'}{tx.type === 'GAME_WIN' && '🏆'}{tx.type === 'GAME_LOSS' && '💔'}{tx.type === 'SPIN' && '🎁'}{tx.type === 'REF_COMMISSION' && '👥'}
+                            </div>
+                            <div>
+                              <div className="text-xs font-bold text-slate-200">{tx.title}</div>
+                              <div className="text-[9px] text-slate-500 font-mono">{tx.date} • {tx.txHash}</div>
+                            </div>
                           </div>
-                          <div>
-                            <div className="text-xs font-bold text-slate-200">{tx.title}</div>
-                            <div className="text-[9px] text-slate-500 font-mono">{tx.date} • {tx.txHash}</div>
+                          <div className={`text-xs font-black ${isNegativeTx ? 'text-rose-400' : 'text-emerald-400'}`}>
+                            {isNegativeTx ? '-' : '+'}{tx.amount.toFixed(2)} USDT
                           </div>
                         </div>
-                        <div className={`text-xs font-black ${tx.type === 'WITHDRAW' ? 'text-rose-400' : 'text-emerald-400'}`}>{tx.type === 'WITHDRAW' ? '-' : '+'}{tx.amount.toFixed(2)} USDT</div>
-                      </div>
-                    ))
+                      )
+                    })
                   )}
                 </div>
               </motion.div>
