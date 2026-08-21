@@ -66,7 +66,6 @@ const getCryptoRandom = (): number => {
   return Math.random();
 };
 
-// Güvenli Checksum & Anti-Tamper
 const generateTamperProofHash = (addr: string, bal: number): string => {
   const payload = `${addr.toLowerCase()}_${bal.toFixed(2)}_dd_salt_2026_sec_ids_shield`;
   return ethers.keccak256(ethers.toUtf8Bytes(payload));
@@ -728,7 +727,7 @@ export default function PlatformPage() {
         const remainingMs = cooldownMs - diffMs;
         const hours = Math.floor(remainingMs / (1000 * 60 * 60));
         const mins = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
-        setSpinCooldownText(`${hours}s ${mins}dk`);
+        setSpinCooldownText(`${hours}s ${mins}m`);
         return;
       }
     }
@@ -1112,7 +1111,7 @@ export default function PlatformPage() {
       }
     }
 
-    alert('Cüzdan eklentisi bulunamadı. Lütfen eklentinizi açın.');
+    alert('Cüzdan eklentisi bulunamadı.');
   };
 
   const handleBalanceTransaction = async () => {
