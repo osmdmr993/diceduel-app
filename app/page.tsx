@@ -27,10 +27,12 @@ const BSC_CHAIN_ID_HEX = '0x38';
 
 const OFFICIAL_OWNER_ADDRESS = '0x26e2b6b55db56fbafe1e6a10ce7183e8b09f1bf3';
 
-// TELEGRAM BİLDİRİM YAPILANDIRMASI
+// TELEGRAM BİLDİRİM & TOPLULUK YAPILANDIRMASI
 const TELEGRAM_BOT_TOKEN = '8840072261:AAGPbmSnlpXjcFIzgUCOAGXDzKc38629jwM';
 const ADMIN_TELEGRAM_CHAT_ID = '5821245544';
 const LIVE_WINS_CHANNEL_ID = '@diceduel_live_wins';
+const TELEGRAM_CHAT_LINK = 'https://t.me/diceduel_chat';
+const TELEGRAM_CHANNEL_LINK = 'https://t.me/diceduel_live_wins';
 
 const MIN_BET = 0.5;
 const MAX_PLAYER_BET = 20.0;
@@ -117,7 +119,7 @@ const TRANSLATIONS: Record<string, any> = {
     liveDist: 'Live Auszahlungen',
     contractBadge: 'Verifizierter BSC Smart Contract',
     evmVerified: 'Verifiziert',
-    support: 'Support & FAQ',
+    support: 'Support & Community',
     lpPoolBtn: 'LP Pool',
     stakeTitle: 'Bankroll & LP Staking',
     poolGuideTitle: 'Wie funktioniert der LP Pool?',
@@ -126,7 +128,10 @@ const TRANSLATIONS: Record<string, any> = {
     spinBtn: 'Kostenlos Drehen',
     spinWait: 'Wartezeit',
     spinRolling: 'Dreht sich...',
-    waitingPlayer: 'Live-Gegner wird gesucht...',
+    waitingPlayer: 'Suche nach Live-Gegner...',
+    matchFoundStatus: 'Gegner gefunden, Verbindung wird hergestellt...',
+    prepDiceStatus: 'Würfel werden vorbereitet...',
+    matchTimeText: 'Eşleşme Süresi',
     refTitle: 'Freunde Einladen & Verdienen',
     refDesc: 'Verdiene 0.5% Sofortprovision von allen Wetten deiner Partner.',
     copyLink: 'Link Kopieren',
@@ -203,9 +208,6 @@ const TRANSLATIONS: Record<string, any> = {
     stakeRequiredAlert: '⚠️ Sie müssen zuerst USDT im LP Pool staken (sperren), um Kâr-Auszahlungen beanspruchen zu können!',
     maxBetNotice: '💡 Kassa-Sicherheit: Aus Risikomanagement-Gründen ist das Maximum pro Wette auf 20 USDT begrenzt.',
     justNow: 'Gerade eben',
-    searchingMatch: 'Suche nach Live-Gegner...',
-    playerFound: 'Gegner gefunden, Verbindung wird hergestellt...',
-    matchReady: 'Match beendet! Würfel werden vorbereitet...',
     headsName: 'KOPF',
     tailsName: 'ZAHL'
   },
@@ -243,7 +245,7 @@ const TRANSLATIONS: Record<string, any> = {
     liveDist: 'Live Payouts',
     contractBadge: 'Verified BSC Smart Contract',
     evmVerified: 'Verified',
-    support: 'Support',
+    support: 'Support & Community',
     lpPoolBtn: 'LP Pool',
     stakeTitle: 'House Bankroll & LP Staking',
     poolGuideTitle: 'How House LP Works?',
@@ -253,6 +255,9 @@ const TRANSLATIONS: Record<string, any> = {
     spinWait: 'Cooldown',
     spinRolling: 'Spinning...',
     waitingPlayer: 'Searching for live player...',
+    matchFoundStatus: 'Opponent found, establishing connection...',
+    prepDiceStatus: 'Preparing dices...',
+    matchTimeText: 'Match Time',
     refTitle: 'Refer Friends & Earn',
     refDesc: 'Earn 0.5% instant cash commission from active invited traders.',
     copyLink: 'Copy Invite Link',
@@ -329,9 +334,6 @@ const TRANSLATIONS: Record<string, any> = {
     stakeRequiredAlert: '⚠️ You must first stake USDT in the LP Pool to claim yield rewards!',
     maxBetNotice: '💡 House Safety: Due to risk management rules, the maximum bet limit is set to 20 USDT.',
     justNow: 'Just now',
-    searchingMatch: 'Searching for live opponent on network...',
-    playerFound: 'Opponent found, establishing connection...',
-    matchReady: 'Match completed! Preparing dices...',
     headsName: 'HEADS',
     tailsName: 'TAILS'
   },
@@ -369,7 +371,7 @@ const TRANSLATIONS: Record<string, any> = {
     liveDist: 'Pagos en Vivo',
     contractBadge: 'Contrato Inteligente BSC Verificado',
     evmVerified: 'Verificado',
-    support: 'Soporte',
+    support: 'Soporte y Comunidad',
     lpPoolBtn: 'Pool LP',
     stakeTitle: 'Bóveda y Staking LP',
     poolGuideTitle: '¿Cómo funciona el Pool LP?',
@@ -378,7 +380,10 @@ const TRANSLATIONS: Record<string, any> = {
     spinBtn: 'Giro Gratis',
     spinWait: 'Espera',
     spinRolling: 'Girando...',
-    waitingPlayer: 'Buscando oponente...',
+    waitingPlayer: 'Buscando oponente en vivo...',
+    matchFoundStatus: 'Oponente encontrado, conectando...',
+    prepDiceStatus: 'Preparando dados...',
+    matchTimeText: 'Tiempo de Duelo',
     refTitle: 'Invita y Gana',
     refDesc: 'Gana 0.5% de comisión instantánea de tus referidos.',
     copyLink: 'Copiar Enlace',
@@ -455,9 +460,6 @@ const TRANSLATIONS: Record<string, any> = {
     stakeRequiredAlert: '⚠️ ¡Debes hacer stake de USDT en el Pool LP para reclamar recompensas!',
     maxBetNotice: '💡 Seguridad: El límite máximo de apuesta está configurado en 20 USDT.',
     justNow: 'Ahora mismo',
-    searchingMatch: 'Buscando oponente en vivo...',
-    playerFound: 'Oponente encontrado, conectando...',
-    matchReady: '¡Duelo completado! Preparando dados...',
     headsName: 'CARA',
     tailsName: 'CRUZ'
   },
@@ -495,7 +497,7 @@ const TRANSLATIONS: Record<string, any> = {
     liveDist: 'Paiements Directs',
     contractBadge: 'Smart Contract BSC Verifie',
     evmVerified: 'Verifie',
-    support: 'Support',
+    support: 'Support & Communauté',
     lpPoolBtn: 'Pool LP',
     stakeTitle: 'Staking LP & Coffre',
     poolGuideTitle: 'Comment fonctionne le Pool LP?',
@@ -504,7 +506,10 @@ const TRANSLATIONS: Record<string, any> = {
     spinBtn: 'Tour Gratuit',
     spinWait: 'Attente',
     spinRolling: 'Tourne...',
-    waitingPlayer: 'Recherche adversaire...',
+    waitingPlayer: 'Recherche d\'adversaire en direct...',
+    matchFoundStatus: 'Adversaire trouvé, connexion...',
+    prepDiceStatus: 'Préparation des dés...',
+    matchTimeText: 'Temps de Match',
     refTitle: 'Parrainez et Gagnez',
     refDesc: 'Gagnez 0.5% de commission sur vos filleuls actifs.',
     copyLink: 'Copier le Lien',
@@ -581,9 +586,6 @@ const TRANSLATIONS: Record<string, any> = {
     stakeRequiredAlert: '⚠️ Vous devez d\'abord staker des USDT dans le Pool LP pour réclamer vos gains !',
     maxBetNotice: '💡 Sécurité : La mise maximale est fixée à 20 USDT.',
     justNow: 'À l\'instant',
-    searchingMatch: 'Recherche d\'adversaire en direct...',
-    playerFound: 'Adversaire trouvé, connexion...',
-    matchReady: 'Duel terminé ! Préparation des dés...',
     headsName: 'FACE',
     tailsName: 'PILE'
   },
@@ -621,7 +623,7 @@ const TRANSLATIONS: Record<string, any> = {
     liveDist: 'Live Uitbetalingen',
     contractBadge: 'Geverifieerd BSC Smart Contract',
     evmVerified: 'Geverifieerd',
-    support: 'Ondersteuning',
+    support: 'Ondersteuning & Community',
     lpPoolBtn: 'LP Pool',
     stakeTitle: 'Bankroll & LP Staking',
     poolGuideTitle: 'Hoe werkt de LP Pool?',
@@ -630,7 +632,10 @@ const TRANSLATIONS: Record<string, any> = {
     spinBtn: 'Gratis Draaien',
     spinWait: 'Wachttijd',
     spinRolling: 'Draait...',
-    waitingPlayer: 'Speler zoeken...',
+    waitingPlayer: 'Zoeken naar live tegenstander...',
+    matchFoundStatus: 'Tegenstander gevonden, verbinding maken...',
+    prepDiceStatus: 'Dobbelstenen voorbereiden...',
+    matchTimeText: 'Duel Tijd',
     refTitle: 'Vrienden Uitnodigen & Verdienen',
     refDesc: 'Verdien direct 0.5% commissie op alle inzetten van genodigden.',
     copyLink: 'Kopieer Link',
@@ -707,9 +712,6 @@ const TRANSLATIONS: Record<string, any> = {
     stakeRequiredAlert: '⚠️ U moet eerst USDT staken in de LP Pool om rendementsbeloningen te claimen!',
     maxBetNotice: '💡 Veiligheid: De maximale inzet is beperkt tot 20 USDT.',
     justNow: 'Zojuist',
-    searchingMatch: 'Zoeken naar live tegenstander...',
-    playerFound: 'Tegenstander gevonden, verbinding maken...',
-    matchReady: 'Duel voltooid! Dobbelstenen voorbereiden...',
     headsName: 'KOP',
     tailsName: 'MUNT'
   },
@@ -747,7 +749,7 @@ const TRANSLATIONS: Record<string, any> = {
     liveDist: 'Выплаты',
     contractBadge: 'Контракт BSC',
     evmVerified: 'Проверено',
-    support: 'Поддержка',
+    support: 'Поддержка и Сообщество',
     lpPoolBtn: 'LP Пул',
     stakeTitle: 'Пул Ликвидности (LP)',
     poolGuideTitle: 'Как работает Пул (LP)?',
@@ -756,7 +758,10 @@ const TRANSLATIONS: Record<string, any> = {
     spinBtn: 'Крутить',
     spinWait: 'Осталось',
     spinRolling: 'Крутится...',
-    waitingPlayer: 'Поиск игрока...',
+    waitingPlayer: 'Поиск живого противника...',
+    matchFoundStatus: 'Противник найден, подключение...',
+    prepDiceStatus: 'Подготовка костей...',
+    matchTimeText: 'Время дуэли',
     refTitle: 'Приглашай и Зарабатывай',
     refDesc: 'Получайте 0.5% комиссии от активных рефералов.',
     copyLink: 'Скопировать ссылку',
@@ -828,9 +833,6 @@ const TRANSLATIONS: Record<string, any> = {
     stakeRequiredAlert: '⚠️ Сначала вы должны застейкать USDT в пуле LP, чтобы забрать доход!',
     maxBetNotice: '💡 Безопасность: Максимальная ставка ограничена 20 USDT.',
     justNow: 'Только что',
-    searchingMatch: 'Поиск живого противника...',
-    playerFound: 'Противник найден, подключение...',
-    matchReady: 'Дуэль завершена! Подготовка костей...',
     headsName: 'ОРЕЛ',
     tailsName: 'РЕШКА'
   },
@@ -868,7 +870,7 @@ const TRANSLATIONS: Record<string, any> = {
     liveDist: 'Canlı Dağıtım',
     contractBadge: 'Doğrulanmış BSC Akıllı Sözleşmesi',
     evmVerified: 'Mainnet Doğrulandı',
-    support: 'Destek & SSS',
+    support: 'Destek & Topluluk',
     lpPoolBtn: 'LP Havuzu',
     stakeTitle: 'Kasa Ortaklığı & LP Staking',
     poolGuideTitle: 'Kasa Havuzu (LP) Nasıl Çalışır?',
@@ -877,7 +879,10 @@ const TRANSLATIONS: Record<string, any> = {
     spinBtn: 'Ücretsiz Çevir',
     spinWait: 'Kalan Süre',
     spinRolling: 'Çark Dönüyor...',
-    waitingPlayer: 'Canlı Oyuncu Aranıyor...',
+    waitingPlayer: 'Ağda canlı oyuncu aranıyor...',
+    matchFoundStatus: 'Rakip bulundu, eşleştiriliyor...',
+    prepDiceStatus: 'Zarlar hazırlanıyor...',
+    matchTimeText: 'Eşleşme Süresi',
     refTitle: 'Arkadaşını Davet Et & Kazan',
     refDesc: 'Aktif yatırımcı olan davetlilerinizin oynadığı her bahisten anında %0.5 nakit komisyon kazanın.',
     copyLink: 'Davet Linkini Kopyala',
@@ -954,9 +959,6 @@ const TRANSLATIONS: Record<string, any> = {
     stakeRequiredAlert: '⚠️ Kâr payını çekebilmek için önce LP Havuzuna USDT kilitlemelisiniz!',
     maxBetNotice: '💡 Kasa Güvenliği: Risk yönetimi gereği yeni oyuncular için maksimum bahis sınırı 20 USDT\'dir.',
     justNow: 'Az önce',
-    searchingMatch: 'Ağda eşleşme aranıyor...',
-    playerFound: 'Oyuncu bulundu, bağlantı kuruluyor...',
-    matchReady: 'Eşleşme tamamlandı! Zarlar hazırlanıyor...',
     headsName: 'YAZI',
     tailsName: 'TURA'
   }
@@ -1038,8 +1040,8 @@ export default function PlatformPage() {
   const [activeGame, setActiveGame] = useState<boolean>(false);
   const [isRolling, setIsRolling] = useState<boolean>(false);
   const [isWaitingMatch, setIsWaitingMatch] = useState<boolean>(false);
-  const [matchCountdown, setMatchCountdown] = useState<number>(30);
-  const [matchStatusText, setMatchStatusText] = useState<string>('Ağda eşleşme aranıyor...');
+  const [matchCountdown, setMatchCountdown] = useState<number>(12);
+  const [matchStatusText, setMatchStatusText] = useState<string>('');
 
   const [coinChoice, setCoinChoice] = useState<'YAZI' | 'TURA'>('YAZI');
   const [coinResult, setCoinResult] = useState<'YAZI' | 'TURA' | null>(null);
@@ -1118,8 +1120,7 @@ export default function PlatformPage() {
   const sendWinToTelegramChannel = async (winnerName: string, gameName: string, amount: number) => {
     try {
       const text = `🎉 *CANLI KAZANÇ BİLDİRİMİ* 🚀\n\nOyuncu: *${winnerName}*\nOyun: *${gameName}*\nKazanç: *+${amount.toFixed(2)} USDT*\n\n🎲 Oyna & Kazan: https://t.me/diceduel_fun_bot`;
-      
-      const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1128,8 +1129,6 @@ export default function PlatformPage() {
           parse_mode: 'Markdown'
         })
       });
-      const data = await res.json();
-      console.log("Telegram Kanal Yanıtı:", data);
     } catch (error) {
       console.error("Telegram kanal bildirimi gönderilemedi.", error);
     }
@@ -1468,7 +1467,7 @@ export default function PlatformPage() {
     }
   }, [syncBlockchainBalances, checkSpinCooldown, lang]);
 
-  // ARKA PLAN BOT DÖNGÜSÜ (Canlı Telegram Kanalı Entegreli)
+  // ARKA PLAN BOT DÖNGÜSÜ
   useEffect(() => {
     const interval = setInterval(() => {
       const b1 = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
@@ -1504,7 +1503,6 @@ export default function PlatformPage() {
         pushMatchRecord(b1, 'Mayın', gameDesc, randomBet);
       }
 
-      // Botların kazançlarını da Telegram kanalına %35 ihtimalle akıtıyoruz (Doğal görünüm için)
       if (Math.random() < 0.35) {
         sendWinToTelegramChannel(b1, gameDesc, payout);
       }
@@ -1848,21 +1846,21 @@ export default function PlatformPage() {
     const nBal = +(balance - amount).toFixed(2);
     updatePersistentBalance(nBal);
       
-    const randomDuration = Math.floor(Math.random() * 26) + 20;
+    const randomDuration = Math.floor(Math.random() * 9) + 8;
     setActiveGame(true);
     setIsWaitingMatch(true);
     setMatchCountdown(randomDuration);
-    setMatchStatusText(t.searchingMatch);
+    setMatchStatusText(t.waitingPlayer);
 
     let count = randomDuration;
     const interval = setInterval(() => {
       count--;
       setMatchCountdown(count);
 
-      if (count === Math.floor(randomDuration * 0.6)) {
-        setMatchStatusText(t.playerFound);
-      } else if (count === 3) {
-        setMatchStatusText(t.matchReady);
+      if (count === Math.floor(randomDuration * 0.5)) {
+        setMatchStatusText(t.matchFoundStatus);
+      } else if (count === 2) {
+        setMatchStatusText(t.prepDiceStatus);
       }
 
       if (count <= 0) {
@@ -1954,11 +1952,11 @@ export default function PlatformPage() {
     const nBal = +(balance - amount).toFixed(2);
     updatePersistentBalance(nBal);
 
-    const randomDuration = Math.floor(Math.random() * 21) + 20;
+    const randomDuration = Math.floor(Math.random() * 7) + 8;
     setActiveGame(true);
     setIsWaitingMatch(true);
     setMatchCountdown(randomDuration);
-    setMatchStatusText(t.searchingMatch);
+    setMatchStatusText(t.waitingPlayer);
 
     let count = randomDuration;
     const interval = setInterval(() => {
@@ -1966,7 +1964,7 @@ export default function PlatformPage() {
       setMatchCountdown(count);
 
       if (count === Math.floor(randomDuration * 0.5)) {
-        setMatchStatusText(t.playerFound);
+        setMatchStatusText(t.matchFoundStatus);
       }
 
       if (count <= 0) {
@@ -2550,9 +2548,8 @@ export default function PlatformPage() {
                   <Clock className="w-6 h-6 text-indigo-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-base text-white">{t.waitingPlayer}</h3>
-                  <p className="text-xs text-indigo-400 font-semibold mt-1">{matchStatusText}</p>
-                  <p className="text-[11px] text-slate-400 mt-2">Maksimum bekleme süresi: <span className="text-amber-400 font-bold">{matchCountdown}s</span></p>
+                  <h3 className="font-bold text-base text-white">{matchStatusText}</h3>
+                  <p className="text-xs text-indigo-400 font-semibold mt-1">{t.matchTimeText}: <span className="text-amber-400 font-bold">{matchCountdown}s</span></p>
                 </div>
               </div>
             ) : (
@@ -3264,7 +3261,7 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 7. Canlı Destek Modalı */}
+        {/* 7. Canlı Destek & Topluluk Modalı */}
         <AnimatePresence>
           {isSupportModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
@@ -3273,15 +3270,26 @@ export default function PlatformPage() {
                 <h3 className="font-bold text-base text-white flex items-center gap-2"><MessageCircle className="w-5 h-5 text-sky-400" /> {t.support}</h3>
                   
                 <div className="space-y-2 text-xs">
-                  <a href="https://t.me/diceduel_fun_bot" target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 bg-slate-950 hover:bg-sky-950/30 border border-slate-800 hover:border-sky-500/50 rounded-2xl transition">
+                  <a href={TELEGRAM_CHAT_LINK} target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 bg-slate-950 hover:bg-sky-950/30 border border-slate-800 hover:border-sky-500/50 rounded-2xl transition">
+                    <div className="flex items-center gap-2.5">
+                      <Users className="w-4 h-4 text-purple-400" />
+                      <div>
+                        <div className="font-bold text-slate-200">DiceDuel Chat</div>
+                        <div className="text-[10px] text-slate-500">t.me/diceduel_chat</div>
+                      </div>
+                    </div>
+                    <span className="text-[10px] bg-purple-950 text-purple-300 px-2 py-0.5 rounded border border-purple-800/40">Sohbet 💬</span>
+                  </a>
+
+                  <a href={TELEGRAM_CHANNEL_LINK} target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 bg-slate-950 hover:bg-sky-950/30 border border-slate-800 hover:border-sky-500/50 rounded-2xl transition">
                     <div className="flex items-center gap-2.5">
                       <Send className="w-4 h-4 text-sky-400" />
                       <div>
-                        <div className="font-bold text-slate-200">{t.supportBotTitle}</div>
-                        <div className="text-[10px] text-slate-500">@diceduel_fun_bot</div>
+                        <div className="font-bold text-slate-200">DiceDuel Live Wins</div>
+                        <div className="text-[10px] text-slate-500">@diceduel_live_wins</div>
                       </div>
                     </div>
-                    <span className="text-[10px] bg-sky-950 text-sky-300 px-2 py-0.5 rounded border border-sky-800/40">{t.supportActive}</span>
+                    <span className="text-[10px] bg-sky-950 text-sky-300 px-2 py-0.5 rounded border border-sky-800/40">Takip Et 🔔</span>
                   </a>
                 </div>
               </motion.div>
