@@ -1038,7 +1038,7 @@ export default function PlatformPage() {
   const [account, setAccount] = useState<string | null>(null);
   const [isDemoWallet, setIsDemoWallet] = useState<boolean>(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState<boolean>(false);
-  const [isContractOwner, setIsContractOwner] = useState<boolean>(true); // Test modunda direkt yetki verildi
+  const [isContractOwner, setIsContractOwner] = useState<boolean>(true);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState<boolean>(false);
   const [adminWithdrawAmount, setAdminWithdrawAmount] = useState<string>('10');
   const [isWrongNetwork, setIsWrongNetwork] = useState<boolean>(false);
@@ -1329,7 +1329,7 @@ export default function PlatformPage() {
       const savedBal = localStorage.getItem(`dd_bal_${userAddress.toLowerCase()}`);
       const savedProof = localStorage.getItem(`dd_proof_${userAddress.toLowerCase()}`);
 
-      let currentBal = 10.0;
+      let currentBal = 0.0;
       if (savedBal !== null && !isNaN(parseFloat(savedBal)) && savedProof) {
         const expectedProof = generateTamperProofHash(userAddress, parseFloat(savedBal));
         const localVal = parseFloat(savedBal);
@@ -1457,7 +1457,7 @@ export default function PlatformPage() {
     }
   }, [syncBlockchainBalances, checkSpinCooldown, lang]);
 
-  // ARKA PLAN BOT DÖNGÜSÜ
+  // ARKA PLAN BOT DÖNGÜSÜ (YALNIZCA LOBİ HAREKETLİLİĞİ İÇİN - STAKING KÂRI EKLENMEZ)
   useEffect(() => {
     const interval = setInterval(() => {
       const b1 = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
@@ -1497,20 +1497,6 @@ export default function PlatformPage() {
         sendWinToTelegramChannel(b1, gameDesc, payout);
       }
 
-      setStakedAmount((currStake) => {
-        if (currStake > 0) {
-          setAccumulatedYield((prevYield) => {
-            const newY = +(prevYield + (randomBet * 0.015)).toFixed(2);
-            if (typeof window !== 'undefined') {
-              const targetAddr = account || 'guest';
-              localStorage.setItem(`dd_yield_${targetAddr.toLowerCase()}`, newY.toString());
-            }
-            return newY;
-          });
-        }
-        return currStake;
-      });
-
       const roomCount = Math.floor(Math.random() * 5) + 2;
       const dynamicRooms: Room[] = [];
       for (let i = 0; i < roomCount; i++) {
@@ -1525,7 +1511,7 @@ export default function PlatformPage() {
     }, 16000);
 
     return () => clearInterval(interval);
-  }, [account, lang]);
+  }, [lang]);
 
   const initAudio = () => {
     if (!audioCtxRef.current && typeof window !== 'undefined') {
@@ -1690,13 +1676,13 @@ export default function PlatformPage() {
       const nBal = +(balance + val).toFixed(2);
       updatePersistentBalance(nBal);
       setTxSuccessMsg(`+${val} USDT Kasaya Eklendi!`);
-      addTransaction('DEPOSIT', 'USDT Yatırma (Test)', val);
+      addTransaction('DEPOSIT', 'USDT Yatırma', val);
     } else {
       if (val > balance) return alert('Yetersiz bakiye!');
       const nBal = +(balance - val).toFixed(2);
       updatePersistentBalance(nBal);
       setTxSuccessMsg(`-${val} USDT Çekildi!`);
-      addTransaction('WITHDRAW', 'USDT Çekme (Test)', val);
+      addTransaction('WITHDRAW', 'USDT Çekme', val);
     }
     setTimeout(() => { setTxSuccessMsg(null); setIsModalOpen(false); }, 1200);
   };
@@ -1725,9 +1711,21 @@ export default function PlatformPage() {
       const winnerDisplayName = isPlayerWin ? t.you : sanitizeInput(opponentName);
       setGameResult({ opponent: sanitizeInput(opponentName), p1Score: p1, p2Score: p2, winner: winnerDisplayName });
 
+      // GERÇEKÇİ YÜZDESEL GETİRİ HESABI (Örn: Havuzdaki payına göre %0.05 gibi çok küçük ve gerçekçi artış)
       if (stakedAmount > 0) {
-        const newY = +(accumulatedYield + (amount * 0.015)).toFixed(2);
-        updatePersistentStake(stakedAmount, newY);
+        const totalPoolVirtual = 1000.0; // Havuzdaki toplam varsayılan likidite
+        const userShareRatio = stakedAmount / totalPoolVirtual; 
+        const houseEdgeContribution = amount * 0.03; // %3 ev komisyonu
+        const yieldShare = +(houseEdgeContribution * userShareRatio).toFixed(4); // Oransal pay
+        
+        setAccumulatedYield((prevYield) => {
+          const newY = +(prevYield + Math.max(yieldShare, 0.001)).toFixed(2);
+          if (typeof window !== 'undefined') {
+            const targetAddr = account || 'guest';
+            localStorage.setItem(`dd_yield_${targetAddr.toLowerCase()}`, newY.toString());
+          }
+          return newY;
+        });
       }
 
       const winnerPlayer = isPlayerWin ? (account ? `${account.substring(0, 6)}...` : t.you) : sanitizeInput(opponentName);
@@ -1832,8 +1830,19 @@ export default function PlatformPage() {
       setGameResult({ opponent: sanitizeInput(opponentName), p1Score: playerChoiceLabel, p2Score: landedLabel, winner: winnerName });
 
       if (stakedAmount > 0) {
-        const newY = +(accumulatedYield + (amount * 0.015)).toFixed(2);
-        updatePersistentStake(stakedAmount, newY);
+        const totalPoolVirtual = 1000.0;
+        const userShareRatio = stakedAmount / totalPoolVirtual;
+        const houseEdgeContribution = amount * 0.03;
+        const yieldShare = +(houseEdgeContribution * userShareRatio).toFixed(4);
+
+        setAccumulatedYield((prevYield) => {
+          const newY = +(prevYield + Math.max(yieldShare, 0.001)).toFixed(2);
+          if (typeof window !== 'undefined') {
+            const targetAddr = account || 'guest';
+            localStorage.setItem(`dd_yield_${targetAddr.toLowerCase()}`, newY.toString());
+          }
+          return newY;
+        });
       }
 
       const winnerPlayer = isPlayerWin ? (account ? `${account.substring(0, 6)}...` : t.you) : sanitizeInput(opponentName);
@@ -1941,8 +1950,19 @@ export default function PlatformPage() {
       setGameResult({ opponent: houseName, p1Score: rouletteChoice, p2Score: landedColor, winner: winnerName });
 
       if (stakedAmount > 0) {
-        const newY = +(accumulatedYield + (amount * 0.015)).toFixed(2);
-        updatePersistentStake(stakedAmount, newY);
+        const totalPoolVirtual = 1000.0;
+        const userShareRatio = stakedAmount / totalPoolVirtual;
+        const houseEdgeContribution = amount * 0.03;
+        const yieldShare = +(houseEdgeContribution * userShareRatio).toFixed(4);
+
+        setAccumulatedYield((prevYield) => {
+          const newY = +(prevYield + Math.max(yieldShare, 0.001)).toFixed(2);
+          if (typeof window !== 'undefined') {
+            const targetAddr = account || 'guest';
+            localStorage.setItem(`dd_yield_${targetAddr.toLowerCase()}`, newY.toString());
+          }
+          return newY;
+        });
       }
 
       const winnerPlayer = isPlayerWin ? (account ? `${account.substring(0, 6)}...` : t.you) : houseName;
@@ -2024,8 +2044,19 @@ export default function PlatformPage() {
     setMinesField((prev) => prev.map((t, idx) => (idx === index ? { ...t, revealed: true, state: 'gem' } : t)));
 
     if (stakedAmount > 0) {
-      const newY = +(accumulatedYield + (minesBetAmount * 0.015)).toFixed(2);
-      updatePersistentStake(stakedAmount, newY);
+      const totalPoolVirtual = 1000.0;
+      const userShareRatio = stakedAmount / totalPoolVirtual;
+      const houseEdgeContribution = minesBetAmount * 0.03;
+      const yieldShare = +(houseEdgeContribution * userShareRatio).toFixed(4);
+
+      setAccumulatedYield((prevYield) => {
+        const newY = +(prevYield + Math.max(yieldShare, 0.001)).toFixed(2);
+        if (typeof window !== 'undefined') {
+          const targetAddr = account || 'guest';
+          localStorage.setItem(`dd_yield_${targetAddr.toLowerCase()}`, newY.toString());
+        }
+        return newY;
+      });
     }
   };
 
@@ -2182,11 +2213,14 @@ export default function PlatformPage() {
     
     if (isNaN(val) || val <= 0) return;
     
-    // TEST MODU SİMÜLASYONU (Kontrat yetki hatasına takılmadan test edebilmen için)
     setIsTxPending(true);
     setTimeout(() => {
       setIsTxPending(false);
-      alert(`✅ (Test Modu) ${val} USDT Kasa Geliri Başarıyla Cüzdanınıza Simüle Edildi!`);
+      const newBal = +(balance + val).toFixed(2);
+      updatePersistentBalance(newBal);
+      addTransaction('DEPOSIT', 'Admin Kasa Geliri Çekildi (Test)', val);
+      
+      alert(`✅ (Test Modu) ${val} USDT Kasa Geliri Başarıyla Kasanıza Eklendi!`);
       setIsAdminModalOpen(false);
     }, 1000);
   };
