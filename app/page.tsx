@@ -632,7 +632,7 @@ const TRANSLATIONS: Record<string, any> = {
     spinBtn: 'Gratis Draaien',
     spinWait: 'Wachttijd',
     spinRolling: 'Draait...',
-    waitingPlayer: 'Zoeken naar live tegenstander...',
+    waitingPlayer: 'Speler zoeken...',
     matchFoundStatus: 'Tegenstander gevonden, verbinding maken...',
     prepDiceStatus: 'Dobbelstenen voorbereiden...',
     matchTimeText: 'Duel Tijd',
@@ -1326,30 +1326,6 @@ export default function PlatformPage() {
         }
       }
 
-      const savedTxsStr = localStorage.getItem(`dd_txs_${userAddress.toLowerCase()}`);
-      if (savedTxsStr) {
-        try {
-          let txsList: TransactionRecord[] = JSON.parse(savedTxsStr);
-          const now = Date.now();
-          const oneDayMs = 24 * 60 * 60 * 1000;
-          let refundAmount = 0;
-
-          txsList = txsList.map(tx => {
-            if (tx.status === 'PENDING' && tx.type === 'WITHDRAW' && tx.timestamp && (now - tx.timestamp > oneDayMs)) {
-              refundAmount += tx.amount;
-              return { ...tx, status: 'COMPLETED', title: `${tx.title} (İade Edildi)` };
-            }
-            return tx;
-          });
-
-          if (refundAmount > 0) {
-            currentBal += refundAmount;
-            localStorage.setItem(`dd_txs_${userAddress.toLowerCase()}`, JSON.stringify(txsList));
-            setTransactions(txsList);
-          }
-        } catch (e) {}
-      }
-
       updatePersistentBalance(currentBal, userAddress);
 
       if (typeof window !== 'undefined') {
@@ -1402,6 +1378,42 @@ export default function PlatformPage() {
       console.error('Bakiye senkronizasyon hatası:', err);
     }
   }, [checkSpinCooldown]);
+
+  // 24 SAAT GEÇEN BEKLEYEN ÇEKİMLERİ OTOMATİK İADE KONTROLÜ (GENEL YÜRÜTME)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const targetAddr = account || 'guest';
+    const savedTxsStr = localStorage.getItem(`dd_txs_${targetAddr.toLowerCase()}`);
+    
+    if (savedTxsStr) {
+      try {
+        let txsList: TransactionRecord[] = JSON.parse(savedTxsStr);
+        const now = Date.now();
+        const oneDayMs = 24 * 60 * 60 * 1000;
+        let refundAmount = 0;
+        let hasChanges = false;
+
+        txsList = txsList.map(tx => {
+          if (tx.status === 'PENDING' && tx.type === 'WITHDRAW' && tx.timestamp && (now - tx.timestamp > oneDayMs)) {
+            refundAmount += tx.amount;
+            hasChanges = true;
+            return { ...tx, status: 'COMPLETED', title: `${tx.title} (İade Edildi)` };
+          }
+          return tx;
+        });
+
+        if (hasChanges && refundAmount > 0) {
+          const currentBal = balance + refundAmount;
+          updatePersistentBalance(currentBal);
+          localStorage.setItem(`dd_txs_${targetAddr.toLowerCase()}`, JSON.stringify(txsList));
+          setTransactions(txsList);
+        } else if (hasChanges) {
+          localStorage.setItem(`dd_txs_${targetAddr.toLowerCase()}`, JSON.stringify(txsList));
+          setTransactions(txsList);
+        }
+      } catch (e) {}
+    }
+  }, [account, balance]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
