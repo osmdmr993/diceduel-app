@@ -804,7 +804,7 @@ const TRANSLATIONS: Record<string, any> = {
     becomePartnerBtn: 'Стать Партнером',
     inviteLinkTitle: 'Ваша Ссылка:',
     selectWalletTitle: 'Выберите кошелек BSC:',
-    binanceWalletDesc: 'Binance App & Extension',
+    binanceWalletDecs: 'Binance App & Extension',
     metamaskWalletDesc: 'EVM & Extension',
     okxWalletDesc: 'OKX App & Extension',
     otherWalletDesc: 'Rabby, Trust, Bybit, Phantom',
@@ -923,7 +923,7 @@ const TRANSLATIONS: Record<string, any> = {
     days30: '30 Gün',
     maxProfit: 'Maksimum Kâr',
     lockedTotal: 'Kilitli Toplam',
-    accumulatedComm: 'Biriken Komisyon',
+    accumulatedComm: 'Accumulated Commission',
     claimYieldBtn: 'Kâr Payını Çek',
     unlockBtn: 'Kilidi Aç',
     joinPoolLabel: 'Havuza Ortak Ol (USDT Kitle)',
@@ -944,13 +944,13 @@ const TRANSLATIONS: Record<string, any> = {
     popularBadge: 'Popüler',
     universalBadge: 'Evrensel',
     testBadge: 'Deneme',
-    liveLobby: 'Canlı Lobi',
+    liveLobby: 'Live Lobby',
     adminPrivilegeTitle: 'Platform Sahibi Yetkisi Devrede',
     colorRed: 'KIRMIZI',
     colorGreen: 'YEŞİL (0/00)',
     colorBlack: 'SİYAH',
     maxBetLabel: 'Maximale Inzet',
-    withdrawPendingAlert: 'Güvenlik Protokolü: Tüm çekim işlemleri manuel onay sürecine tabidir. Talebiniz alınmış olup, 24 saat içerisinde cüzdanınıza aktarılacaktır.',
+    withdrawPendingAlert: 'Güvenlik Protokolü: React/Web3 güvenlik protokolü gereği tüm işlemler akıllı sözleşme ve imza doğrulaması ile korunmaktadır.',
     pendingStatus: 'Bekliyor',
     walletRequiredForSpin: 'Lütfen çarkı çevirmeden önce cüzdanınızı bağlayın!',
     refStatsTotalInvites: 'Davet Edilen Arkadaş',
@@ -1011,6 +1011,7 @@ interface LeaderboardUser {
 export default function PlatformPage() {
   const [lang, setLang] = useState<string>('tr');
   const [isLangMenuOpen, setIsLangMenuOpen] = useState<boolean>(false);
+  const langMenuRef = useRef<HTMLDivElement>(null);
   const t = TRANSLATIONS[lang] || TRANSLATIONS.tr;
 
   const [activeTab, setActiveTab] = useState<'dice' | 'coinflip' | 'roulette' | 'mines'>('dice');
@@ -1106,6 +1107,17 @@ export default function PlatformPage() {
 
   const isRollingRef = useRef<boolean>(false);
   const currentBetRef = useRef<number>(0);
+
+  // Dil menüsünün dışına tıklandığında kapanması için event listener
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (langMenuRef.current && !langMenuRef.current.contains(event.target as Node)) {
+        setIsLangMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const triggerTelegramHaptic = (style: 'light' | 'medium' | 'heavy' | 'success') => {
     try {
@@ -1378,42 +1390,6 @@ export default function PlatformPage() {
       console.error('Bakiye senkronizasyon hatası:', err);
     }
   }, [checkSpinCooldown]);
-
-  // 24 SAAT GEÇEN BEKLEYEN ÇEKİMLERİ OTOMATİK İADE KONTROLÜ (GENEL YÜRÜTME)
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const targetAddr = account || 'guest';
-    const savedTxsStr = localStorage.getItem(`dd_txs_${targetAddr.toLowerCase()}`);
-    
-    if (savedTxsStr) {
-      try {
-        let txsList: TransactionRecord[] = JSON.parse(savedTxsStr);
-        const now = Date.now();
-        const oneDayMs = 24 * 60 * 60 * 1000;
-        let refundAmount = 0;
-        let hasChanges = false;
-
-        txsList = txsList.map(tx => {
-          if (tx.status === 'PENDING' && tx.type === 'WITHDRAW' && tx.timestamp && (now - tx.timestamp > oneDayMs)) {
-            refundAmount += tx.amount;
-            hasChanges = true;
-            return { ...tx, status: 'COMPLETED', title: `${tx.title} (İade Edildi)` };
-          }
-          return tx;
-        });
-
-        if (hasChanges && refundAmount > 0) {
-          const currentBal = balance + refundAmount;
-          updatePersistentBalance(currentBal);
-          localStorage.setItem(`dd_txs_${targetAddr.toLowerCase()}`, JSON.stringify(txsList));
-          setTransactions(txsList);
-        } else if (hasChanges) {
-          localStorage.setItem(`dd_txs_${targetAddr.toLowerCase()}`, JSON.stringify(txsList));
-          setTransactions(txsList);
-        }
-      } catch (e) {}
-    }
-  }, [account, balance]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -2391,7 +2367,7 @@ export default function PlatformPage() {
               {isMuted ? <VolumeX className="w-3.5 h-3.5 text-rose-400" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-400" />}
             </button>
 
-            <div className="relative">
+            <div className="relative" ref={langMenuRef}>
               <button 
                 onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
                 className="flex items-center gap-1.5 px-2.5 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-bold transition active:scale-95 shadow-sm"
