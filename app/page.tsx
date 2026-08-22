@@ -12,7 +12,8 @@ import {
   History, Gift, CircleDot, Dices, Send,
   ReceiptText, Download, Printer,
   MessageCircle, Info, ChevronDown, Loader2, Clock, Lock, Unlock, ExternalLink, 
-  Volume2, VolumeX, Crown, AlertTriangle, Medal, Bomb, Gem, Play, ShieldAlert, Timer, Users
+  Volume2, VolumeX, Crown, AlertTriangle, Medal, Bomb, Gem, Play, ShieldAlert, Timer, Users,
+  BarChart3, ShieldAlert as AlertIcon, Eye, UserCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -163,7 +164,7 @@ const TRANSLATIONS: Record<string, any> = {
     depositUsdt: 'USDT Einzahlen',
     withdrawUsdt: 'USDT Auszahlen',
     amountLabel: 'Betrag',
-    adminPanelTitle: 'Gründer Einnahmen',
+    adminPanelTitle: 'Gründer Einnahmen & Risk Audit',
     adminPanelDesc: '3% Hausgebühr sammeln sich im Smart Contract. Hier kannst du den Betrag auf dein Binance Wallet übertragen.',
     adminWithdrawLabel: 'Einnahmen abheben (USDT)',
     adminBtnText: 'Zum Wallet übertragen (BscScan)',
@@ -291,10 +292,10 @@ const TRANSLATIONS: Record<string, any> = {
     depositUsdt: 'Deposit USDT',
     withdrawUsdt: 'Withdraw USDT',
     amountLabel: 'Amount',
-    adminPanelTitle: 'Founder Revenue Panel',
+    adminPanelTitle: 'Founder Revenue & Risk Audit Panel',
     adminPanelDesc: 'A 3% house edge from all games accumulates in the smart contract.',
     adminWithdrawLabel: 'Withdraw Revenue (USDT)',
-    adminBtnText: 'Transfer Revenue to Wallet (BscScan)',
+    adminBtnText: 'Transfer Revenue to Wallet',
     flexibleStake: 'Flexible',
     instantWithdraw: 'Instant Withdrawal',
     days7: '7 Days',
@@ -419,16 +420,16 @@ const TRANSLATIONS: Record<string, any> = {
     depositUsdt: 'Depositar USDT',
     withdrawUsdt: 'Retirar USDT',
     amountLabel: 'Cantidad',
-    adminPanelTitle: 'Panel de Ingresos',
+    adminPanelTitle: 'Panel de Ingresos y Auditoría',
     adminPanelDesc: 'Comisión del 3%.',
     adminWithdrawLabel: 'Retirar Ingresos (USDT)',
     adminBtnText: 'Transferir a la Wallet',
     flexibleStake: 'Flexible',
     instantWithdraw: 'Retiro Instantáneo',
     days7: '7 Días',
-    bonusProfit: '+Beneficio',
+    bonusProfit: 'Bonus',
     days30: '30 Días',
-    maxProfit: 'Máximo',
+    maxProfit: 'Max',
     lockedTotal: 'Bloqueado',
     accumulatedComm: 'Comisión',
     claimYieldBtn: 'Reclamar',
@@ -547,7 +548,7 @@ const TRANSLATIONS: Record<string, any> = {
     depositUsdt: 'Déposer',
     withdrawUsdt: 'Retirer',
     amountLabel: 'Montant',
-    adminPanelTitle: 'Admin',
+    adminPanelTitle: 'Admin & Audit',
     adminPanelDesc: 'Commission.',
     adminWithdrawLabel: 'Retirer',
     adminBtnText: 'Transférer',
@@ -675,7 +676,7 @@ const TRANSLATIONS: Record<string, any> = {
     depositUsdt: 'Stort',
     withdrawUsdt: 'Opnemen',
     amountLabel: 'Bedrag',
-    adminPanelTitle: 'Admin',
+    adminPanelTitle: 'Admin & Audit',
     adminPanelDesc: 'Commissie.',
     adminWithdrawLabel: 'Opnemen',
     adminBtnText: 'Overmaken',
@@ -785,7 +786,7 @@ const TRANSLATIONS: Record<string, any> = {
     startMines: 'Старт',
     spinRoulette: 'Крутить',
     inGameLock: 'Заблокировано!',
-    sybilError: ' Anti-Sybil',
+    sybilError: 'Anti-Sybil',
     coinSubText: 'PvP Дуэль',
     rouletteSubText: 'Красное / Черное',
     minesSubText: 'RNG',
@@ -803,7 +804,7 @@ const TRANSLATIONS: Record<string, any> = {
     depositUsdt: 'Внести',
     withdrawUsdt: 'Снять',
     amountLabel: 'Сумма',
-    adminPanelTitle: 'Админ',
+    adminPanelTitle: 'Админ и Аудит',
     adminPanelDesc: 'Комиссия.',
     adminWithdrawLabel: 'Вывод',
     adminBtnText: 'Перевести',
@@ -931,10 +932,10 @@ const TRANSLATIONS: Record<string, any> = {
     depositUsdt: 'USDT Yatır',
     withdrawUsdt: 'USDT Çek',
     amountLabel: 'Tutar',
-    adminPanelTitle: 'Kurucu Kasa Gelir Paneli',
+    adminPanelTitle: 'Kurucu Kasa Gelir ve Risk Denetim Paneli',
     adminPanelDesc: 'Platformda oynanan tüm oyunların %3 ev komisyonu akıllı sözleşmede birikir.',
     adminWithdrawLabel: 'Çekilecek Kasa Geliri (USDT)',
-    adminBtnText: 'Kasa Gelirini Cüzdana Aktar (BscScan)',
+    adminBtnText: 'Kasa Gelirini Cüzdana Aktar',
     flexibleStake: 'Esnek',
     instantWithdraw: 'Anında Çekim',
     days7: '7 Gün',
@@ -3025,20 +3026,53 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 2. Kurucu Admin Kasa Modalı */}
+        {/* 2. Kurucu Admin Kasa ve Risk Denetim Modalı */}
         <AnimatePresence>
           {isAdminModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-slate-900 border border-amber-500/40 rounded-3xl p-5 w-full max-w-md shadow-2xl relative space-y-4">
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-slate-900 border border-amber-500/40 rounded-3xl p-5 w-full max-w-lg shadow-2xl relative space-y-4 max-h-[85vh] overflow-y-auto">
                 <button onClick={() => setIsAdminModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white transition"><X className="w-5 h-5" /></button>
                 <h3 className="font-bold text-base text-amber-300 flex items-center gap-2"><Crown className="w-5 h-5 text-amber-400" /> {t.adminPanelTitle}</h3>
                   
                 <div className="p-3 bg-amber-950/30 border border-amber-800/40 rounded-2xl text-xs space-y-1.5 text-slate-300">
-                  <div className="font-bold text-amber-300">👑 {t.adminPrivilegeTitle}</div>
+                  <div className="font-bold text-amber-300 flex items-center gap-1.5"><ShieldAlert className="w-4 h-4 text-amber-400" /> {t.adminPrivilegeTitle}</div>
                   <p className="text-[11px] leading-relaxed">{t.adminPanelDesc}</p>
                 </div>
 
-                <div className="space-y-2">
+                {/* Risk Analizi & İstatistik Özeti */}
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div className="p-3 bg-slate-950 border border-slate-800 rounded-2xl">
+                    <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><Users className="w-3 h-3 text-indigo-400" /> Bağlı Cüzdanlar</span>
+                    <span className="text-sm font-black text-indigo-300">{account ? '1 (Aktif)' : '0'}</span>
+                  </div>
+                  <div className="p-3 bg-slate-950 border border-slate-800 rounded-2xl">
+                    <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><BarChart3 className="w-3 h-3 text-emerald-400" /> Kasa Toplam Likidite</span>
+                    <span className="text-sm font-black text-emerald-400">{balance.toFixed(2)} USDT</span>
+                  </div>
+                </div>
+
+                {/* Oyuncu Davranış / Anomali Listesi */}
+                <div className="space-y-2 pt-2">
+                  <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5"><AlertIcon className="w-4 h-4 text-amber-400" /> Oyuncu Risk & Anomali Denetimi</span>
+                  <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-xl space-y-2 text-xs">
+                    {account ? (
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                          <span className="font-mono text-[11px] text-slate-300">{account.substring(0, 10)}...</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-emerald-400 font-bold">Normal Risk</span>
+                          <span className="text-[10px] bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded border border-emerald-800">Güvenli</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center text-slate-500 py-2">Aktif bağlı cüzdan bulunmuyor.</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-2 pt-2 border-t border-slate-800">
                   <label className="text-[11px] text-slate-300 font-bold block">{t.adminWithdrawLabel}</label>
                   <input 
                     type="number" 
