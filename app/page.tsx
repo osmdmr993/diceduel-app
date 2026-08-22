@@ -633,7 +633,7 @@ const TRANSLATIONS: Record<string, any> = {
     refTitle: 'Vrienden Uitnodigen & Verdienen',
     refDesc: 'Verdien direct 0.5% commissie op alle inzetten van genodigden.',
     copyLink: 'Kopieer Link',
-    linkCopied: 'Gekopieerd!',
+    linkCopied: 'Kopieerd!',
     shareTelegramWin: 'Deel op Telegram',
     adminPanel: 'Kluis Beheer',
     wrongNetwork: 'Schakel over naar BSC Mainnet!',
@@ -1038,7 +1038,7 @@ export default function PlatformPage() {
   const [isRolling, setIsRolling] = useState<boolean>(false);
   const [isWaitingMatch, setIsWaitingMatch] = useState<boolean>(false);
   const [matchCountdown, setMatchCountdown] = useState<number>(30);
-  const [matchStatusText, setMatchStatusText] = useState<string>(t.searchingMatch);
+  const [matchStatusText, setMatchStatusText] = useState<string>('Ağda eşleşme aranıyor...');
 
   const [coinChoice, setCoinChoice] = useState<'YAZI' | 'TURA'>('YAZI');
   const [coinResult, setCoinResult] = useState<'YAZI' | 'TURA' | null>(null);
@@ -1333,7 +1333,7 @@ export default function PlatformPage() {
 
       updatePersistentBalance(currentBal, userAddress);
 
-      // REFERANS / INVITE KONTROLÜ
+      // REFERANS / INVITE KONTROLÜ (Cüzdan bağlandığında aktifleşir)
       if (typeof window !== 'undefined') {
         const urlParams = new URLSearchParams(window.location.search);
         const refParam = urlParams.get('ref');
