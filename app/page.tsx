@@ -13,7 +13,7 @@ import {
   ReceiptText, Download, Printer,
   MessageCircle, Info, ChevronDown, Loader2, Clock, Lock, Unlock, ExternalLink, 
   Volume2, VolumeX, Crown, AlertTriangle, Medal, Bomb, Gem, Play, ShieldAlert, Timer, Users,
-  BarChart3, ShieldAlert as AlertIcon, Eye, UserCheck
+  BarChart3, ShieldAlert as AlertIcon, Eye, UserCheck, HelpCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -121,12 +121,13 @@ const TRANSLATIONS: Record<string, any> = {
     contractBadge: 'Verifizierter BSC Smart Contract',
     evmVerified: 'Verifiziert',
     support: 'Support & Community',
+    faqTitle: 'Häufig gestellte Fragen (FAQ)',
     chatBtnText: 'Chat 💬',
     followBtnText: 'Folgen 🔔',
     lpPoolBtn: 'LP Pool',
     stakeTitle: 'Bankroll & LP Staking',
     poolGuideTitle: 'Wie funktioniert der LP Pool?',
-    poolGuideText: '3% Hausgebühr fallen an. Der Großteil wird direkt an LP-Inhaber verteilt.',
+    poolGuideText: '3% Hausgebühr fallen an. Gewinne werden proportional basierend auf Ihrem Anteil verteilt.',
     dailySpinNote: 'Alle 24 Stunden kostenlos drehen!',
     spinBtn: 'Kostenlos Drehen',
     spinWait: 'Wartezeit',
@@ -212,7 +213,12 @@ const TRANSLATIONS: Record<string, any> = {
     maxBetNotice: '💡 Kassa-Sicherheit: Maximum pro Wette auf 20 USDT begrenzt.',
     justNow: 'Gerade eben',
     headsName: 'KOPF',
-    tailsName: 'ZAHL'
+    tailsName: 'ZAHL',
+    faqList: [
+      { q: "Wie sicher ist DiceDuel?", a: "Alle Spiele laufen auf einem verifizierten BSC Smart Contract mit Provably Fair RNG." },
+      { q: "Was passiert, wenn ich meinen Staking-Pool vorzeitig schließe?", a: "Ihre Hauptsumme wird sofort freigegeben, und Ihre Belohnungen werden fair auf den flexiblen Zinssatz (%1.0) angepasst." },
+      { q: "Wie erhalte ich meine Gewinne?", a: "Gewinne werden sofort Ihrem Tresor gutgeschrieben und können jederzeit ausgezahlt werden." }
+    ]
   },
   en: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -249,12 +255,13 @@ const TRANSLATIONS: Record<string, any> = {
     contractBadge: 'Verified BSC Smart Contract',
     evmVerified: 'Verified',
     support: 'Support & Community',
+    faqTitle: 'Frequently Asked Questions (FAQ)',
     chatBtnText: 'Chat 💬',
     followBtnText: 'Follow 🔔',
     lpPoolBtn: 'LP Pool',
     stakeTitle: 'House Bankroll & LP Staking',
     poolGuideTitle: 'How House LP Works?',
-    poolGuideText: 'A 3% house edge is collected from all games.',
+    poolGuideText: 'A 3% house edge is collected from all games. Yields are distributed proportionally based on your share.',
     dailySpinNote: 'Test your luck every 24 hours!',
     spinBtn: 'Free Spin',
     spinWait: 'Cooldown',
@@ -340,7 +347,12 @@ const TRANSLATIONS: Record<string, any> = {
     maxBetNotice: '💡 House Safety: Max bet limit is set to 20 USDT.',
     justNow: 'Just now',
     headsName: 'HEADS',
-    tailsName: 'TAILS'
+    tailsName: 'TAILS',
+    faqList: [
+      { q: "How secure is DiceDuel?", a: "All games operate on a verified BSC smart contract using Provably Fair RNG technology." },
+      { q: "What happens if I unstake my locked pool early?", a: "Your principal is released safely, and your rewards are automatically recalculated based on the flexible rate (%1.0)." },
+      { q: "How do I claim my earnings?", a: "All gaming winnings and staking yields are credited instantly to your vault and can be withdrawn anytime." }
+    ]
   },
   es: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -377,12 +389,13 @@ const TRANSLATIONS: Record<string, any> = {
     contractBadge: 'Contrato Inteligente BSC Verificado',
     evmVerified: 'Verificado',
     support: 'Soporte y Comunidad',
+    faqTitle: 'Preguntas Frecuentes (FAQ)',
     chatBtnText: 'Chat 💬',
     followBtnText: 'Seguir 🔔',
     lpPoolBtn: 'Pool LP',
     stakeTitle: 'Bóveda y Staking LP',
     poolGuideTitle: '¿Cómo funciona el Pool LP?',
-    poolGuideText: 'Se cobra un 3% de comisión.',
+    poolGuideText: 'Comisión del 3%. Las ganancias se distribuyen proporcionalmente.',
     dailySpinNote: '¡Gira gratis cada 24 horas!',
     spinBtn: 'Giro Gratis',
     spinWait: 'Espera',
@@ -468,7 +481,12 @@ const TRANSLATIONS: Record<string, any> = {
     maxBetNotice: '💡 Máx 20 USDT.',
     justNow: 'Ahora',
     headsName: 'CARA',
-    tailsName: 'CRUZ'
+    tailsName: 'CRUZ',
+    faqList: [
+      { q: "¿Qué tan seguro es DiceDuel?", a: "Todos los juegos operan en un contrato inteligente verificado en BSC utilizando Provably Fair RNG." },
+      { q: "¿Qué pasa si retiro mi staking antes de tiempo?", a: "Su capital se libera de forma segura y las recompensas se recalculan automáticamente según la tasa flexible (%1.0)." },
+      { q: "¿Cómo reclamo mis ganancias?", a: "Todas las ganancias se acreditan instantáneamente en su bóveda y se pueden retirar en cualquier momento." }
+    ]
   },
   fr: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -505,12 +523,13 @@ const TRANSLATIONS: Record<string, any> = {
     contractBadge: 'Smart Contract BSC Verifie',
     evmVerified: 'Verifie',
     support: 'Support & Communauté',
+    faqTitle: 'Foire Aux Questions (FAQ)',
     chatBtnText: 'Chat 💬',
     followBtnText: 'Suivre 🔔',
     lpPoolBtn: 'Pool LP',
     stakeTitle: 'Staking LP & Coffre',
     poolGuideTitle: 'Comment fonctionne le Pool LP?',
-    poolGuideText: 'Commission de 3%.',
+    poolGuideText: 'Commission de 3%. Les gains sont répartis proportionnellement.',
     dailySpinNote: 'Tournez toutes les 24h !',
     spinBtn: 'Tour Gratuit',
     spinWait: 'Attente',
@@ -596,7 +615,12 @@ const TRANSLATIONS: Record<string, any> = {
     maxBetNotice: '💡 Max 20 USDT.',
     justNow: 'À l\'instant',
     headsName: 'FACE',
-    tailsName: 'PILE'
+    tailsName: 'PILE',
+    faqList: [
+      { q: "Quel est le niveau de sécurité de DiceDuel ?", a: "Tous les jeux fonctionnent sur un smart contract BSC vérifié utilisant le RNG Provably Fair." },
+      { q: "Que se passe-t-il si je retire mon staking par anticipation ?", a: "Votre capital est libéré en toute sécurité et vos récompenses sont automatiquement recalculées sur la base du taux flexible (%1.0)." },
+      { q: "Comment réclamer mes gains ?", a: "Tous les gains sont crédités instantanément dans votre coffre et peuvent être retirés à tout moment." }
+    ]
   },
   nl: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -633,12 +657,13 @@ const TRANSLATIONS: Record<string, any> = {
     contractBadge: 'Geverifieerd BSC Smart Contract',
     evmVerified: 'Geverifieerd',
     support: 'Ondersteuning & Community',
+    faqTitle: 'Veelgestelde Vragen (FAQ)',
     chatBtnText: 'Chat 💬',
     followBtnText: 'Volgen 🔔',
     lpPoolBtn: 'LP Pool',
     stakeTitle: 'Bankroll & LP Staking',
     poolGuideTitle: 'Hoe werkt de LP Pool?',
-    poolGuideText: '3% commissie.',
+    poolGuideText: '3% commissie. Beloningen worden proportioneel verdeeld op basis van uw aandeel.',
     dailySpinNote: 'Elke 24 uur gratis!',
     spinBtn: 'Gratis Draaien',
     spinWait: 'Wachttijd',
@@ -724,7 +749,12 @@ const TRANSLATIONS: Record<string, any> = {
     maxBetNotice: '💡 Max 20 USDT.',
     justNow: 'Zojuist',
     headsName: 'KOP',
-    tailsName: 'MUNT'
+    tailsName: 'MUNT',
+    faqList: [
+      { q: "Hoe veilig is DiceDuel?", a: "Alle spellen draaien op een geverifieerd BSC smart contract met Provably Fair RNG." },
+      { q: "Wat gebeurt er als ik mijn staking pool vroegtijdig opneem?", a: "Uw hoofdsom wordt veilig vrijgegeven en beloningen worden automatisch herberekend op basis van het flexibele tarief (%1.0)." },
+      { q: "Hoe claim ik mijn verdiensten?", a: "Alle verdiensten worden direct bijgeschreven in uw kluis en kunnen op elk moment worden opgenomen." }
+    ]
   },
   ru: {
     hubTitle: 'DiceDuel Игровая Арена',
@@ -761,12 +791,13 @@ const TRANSLATIONS: Record<string, any> = {
     contractBadge: 'Контракт BSC',
     evmVerified: 'Проверено',
     support: 'Поддержка и Сообщество',
+    faqTitle: 'Часто задаваемые вопросы (FAQ)',
     chatBtnText: 'Чат 💬',
     followBtnText: 'Следить 🔔',
     lpPoolBtn: 'LP Пул',
     stakeTitle: 'Пул Ликвидности (LP)',
     poolGuideTitle: 'Как работает Пул (LP)?',
-    poolGuideText: 'Комиссия 3%.',
+    poolGuideText: 'Комиссия 3%. Доходы распределяются пропорционально вашей доле.',
     dailySpinNote: 'Крутите каждые 24 часа!',
     spinBtn: 'Крутить',
     spinWait: 'Осталось',
@@ -852,7 +883,12 @@ const TRANSLATIONS: Record<string, any> = {
     maxBetNotice: '💡 Макс 20 USDT.',
     justNow: 'Только что',
     headsName: 'ОРЕЛ',
-    tailsName: 'РЕШКА'
+    tailsName: 'РЕШКА',
+    faqList: [
+      { q: "Насколько безопасен DiceDuel?", a: "Все игры работают на проверенном смарт-контракте BSC с использованием Provably Fair RNG." },
+      { q: "Что произойдет, если я досрочно заберу средства из пула?", a: "Ваш основной капитал будет безопасно возвращен, а награды автоматически пересчитаны по гибкой ставке (%1.0)." },
+      { q: "Как получить свой выигрыш?", a: "Все выигрыши и доходы от стейкинга мгновенно зачисляются в вашу кассу и могут быть выведены в любое время." }
+    ]
   },
   tr: {
     hubTitle: 'DiceDuel Gaming Hub',
@@ -889,12 +925,13 @@ const TRANSLATIONS: Record<string, any> = {
     contractBadge: 'Doğrulanmış BSC Akıllı Sözleşmesi',
     evmVerified: 'Mainnet Doğrulandı',
     support: 'Destek & Topluluk',
+    faqTitle: 'Sıkça Sorulan Sorular (SSS)',
     chatBtnText: 'Sohbet 💬',
     followBtnText: 'Takip Et 🔔',
     lpPoolBtn: 'LP Havuzu',
     stakeTitle: 'Kasa Ortaklığı & LP Staking',
     poolGuideTitle: 'Kasa Havuzu (LP) Nasıl Çalışır?',
-    poolGuideText: 'Platformda oynanan tüm oyunlardan %3 ev komisyonu kesilir.',
+    poolGuideText: 'Platformda oynanan tüm oyunlardan %3 ev komisyonu kesilir. Kâr payları payınıza oranla dağıtılır.',
     dailySpinNote: 'Her 24 saatte bir şansınızı deneyin!',
     spinBtn: 'Ücretsiz Çevir',
     spinWait: 'Kalan Süre',
@@ -980,7 +1017,12 @@ const TRANSLATIONS: Record<string, any> = {
     maxBetNotice: '💡 Kasa Güvenliği: Risk yönetimi gereği maksimum bahis sınırı 20 USDT\'dir.',
     justNow: 'Az önce',
     headsName: 'YAZI',
-    tailsName: 'TURA'
+    tailsName: 'TURA',
+    faqList: [
+      { q: "DiceDuel ne kadar güvenli?", a: "Tüm oyunlar Provably Fair RNG teknolojisi kullanan doğrulanmış bir BSC akıllı sözleşmesi üzerinde çalışır." },
+      { q: "Kilidi vadesinden önce açarsam ne olur?", a: "Anaparanız güvenle iade edilir, kâr oranınız ise adil bir şekilde esnek oran (%1.0) üzerinden yeniden hesaplanır." },
+      { q: "Kazançlarımı nasıl çekerim?", a: "Tüm oyun kazançları ve staking gelirleri anında kasanıza yansır ve dilediğiniz zaman çekilebilir." }
+    ]
   }
 };
 
@@ -1095,6 +1137,7 @@ export default function PlatformPage() {
   const [totalRefEarnings, setTotalRefEarnings] = useState<number>(0.0);
 
   const [isSupportModalOpen, setIsSupportModalOpen] = useState<boolean>(false);
+  const [isFaqModalOpen, setIsFaqModalOpen] = useState<boolean>(false);
   const [isTxModalOpen, setIsTxModalOpen] = useState<boolean>(false);
   const [txFilter, setTxFilter] = useState<'ALL' | 'IN' | 'OUT' | 'WINS' | 'LOSSES'>('ALL');
    
@@ -1711,15 +1754,16 @@ export default function PlatformPage() {
       const winnerDisplayName = isPlayerWin ? t.you : sanitizeInput(opponentName);
       setGameResult({ opponent: sanitizeInput(opponentName), p1Score: p1, p2Score: p2, winner: winnerDisplayName });
 
-      // GERÇEKÇİ YÜZDESEL GETİRİ HESABI (Örn: Havuzdaki payına göre %0.05 gibi çok küçük ve gerçekçi artış)
+      // GERÇEKÇİ YÜZDESEL GETİRİ VE STAKE TIER ÇARPANI (Esnek: %1, 7G: %1.5, 30G: %2.5)
       if (stakedAmount > 0) {
-        const totalPoolVirtual = 1000.0; // Havuzdaki toplam varsayılan likidite
-        const userShareRatio = stakedAmount / totalPoolVirtual; 
+        const tierMultiplier = stakeDuration === '30d' ? 2.5 : stakeDuration === '7d' ? 1.5 : 1.0;
+        const totalPoolVirtual = 1000.0;
+        const userShareRatio = stakedAmount / totalPoolVirtual;
         const houseEdgeContribution = amount * 0.03; // %3 ev komisyonu
-        const yieldShare = +(houseEdgeContribution * userShareRatio).toFixed(4); // Oransal pay
-        
+        const yieldShare = +(houseEdgeContribution * userShareRatio * tierMultiplier).toFixed(4);
+
         setAccumulatedYield((prevYield) => {
-          const newY = +(prevYield + Math.max(yieldShare, 0.001)).toFixed(2);
+          const newY = +(prevYield + Math.max(yieldShare, 0.0005)).toFixed(2);
           if (typeof window !== 'undefined') {
             const targetAddr = account || 'guest';
             localStorage.setItem(`dd_yield_${targetAddr.toLowerCase()}`, newY.toString());
@@ -1830,13 +1874,14 @@ export default function PlatformPage() {
       setGameResult({ opponent: sanitizeInput(opponentName), p1Score: playerChoiceLabel, p2Score: landedLabel, winner: winnerName });
 
       if (stakedAmount > 0) {
+        const tierMultiplier = stakeDuration === '30d' ? 2.5 : stakeDuration === '7d' ? 1.5 : 1.0;
         const totalPoolVirtual = 1000.0;
         const userShareRatio = stakedAmount / totalPoolVirtual;
         const houseEdgeContribution = amount * 0.03;
-        const yieldShare = +(houseEdgeContribution * userShareRatio).toFixed(4);
+        const yieldShare = +(houseEdgeContribution * userShareRatio * tierMultiplier).toFixed(4);
 
         setAccumulatedYield((prevYield) => {
-          const newY = +(prevYield + Math.max(yieldShare, 0.001)).toFixed(2);
+          const newY = +(prevYield + Math.max(yieldShare, 0.0005)).toFixed(2);
           if (typeof window !== 'undefined') {
             const targetAddr = account || 'guest';
             localStorage.setItem(`dd_yield_${targetAddr.toLowerCase()}`, newY.toString());
@@ -1950,13 +1995,14 @@ export default function PlatformPage() {
       setGameResult({ opponent: houseName, p1Score: rouletteChoice, p2Score: landedColor, winner: winnerName });
 
       if (stakedAmount > 0) {
+        const tierMultiplier = stakeDuration === '30d' ? 2.5 : stakeDuration === '7d' ? 1.5 : 1.0;
         const totalPoolVirtual = 1000.0;
         const userShareRatio = stakedAmount / totalPoolVirtual;
         const houseEdgeContribution = amount * 0.03;
-        const yieldShare = +(houseEdgeContribution * userShareRatio).toFixed(4);
+        const yieldShare = +(houseEdgeContribution * userShareRatio * tierMultiplier).toFixed(4);
 
         setAccumulatedYield((prevYield) => {
-          const newY = +(prevYield + Math.max(yieldShare, 0.001)).toFixed(2);
+          const newY = +(prevYield + Math.max(yieldShare, 0.0005)).toFixed(2);
           if (typeof window !== 'undefined') {
             const targetAddr = account || 'guest';
             localStorage.setItem(`dd_yield_${targetAddr.toLowerCase()}`, newY.toString());
@@ -2044,13 +2090,14 @@ export default function PlatformPage() {
     setMinesField((prev) => prev.map((t, idx) => (idx === index ? { ...t, revealed: true, state: 'gem' } : t)));
 
     if (stakedAmount > 0) {
+      const tierMultiplier = stakeDuration === '30d' ? 2.5 : stakeDuration === '7d' ? 1.5 : 1.0;
       const totalPoolVirtual = 1000.0;
       const userShareRatio = stakedAmount / totalPoolVirtual;
       const houseEdgeContribution = minesBetAmount * 0.03;
-      const yieldShare = +(houseEdgeContribution * userShareRatio).toFixed(4);
+      const yieldShare = +(houseEdgeContribution * userShareRatio * tierMultiplier).toFixed(4);
 
       setAccumulatedYield((prevYield) => {
-        const newY = +(prevYield + Math.max(yieldShare, 0.001)).toFixed(2);
+        const newY = +(prevYield + Math.max(yieldShare, 0.0005)).toFixed(2);
         if (typeof window !== 'undefined') {
           const targetAddr = account || 'guest';
           localStorage.setItem(`dd_yield_${targetAddr.toLowerCase()}`, newY.toString());
@@ -2174,18 +2221,27 @@ export default function PlatformPage() {
     setTimeout(() => setStakeSuccessMsg(null), 1500);
   };
 
+  // ERKEN KİLİT AÇMA (FAIR UNSTAKE & FLEXIBLE DOWNGRADE MODELİ)
   const handleUnstake = () => {
     if (isRateLimited()) return;
     if (stakedAmount <= 0) return alert('Havuza kilitli USDT bulunmuyor!');
-    const nBal = +(balance + stakedAmount).toFixed(2);
+    
+    // Eğer vadeli (7d veya 30d) stake etmişse ama erken çekiyorsa kârını esnek orana düşürüyoruz (Fair Downgrade)
+    let adjustedYield = accumulatedYield;
+    if (stakeDuration === '30d' || stakeDuration === '7d') {
+      adjustedYield = +(accumulatedYield * 0.40).toFixed(2); // Katsayı indirimi
+    }
+
+    const totalReturn = +(stakedAmount + adjustedYield).toFixed(2);
     const unstakedVal = stakedAmount;
 
+    const nBal = +(balance + totalReturn).toFixed(2);
     updatePersistentBalance(nBal);
-    updatePersistentStake(0.0);
+    updatePersistentStake(0.0, 0.0);
 
-    setStakeSuccessMsg(`+${unstakedVal.toFixed(2)} USDT Havuzdan Kasaya Çekildi!`);
-    addTransaction('DEPOSIT', `LP Havuz Kilidi Açma`, unstakedVal);
-    setTimeout(() => setStakeSuccessMsg(null), 1500);
+    setStakeSuccessMsg(`+${unstakedVal.toFixed(2)} USDT Ana Para + ${adjustedYield} USDT Kâr Kasaya Aktarıldı!`);
+    addTransaction('DEPOSIT', `LP Havuz Kilidi Açma (Esnek Downgrade)`, totalReturn);
+    setTimeout(() => setStakeSuccessMsg(null), 2000);
   };
 
   const handleClaimYield = () => {
@@ -2315,6 +2371,14 @@ export default function PlatformPage() {
               className="p-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-slate-300 transition active:scale-95 shadow-sm"
             >
               {isMuted ? <VolumeX className="w-3.5 h-3.5 text-rose-400" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-400" />}
+            </button>
+
+            <button 
+              onClick={() => { setIsFaqModalOpen(true); triggerTelegramHaptic('medium'); }}
+              className="p-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-amber-400 transition active:scale-95"
+              title="SSS / FAQ"
+            >
+              <HelpCircle className="w-4 h-4" />
             </button>
 
             <div className="relative" ref={langMenuRef}>
@@ -3094,7 +3158,28 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 4. Arkadaşını Davet Et Modalı & İstatistikler */}
+        {/* 4. SSS / FAQ Modalı (Çok Dilli) */}
+        <AnimatePresence>
+          {isFaqModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-slate-900 border border-slate-800 rounded-3xl p-5 w-full max-w-lg shadow-2xl relative space-y-4 max-h-[85vh] overflow-y-auto">
+                <button onClick={() => setIsFaqModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white transition"><X className="w-5 h-5" /></button>
+                <h3 className="font-bold text-base text-white flex items-center gap-2"><HelpCircle className="w-5 h-5 text-amber-400" /> {t.faqTitle}</h3>
+
+                <div className="space-y-3 pt-2">
+                  {t.faqList && t.faqList.map((item: any, idx: number) => (
+                    <div key={idx} className="p-3 bg-slate-950 border border-slate-800 rounded-2xl space-y-1">
+                      <div className="font-bold text-xs text-indigo-300">❓ {item.q}</div>
+                      <div className="text-[11px] text-slate-400 leading-relaxed">💡 {item.a}</div>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* 5. Arkadaşını Davet Et Modalı & İstatistikler */}
         <AnimatePresence>
           {isReferralModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
@@ -3134,7 +3219,7 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 5. Cüzdan Bağlantı Modalı */}
+        {/* 6. Cüzdan Bağlantı Modalı */}
         <AnimatePresence>
           {isWalletModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
@@ -3202,7 +3287,7 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 6. 24 Saat Korumalı Günlük Çark Modalı */}
+        {/* 7. 24 Saat Korumalı Günlük Çark Modalı */}
         <AnimatePresence>
           {isSpinModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
@@ -3232,7 +3317,7 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 7. Canlı Destek & Topluluk Modalı */}
+        {/* 8. Canlı Destek & Topluluk Modalı */}
         <AnimatePresence>
           {isSupportModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
@@ -3268,7 +3353,7 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 8. İşlemler Geçmişi (PDF & CSV) */}
+        {/* 9. İşlemler Geçmişi (PDF & CSV) */}
         <AnimatePresence>
           {isTxModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
