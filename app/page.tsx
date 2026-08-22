@@ -944,7 +944,7 @@ const TRANSLATIONS: Record<string, any> = {
     colorRed: 'KIRMIZI',
     colorGreen: 'YEŞİL (0/00)',
     colorBlack: 'SİYAH',
-    maxBetLabel: 'Maksimum Bahis',
+    maxBetLabel: 'Maximale Inzet',
     withdrawPendingAlert: 'Güvenlik Protokolü: Tüm çekim işlemleri manuel onay sürecine tabidir. Talebiniz alınmış olup, 24 saat içerisinde cüzdanınıza aktarılacaktır.',
     pendingStatus: 'Bekliyor',
     walletRequiredForSpin: 'Lütfen çarkı çevirmeden önce cüzdanınızı bağlayın!',
@@ -1465,6 +1465,7 @@ export default function PlatformPage() {
     }
   }, [syncBlockchainBalances, checkSpinCooldown, lang]);
 
+  // ARKA PLAN BOT DÖNGÜSÜ (Canlı Telegram Kanalı Entegreli)
   useEffect(() => {
     const interval = setInterval(() => {
       const b1 = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
@@ -1479,17 +1480,30 @@ export default function PlatformPage() {
       const tailsLabel = lang === 'tr' ? 'TURA' : 'TAILS';
       const coinFace = Math.random() > 0.5 ? headsLabel : tailsLabel;
 
+      let gameDesc = '';
+      let payout = +(randomBet * 2 * 0.97).toFixed(2);
+
       if (randGame < 0.4) {
         const s1 = Math.floor(Math.random() * 40) + 60;
         const s2 = Math.floor(Math.random() * 50) + 1;
-        pushMatchRecord(b1, b2, `🎲 Zar (${s1}-${s2})`, randomBet);
+        gameDesc = `🎲 Zar (${s1}-${s2})`;
+        pushMatchRecord(b1, b2, gameDesc, randomBet);
       } else if (randGame < 0.7) {
-        pushMatchRecord(b1, b2, `🪙 Coin Flip (${coinFace})`, randomBet);
+        gameDesc = `🪙 Coin Flip (${coinFace})`;
+        pushMatchRecord(b1, b2, gameDesc, randomBet);
       } else if (randGame < 0.9) {
         const color = Math.random() > 0.5 ? 'KIRMIZI' : 'SİYAH';
-        pushMatchRecord(b1, b2, `🔴 Rulet (${color})`, randomBet);
+        gameDesc = `🔴 Rulet (${color})`;
+        pushMatchRecord(b1, b2, gameDesc, randomBet);
       } else {
-        pushMatchRecord(b1, 'Mayın', `💣 Mayın (1.85x)`, randomBet);
+        gameDesc = `💣 Mayın (1.85x)`;
+        payout = +(randomBet * 1.85).toFixed(2);
+        pushMatchRecord(b1, 'Mayın', gameDesc, randomBet);
+      }
+
+      // Botların kazançlarını da Telegram kanalına %35 ihtimalle akıtıyoruz (Doğal görünüm için)
+      if (Math.random() < 0.35) {
+        sendWinToTelegramChannel(b1, gameDesc, payout);
       }
 
       setStakedAmount((currStake) => {
