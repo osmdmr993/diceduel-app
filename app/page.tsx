@@ -165,9 +165,9 @@ const TRANSLATIONS: Record<string, any> = {
     withdrawUsdt: 'USDT Auszahlen',
     amountLabel: 'Betrag',
     adminPanelTitle: 'Gründer Einnahmen & Risk Audit',
-    adminPanelDesc: '3% Hausgebühr sammeln sich im Smart Contract. Hier kannst du den Betrag auf dein Binance Wallet übertragen.',
+    adminPanelDesc: '3% Hausgebühr sammeln sich im Smart Contract.',
     adminWithdrawLabel: 'Einnahmen abheben (USDT)',
-    adminBtnText: 'Zum Wallet übertragen (BscScan)',
+    adminBtnText: 'Einnahmen Abheben (Test Modus)',
     flexibleStake: 'Flexibel',
     instantWithdraw: 'Sofortige Auszahlung',
     days7: '7 Tage',
@@ -254,7 +254,7 @@ const TRANSLATIONS: Record<string, any> = {
     lpPoolBtn: 'LP Pool',
     stakeTitle: 'House Bankroll & LP Staking',
     poolGuideTitle: 'How House LP Works?',
-    poolGuideText: 'A 3% house edge is collected from all games. More than half is distributed directly to liquidity providers as yield.',
+    poolGuideText: 'A 3% house edge is collected from all games.',
     dailySpinNote: 'Test your luck every 24 hours!',
     spinBtn: 'Free Spin',
     spinWait: 'Cooldown',
@@ -295,7 +295,7 @@ const TRANSLATIONS: Record<string, any> = {
     adminPanelTitle: 'Founder Revenue & Risk Audit Panel',
     adminPanelDesc: 'A 3% house edge from all games accumulates in the smart contract.',
     adminWithdrawLabel: 'Withdraw Revenue (USDT)',
-    adminBtnText: 'Transfer Revenue to Wallet',
+    adminBtnText: 'Withdraw Revenue (Test Mode)',
     flexibleStake: 'Flexible',
     instantWithdraw: 'Instant Withdrawal',
     days7: '7 Days',
@@ -423,7 +423,7 @@ const TRANSLATIONS: Record<string, any> = {
     adminPanelTitle: 'Panel de Ingresos y Auditoría',
     adminPanelDesc: 'Comisión del 3%.',
     adminWithdrawLabel: 'Retirar Ingresos (USDT)',
-    adminBtnText: 'Transferir a la Wallet',
+    adminBtnText: 'Retirar (Modo Test)',
     flexibleStake: 'Flexible',
     instantWithdraw: 'Retiro Instantáneo',
     days7: '7 Días',
@@ -551,7 +551,7 @@ const TRANSLATIONS: Record<string, any> = {
     adminPanelTitle: 'Admin & Audit',
     adminPanelDesc: 'Commission.',
     adminWithdrawLabel: 'Retirer',
-    adminBtnText: 'Transférer',
+    adminBtnText: 'Retirer (Mode Test)',
     flexibleStake: 'Flexible',
     instantWithdraw: 'Instantané',
     days7: '7 Jours',
@@ -679,7 +679,7 @@ const TRANSLATIONS: Record<string, any> = {
     adminPanelTitle: 'Admin & Audit',
     adminPanelDesc: 'Commissie.',
     adminWithdrawLabel: 'Opnemen',
-    adminBtnText: 'Overmaken',
+    adminBtnText: 'Opnemen (Testmodus)',
     flexibleStake: 'Flexibel',
     instantWithdraw: 'Direct',
     days7: '7 Dagen',
@@ -807,7 +807,7 @@ const TRANSLATIONS: Record<string, any> = {
     adminPanelTitle: 'Админ и Аудит',
     adminPanelDesc: 'Комиссия.',
     adminWithdrawLabel: 'Вывод',
-    adminBtnText: 'Перевести',
+    adminBtnText: 'Снять (Тест Режим)',
     flexibleStake: 'Гибкий',
     instantWithdraw: 'Мгновенный',
     days7: '7 Дней',
@@ -935,7 +935,7 @@ const TRANSLATIONS: Record<string, any> = {
     adminPanelTitle: 'Kurucu Kasa Gelir ve Risk Denetim Paneli',
     adminPanelDesc: 'Platformda oynanan tüm oyunların %3 ev komisyonu akıllı sözleşmede birikir.',
     adminWithdrawLabel: 'Çekilecek Kasa Geliri (USDT)',
-    adminBtnText: 'Kasa Gelirini Cüzdana Aktar',
+    adminBtnText: 'Kasa Gelirini Çek (Test Modu)',
     flexibleStake: 'Esnek',
     instantWithdraw: 'Anında Çekim',
     days7: '7 Gün',
@@ -1038,7 +1038,7 @@ export default function PlatformPage() {
   const [account, setAccount] = useState<string | null>(null);
   const [isDemoWallet, setIsDemoWallet] = useState<boolean>(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState<boolean>(false);
-  const [isContractOwner, setIsContractOwner] = useState<boolean>(false);
+  const [isContractOwner, setIsContractOwner] = useState<boolean>(true); // Test modunda direkt yetki verildi
   const [isAdminModalOpen, setIsAdminModalOpen] = useState<boolean>(false);
   const [adminWithdrawAmount, setAdminWithdrawAmount] = useState<string>('10');
   const [isWrongNetwork, setIsWrongNetwork] = useState<boolean>(false);
@@ -1326,27 +1326,10 @@ export default function PlatformPage() {
       const rawWalletBal = await usdtContract.balanceOf(userAddress);
       setWalletUSDT(+parseFloat(ethers.formatUnits(rawWalletBal, 18)).toFixed(2));
 
-      const platformContract = new ethers.Contract(CONTRACT_ADDRESS, PLATFORM_ABI, browserProvider);
-      try {
-        const ownerAddr = await platformContract.owner();
-        if (ownerAddr.toLowerCase() === userAddress.toLowerCase() || userAddress.toLowerCase() === OFFICIAL_OWNER_ADDRESS.toLowerCase()) {
-          setIsContractOwner(true);
-        } else {
-          setIsContractOwner(false);
-        }
-      } catch (e) {
-        if (userAddress.toLowerCase() === OFFICIAL_OWNER_ADDRESS.toLowerCase()) {
-          setIsContractOwner(true);
-        }
-      }
-
       const savedBal = localStorage.getItem(`dd_bal_${userAddress.toLowerCase()}`);
       const savedProof = localStorage.getItem(`dd_proof_${userAddress.toLowerCase()}`);
 
-      const rawContractBal = await platformContract.userBalances(userAddress);
-      const fetchedContractBal = +parseFloat(ethers.formatUnits(rawContractBal, 18)).toFixed(2);
-
-      let currentBal = fetchedContractBal;
+      let currentBal = 10.0;
       if (savedBal !== null && !isNaN(parseFloat(savedBal)) && savedProof) {
         const expectedProof = generateTamperProofHash(userAddress, parseFloat(savedBal));
         const localVal = parseFloat(savedBal);
@@ -1703,90 +1686,19 @@ export default function PlatformPage() {
     if (isNaN(val) || val <= 0) return;
     if (!account) return alert('Lütfen önce cüzdanınızı bağlayın!');
 
-    if (isDemoWallet) {
-      if (modalTab === 'deposit') {
-        const nBal = +(balance + val).toFixed(2);
-        updatePersistentBalance(nBal);
-        setTxSuccessMsg(`+${val} USDT Demo Kasaya Eklendi!`);
-        addTransaction('DEPOSIT', 'Demo USDT Yatırma', val);
-      } else {
-        if (val > balance) return alert('Yetersiz bakiye!');
-        const nBal = +(balance - val).toFixed(2);
-        updatePersistentBalance(nBal);
-        setTxSuccessMsg(`-${val} USDT Demo Çekildi!`);
-        addTransaction('WITHDRAW', 'Demo USDT Çekme', val);
-      }
-      setTimeout(() => { setTxSuccessMsg(null); setIsModalOpen(false); }, 1200);
-      return;
+    if (modalTab === 'deposit') {
+      const nBal = +(balance + val).toFixed(2);
+      updatePersistentBalance(nBal);
+      setTxSuccessMsg(`+${val} USDT Kasaya Eklendi!`);
+      addTransaction('DEPOSIT', 'USDT Yatırma (Test)', val);
+    } else {
+      if (val > balance) return alert('Yetersiz bakiye!');
+      const nBal = +(balance - val).toFixed(2);
+      updatePersistentBalance(nBal);
+      setTxSuccessMsg(`-${val} USDT Çekildi!`);
+      addTransaction('WITHDRAW', 'USDT Çekme (Test)', val);
     }
-
-    try {
-      setIsTxPending(true);
-      const win = window as any;
-      const providerObj = win.ethereum || win.BinanceChain || win.okxwallet;
-      const browserProvider = new ethers.BrowserProvider(providerObj);
-      const signer = await browserProvider.getSigner();
-
-      const usdtContract = new ethers.Contract(BSC_USDT_ADDRESS, ERC20_ABI, signer);
-      const platformContract = new ethers.Contract(CONTRACT_ADDRESS, PLATFORM_ABI, signer);
-      const amountWei = ethers.parseUnits(valStr, 18);
-
-      if (modalTab === 'deposit') {
-        if (walletBNB < 0.0008) {
-            setIsTxPending(false);
-            return alert(`⚠️ Yetersiz BNB Gas Bakiyesi!\n\nİşlemi gerçekleştirmek için cüzdanınızda en az 0.001 BNB (~$0.60) gas ücreti bulunmalıdır.\nMevcut BNB Bakiyeniz: ${walletBNB} BNB`);
-        }
-        const allowance = await usdtContract.allowance(account, CONTRACT_ADDRESS);
-        if (allowance < amountWei) {
-          const approveTx = await usdtContract.approve(CONTRACT_ADDRESS, ethers.MaxUint256);
-          await approveTx.wait();
-        }
-
-        const depositTx = await platformContract.deposit(amountWei, ethers.ZeroAddress);
-        await depositTx.wait();
-
-        const nBal = +(balance + val).toFixed(2);
-        updatePersistentBalance(nBal);
-        addTransaction('DEPOSIT', 'BSC USDT Yatırma', val, depositTx.hash);
-        await syncBlockchainBalances(account);
-        setTxSuccessMsg(`+${val} USDT BSC Kontratına Yatırıldı!`);
-        setIsTxPending(false);
-        setTimeout(() => { setTxSuccessMsg(null); setIsModalOpen(false); }, 1500);
-      } else {
-        if (val > balance) {
-          setIsTxPending(false);
-          return alert('Kasada yeterli bakiye yok!');
-        }
-
-        const nBal = +(balance - val).toFixed(2);
-        updatePersistentBalance(nBal);
-        addTransaction('WITHDRAW', t.withdrawAction, val, 'Bekliyor', account, 'PENDING');
-        
-        setIsTxPending(false);
-        alert(t.withdrawPendingAlert);
-        setIsModalOpen(false);
-
-        const telegramMessage = `🚨 *YENİ ÇEKİM TALEBİ* 🚨\n\nCüzdan: \`${account}\`\nTutar: *${val} USDT*\nKalan Bakiye: *${nBal} USDT*\n\nLütfen cüzdana manuel transferi gerçekleştirin.`;
-
-        try {
-            await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    chat_id: ADMIN_TELEGRAM_CHAT_ID,
-                    text: telegramMessage,
-                    parse_mode: 'Markdown'
-                })
-            });
-        } catch (error) {
-            console.error("Telegram bildirimi gönderilemedi.", error);
-        }
-      }
-    } catch (err: any) {
-      setIsTxPending(false);
-      console.error(err);
-      alert('İşlem cüzdandan reddedildi veya hata oluştu.');
-    }
+    setTimeout(() => { setTxSuccessMsg(null); setIsModalOpen(false); }, 1200);
   };
 
   const executeDiceDuel = (amount: number, opponentName: string) => {
@@ -2270,28 +2182,13 @@ export default function PlatformPage() {
     
     if (isNaN(val) || val <= 0) return;
     
-    try {
-      setIsTxPending(true);
-      const win = window as any;
-      const providerObj = win.ethereum || win.BinanceChain || win.okxwallet;
-      const browserProvider = new ethers.BrowserProvider(providerObj);
-      const signer = await browserProvider.getSigner();
-
-      const platformContract = new ethers.Contract(CONTRACT_ADDRESS, PLATFORM_ABI, signer);
-      const amountWei = ethers.parseUnits(valStr, 18);
-
-      const tx = await platformContract.withdrawHouseEdge(amountWei);
-      await tx.wait();
-
-      alert(`✅ ${val} USDT Kasa Geliri Cüzdanınıza Aktarıldı!`);
+    // TEST MODU SİMÜLASYONU (Kontrat yetki hatasına takılmadan test edebilmen için)
+    setIsTxPending(true);
+    setTimeout(() => {
+      setIsTxPending(false);
+      alert(`✅ (Test Modu) ${val} USDT Kasa Geliri Başarıyla Cüzdanınıza Simüle Edildi!`);
       setIsAdminModalOpen(false);
-      setIsTxPending(false);
-      syncBlockchainBalances(account!);
-    } catch (err: any) {
-      setIsTxPending(false);
-      console.error(err);
-      alert('Admin çekim işlemi başarısız!');
-    }
+    }, 1000);
   };
 
   const handleShareTelegramVictory = (winAmount: number) => {
