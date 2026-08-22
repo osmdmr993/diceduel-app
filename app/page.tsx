@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import confetti from 'canvas-confetti';
@@ -30,6 +28,7 @@ const OFFICIAL_OWNER_ADDRESS = '0x26e2b6b55db56fbafe1e6a10ce7183e8b09f1bf3';
 // TELEGRAM BİLDİRİM YAPILANDIRMASI
 const TELEGRAM_BOT_TOKEN = '8840072261:AAGPbmSnlpXjcFIzgUCOAGXDzKc38629jwM';
 const ADMIN_TELEGRAM_CHAT_ID = '5821245544';
+const LIVE_WINS_CHANNEL_ID = '@diceduel_live_wins';
 
 const MIN_BET = 0.5;
 const MAX_PLAYER_BET = 20.0;
@@ -326,7 +325,7 @@ const TRANSLATIONS: Record<string, any> = {
     refStatsTotalEarned: 'Total Commission',
     refBonusNotice: '⚠️ Condition: Both parties must connect their wallets to unlock and claim the bonus (+0.50 USDT).',
     stakeRequiredAlert: '⚠️ You must first stake USDT in the LP Pool to claim yield rewards!',
-    maxBetNotice: '💡 House Safety: Due to risk management rules, the maximum bet limit is set to 20 USDT for players.',
+    maxBetNotice: '💡 House Safety: Due to risk management rules, the maximum bet limit is set to 20 USDT.',
     justNow: 'Just now',
     searchingMatch: 'Searching for live opponent on network...',
     playerFound: 'Opponent found, establishing connection...',
@@ -1114,6 +1113,23 @@ export default function PlatformPage() {
     } catch (e) {}
   };
 
+  const sendWinToTelegramChannel = async (winnerName: string, gameName: string, amount: number) => {
+    try {
+      const text = `🎉 *CANLI KAZANÇ BİLDİRİMİ* 🚀\n\nOyuncu: *${winnerName}*\nOyun: *${gameName}*\nKazanç: *+${amount.toFixed(2)} USDT*\n\n🎲 Oyna & Kazan: https://t.me/diceduel_fun_bot`;
+      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: LIVE_WINS_CHANNEL_ID,
+          text: text,
+          parse_mode: 'Markdown'
+        })
+      });
+    } catch (error) {
+      console.error("Telegram kanal bildirimi gönderilemedi.", error);
+    }
+  };
+
   const triggerSecurityAlert = (threatType: string) => {
     const alertMsg = `🚨 IDS SECURITY ALERT: [${threatType}] detected from Wallet: ${account || 'Unknown'}`;
     console.error(alertMsg);
@@ -1306,7 +1322,6 @@ export default function PlatformPage() {
         }
       }
 
-      // 24 SAAT GEÇEN BEKLEYEN ÇEKİMLERİ OTOMATİK İADE KONTROLÜ
       const savedTxsStr = localStorage.getItem(`dd_txs_${userAddress.toLowerCase()}`);
       if (savedTxsStr) {
         try {
@@ -1333,7 +1348,6 @@ export default function PlatformPage() {
 
       updatePersistentBalance(currentBal, userAddress);
 
-      // REFERANS / INVITE KONTROLÜ (Cüzdan bağlandığında aktifleşir)
       if (typeof window !== 'undefined') {
         const urlParams = new URLSearchParams(window.location.search);
         const refParam = urlParams.get('ref');
@@ -1720,7 +1734,6 @@ export default function PlatformPage() {
           return alert('Kasada yeterli bakiye yok!');
         }
 
-        // ÇEKİM TALEBİ: 24 Saat Manuel İnceleme Uyarısı
         const nBal = +(balance - val).toFixed(2);
         updatePersistentBalance(nBal);
         addTransaction('WITHDRAW', t.withdrawAction, val, 'Bekliyor', account, 'PENDING');
@@ -1729,9 +1742,6 @@ export default function PlatformPage() {
         alert(t.withdrawPendingAlert);
         setIsModalOpen(false);
 
-        // ==================================================
-        // TELEGRAM GİZLİ ADMIN BİLDİRİMİ GÖNDERME
-        // ==================================================
         const telegramMessage = `🚨 *YENİ ÇEKİM TALEBİ* 🚨\n\nCüzdan: \`${account}\`\nTutar: *${val} USDT*\nKalan Bakiye: *${nBal} USDT*\n\nLütfen cüzdana manuel transferi gerçekleştirin.`;
 
         try {
@@ -1795,6 +1805,7 @@ export default function PlatformPage() {
         const nBal = +(balance + netWin).toFixed(2);
         updatePersistentBalance(nBal);
         addTransaction('GAME_WIN', `Zar Galibiyeti (${p1} vs ${p2})`, +netWin.toFixed(2));
+        sendWinToTelegramChannel(account ? `${account.substring(0, 6)}...` : t.you, `🎲 Zar Düellosu`, +netWin.toFixed(2));
       } else {
         playLoseSound();
         addTransaction('GAME_LOSS', `Zar Kaybı (${p1} vs ${p2})`, amount);
@@ -1900,6 +1911,7 @@ export default function PlatformPage() {
         const newTotalBal = +(balance + netWin).toFixed(2);
         updatePersistentBalance(newTotalBal);
         addTransaction('GAME_WIN', `Coin Flip Win (${landedLabel})`, +netWin.toFixed(2));
+        sendWinToTelegramChannel(account ? `${account.substring(0, 6)}...` : t.you, `🪙 Coin Flip (${landedLabel})`, +netWin.toFixed(2));
       } else {
         playLoseSound();
         addTransaction('GAME_LOSS', `Coin Flip Loss (${landedLabel})`, amount);
@@ -2008,6 +2020,7 @@ export default function PlatformPage() {
         const newTotalBal = +(balance + netWin).toFixed(2);
         updatePersistentBalance(newTotalBal);
         addTransaction('GAME_WIN', `Rulet Kazancı (${landedColor})`, +netWin.toFixed(2));
+        sendWinToTelegramChannel(account ? `${account.substring(0, 6)}...` : t.you, `🔴 Rulet (${landedColor})`, +netWin.toFixed(2));
       } else {
         playLoseSound();
         addTransaction('GAME_LOSS', `Rulet Kaybı (${landedColor})`, amount);
@@ -2094,6 +2107,7 @@ export default function PlatformPage() {
 
     addTransaction('GAME_WIN', `Mayın Nakit Çek (${multiplier}x)`, winPayout);
     pushMatchRecord(account ? `${account.substring(0, 6)}...` : t.you, 'Mayın', `💣 Mayın (${multiplier}x)`, minesBetAmount);
+    sendWinToTelegramChannel(account ? `${account.substring(0, 6)}...` : t.you, `💣 Mayın (${multiplier}x)`, winPayout);
 
     setMinesActive(false);
     setMinesGameOver(true);
