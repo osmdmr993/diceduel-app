@@ -1118,7 +1118,8 @@ export default function PlatformPage() {
   const sendWinToTelegramChannel = async (winnerName: string, gameName: string, amount: number) => {
     try {
       const text = `🎉 *CANLI KAZANÇ BİLDİRİMİ* 🚀\n\nOyuncu: *${winnerName}*\nOyun: *${gameName}*\nKazanç: *+${amount.toFixed(2)} USDT*\n\n🎲 Oyna & Kazan: https://t.me/diceduel_fun_bot`;
-      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      
+      const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1127,6 +1128,8 @@ export default function PlatformPage() {
           parse_mode: 'Markdown'
         })
       });
+      const data = await res.json();
+      console.log("Telegram Kanal Yanıtı:", data);
     } catch (error) {
       console.error("Telegram kanal bildirimi gönderilemedi.", error);
     }
