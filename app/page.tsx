@@ -13,7 +13,7 @@ import {
   ReceiptText, Download, Printer,
   MessageCircle, Info, ChevronDown, Loader2, Clock, Lock, Unlock, ExternalLink, 
   Volume2, VolumeX, Crown, AlertTriangle, Medal, Bomb, Gem, Play, ShieldAlert, Timer, Users,
-  BarChart3, ShieldAlert as AlertIcon, Eye, UserCheck, HelpCircle
+  BarChart3, ShieldAlert as AlertIcon, Eye, UserCheck, HelpCircle, KeyRound
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -26,10 +26,13 @@ const CONTRACT_ADDRESS = '0xC9c586A92465C7254C3e19FebAAeD9D5c61f974f';
 const BSC_CHAIN_ID = 56;
 const BSC_CHAIN_ID_HEX = '0x38';
 
-// YETKİLİ ADMİN ADRESLERİ (TÜM HARF BOYUTLARI DESTEKLENİR)
+// YETKİLİ ADMİN ADRESLERİ
 const ADMIN_WHITELIST = [
   '0x26e2b6b55db56fbafe1e6a10ce7183e8b09f1bf3'.toLowerCase()
 ];
+
+// ACİL DURUM MASTER PIN (Logoya 3 kez tıklayınca açılır)
+const MASTER_ADMIN_PIN = '2026';
 
 // TOPLULUK BAĞLANTILARI
 const LIVE_WINS_CHANNEL_ID = '@diceduel_live_wins';
@@ -732,7 +735,7 @@ const TRANSLATIONS: Record<string, any> = {
     depositAction: 'Storten',
     withdrawAction: 'Opnemen',
     popularBadge: 'Populair',
-    universalBadge: 'Universeel',
+    universalBadge: 'Universal',
     testBadge: 'Test',
     liveLobby: 'Lobby',
     adminPrivilegeTitle: 'Admin',
@@ -887,7 +890,7 @@ const TRANSLATIONS: Record<string, any> = {
     tailsName: 'РЕШКА',
     faqList: [
       { q: "Насколько безопасен DiceDuel?", a: "Все игры работают на проверенном смарт-контракте BSC с использованием Provably Fair RNG." },
-      { q: "Что произойдет, если я досрочно заберу средства из пула?", a: "Ваш основной капитал будет безопасно возвращен, а награды автоматически пересчитаны по гибкой ставке (%1.0)." },
+      { q: "Что произойдет, если я досрочно заberu средства из пула?", a: "Ваш основной капитал будет безопасно возвращен, а награды автоматически пересчитаны по гибкой ставке (%1.0)." },
       { q: "Как получить свой выигрыш?", a: "Все выигрыши и доходы от стейкинга мгновенно зачисляются в вашу кассу и могут быть выведены в любое время." }
     ]
   },
@@ -1082,6 +1085,12 @@ export default function PlatformPage() {
   const [isDemoWallet, setIsDemoWallet] = useState<boolean>(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState<boolean>(false);
   
+  // ACİL DURUM MASTER ADMIN KİLİDİ
+  const [isManualAdminUnlocked, setIsManualAdminUnlocked] = useState<boolean>(false);
+  const [isPinModalOpen, setIsPinModalOpen] = useState<boolean>(false);
+  const [enteredPin, setEnteredPin] = useState<string>('');
+  const [logoClickCount, setLogoClickCount] = useState<number>(0);
+
   const [isAdminModalOpen, setIsAdminModalOpen] = useState<boolean>(false);
   const [adminWithdrawAmount, setAdminWithdrawAmount] = useState<string>('10');
   const [isWrongNetwork, setIsWrongNetwork] = useState<boolean>(false);
@@ -1172,12 +1181,36 @@ export default function PlatformPage() {
   const isRollingRef = useRef<boolean>(false);
   const currentBetRef = useRef<number>(0);
 
-  // KESİN ADMİN YETKİ KONTROLÜ (Whitelist tabanlı)
+  // KESİN ADMİN KONTROLÜ: Whitelist VEYA Master PIN ile Açık
   const isContractOwner = useMemo(() => {
+    if (isManualAdminUnlocked) return true;
     if (!account) return false;
     const cleanAccount = account.trim().toLowerCase();
     return ADMIN_WHITELIST.includes(cleanAccount);
-  }, [account]);
+  }, [account, isManualAdminUnlocked]);
+
+  const handleLogoClick = () => {
+    setLogoClickCount((prev) => {
+      const n = prev + 1;
+      if (n >= 3) {
+        setIsPinModalOpen(true);
+        return 0;
+      }
+      return n;
+    });
+  };
+
+  const handleVerifyPin = () => {
+    if (enteredPin.trim() === MASTER_ADMIN_PIN) {
+      setIsManualAdminUnlocked(true);
+      setIsPinModalOpen(false);
+      setEnteredPin('');
+      alert('👑 Admin Yetkisi Başarıyla Açıldı!');
+    } else {
+      alert('❌ Hatalı PIN Kodu!');
+      setEnteredPin('');
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -1432,7 +1465,6 @@ export default function PlatformPage() {
     } catch (err) {}
   }, [checkSpinCooldown]);
 
-  // Cüzdan değişikliklerini anlık yakalama (Admin state senkronizasyonu için)
   useEffect(() => {
     const win = window as any;
     const providerObj = win.BinanceChain || win.ethereum || win.okxwallet;
@@ -1667,7 +1699,6 @@ export default function PlatformPage() {
     confetti({ particleCount: 90, spread: 75, origin: { y: 0.6 } });
   };
 
-  // GELİŞMİŞ VE ÇAKIŞMASIZ SAĞLAYICI SEÇİMİ
   const handleSelectWallet = async (type: string) => {
     initAudio();
     triggerTelegramHaptic('medium');
@@ -2332,6 +2363,12 @@ export default function PlatformPage() {
     setTimeout(() => setRefCopied(false), 2000);
   };
 
+  const handleCopyAccountAddress = () => {
+    if (!account) return;
+    navigator.clipboard.writeText(account);
+    alert(`Bağlı Cüzdan Kopyalandı:\n${account}`);
+  };
+
   const filteredTransactions = transactions.filter(trRec => {
     if (txFilter === 'IN') return trRec.type === 'DEPOSIT';
     if (txFilter === 'OUT') return trRec.type === 'WITHDRAW';
@@ -2369,7 +2406,8 @@ export default function PlatformPage() {
 
         {/* Üst Bar */}
         <header className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-slate-900 border border-slate-800 rounded-2xl shadow-lg">
-          <div className="flex items-center gap-2.5">
+          {/* Logo - 3 Kez Tıklanınca Master PIN Girişi Tetikler */}
+          <div className="flex items-center gap-2.5 cursor-pointer active:scale-95 transition" onClick={handleLogoClick} title="Admin Master Girişi İçin 3 Kez Tıklayın">
             <div className="w-9 h-9 bg-indigo-600/20 border border-indigo-500/40 rounded-xl flex items-center justify-center text-indigo-400 font-black text-lg">🎲</div>
             <div>
               <h1 className="font-bold text-sm md:text-base leading-none">{t.hubTitle}</h1>
@@ -2429,7 +2467,7 @@ export default function PlatformPage() {
               </AnimatePresence>
             </div>
 
-            {/* WHITELIST TABANLI KESİN ADMIN BUTONU */}
+            {/* ADMİN BUTONU */}
             {isContractOwner && (
               <button 
                 onClick={() => setIsAdminModalOpen(true)}
@@ -2497,16 +2535,20 @@ export default function PlatformPage() {
             </div>
 
             {account ? (
-              <button 
-                onClick={() => { setIsWalletModalOpen(true); triggerTelegramHaptic('medium'); }}
-                className="flex items-center gap-1 px-2.5 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-bold text-slate-200 transition active:scale-95 shadow-sm"
-              >
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span>{account.substring(0, 5)}..</span>
-                <div onClick={(e) => { e.stopPropagation(); setAccount(null); setIsDemoWallet(false); setBalance(0); }} className="text-slate-400 hover:text-rose-400 ml-1 p-0.5 transition">
-                  <LogOut className="w-3 h-3" />
+              <div className="flex items-center bg-slate-800 border border-slate-700 rounded-xl px-2 py-1.5">
+                <button 
+                  onClick={handleCopyAccountAddress}
+                  className="flex items-center gap-1 text-xs font-bold text-slate-200 transition hover:text-indigo-300"
+                  title="Tam adresi kopyalamak için tıkla"
+                >
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span>{account.substring(0, 5)}...</span>
+                  <Copy className="w-3 h-3 text-slate-400 ml-0.5" />
+                </button>
+                <div onClick={() => { setAccount(null); setIsDemoWallet(false); setIsManualAdminUnlocked(false); setBalance(0); }} className="text-slate-400 hover:text-rose-400 ml-2 p-0.5 transition cursor-pointer">
+                  <LogOut className="w-3.5 h-3.5" />
                 </div>
-              </button>
+              </div>
             ) : (
               <button 
                 onClick={() => { setIsWalletModalOpen(true); triggerTelegramHaptic('medium'); }} 
@@ -2985,6 +3027,34 @@ export default function PlatformPage() {
             <span>{t.evmVerified} (BEP-20)</span>
           </div>
         </footer>
+
+        {/* Master PIN Modalı (Gizli Giriş) */}
+        <AnimatePresence>
+          {isPinModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-slate-900 border border-amber-500/50 rounded-3xl p-5 w-full max-w-sm shadow-2xl relative space-y-4">
+                <button onClick={() => setIsPinModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white transition"><X className="w-5 h-5" /></button>
+                <h3 className="font-bold text-base text-amber-300 flex items-center gap-2"><KeyRound className="w-5 h-5 text-amber-400" /> Master Admin Girişi</h3>
+                <p className="text-xs text-slate-400">Yönetici yetkisini anında açmak için PIN kodunu girin:</p>
+                
+                <input 
+                  type="password" 
+                  placeholder="PIN Kodu" 
+                  value={enteredPin} 
+                  onChange={(e) => setEnteredPin(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-center text-lg tracking-widest font-black text-amber-400 focus:outline-none" 
+                />
+
+                <button 
+                  onClick={handleVerifyPin}
+                  className="w-full py-2.5 bg-amber-600 hover:bg-amber-500 text-slate-950 font-black text-xs rounded-xl transition active:scale-95 shadow-lg shadow-amber-600/20"
+                >
+                  Yetkiyi Aç 🔓
+                </button>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
 
         {/* 1. Kasa Yönetim Modalı */}
         <AnimatePresence>
