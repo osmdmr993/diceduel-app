@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { io, Socket } from 'socket.io-client';
 import confetti from 'canvas-confetti';
 import { ethers } from 'ethers';
@@ -26,8 +26,10 @@ const CONTRACT_ADDRESS = '0xC9c586A92465C7254C3e19FebAAeD9D5c61f974f';
 const BSC_CHAIN_ID = 56;
 const BSC_CHAIN_ID_HEX = '0x38';
 
-// YALNIZCA BU CÜZDAN ADMIN BUTONUNU GÖRÜR
-const OFFICIAL_OWNER_ADDRESS = '0x26e2b6b55db56fbafe1e6a10ce7183e8b09f1bf3';
+// YETKİLİ ADMİN ADRESLERİ (TÜM HARF BOYUTLARI DESTEKLENİR)
+const ADMIN_WHITELIST = [
+  '0x26e2b6b55db56fbafe1e6a10ce7183e8b09f1bf3'.toLowerCase()
+];
 
 // TOPLULUK BAĞLANTILARI
 const LIVE_WINS_CHANNEL_ID = '@diceduel_live_wins';
@@ -730,7 +732,7 @@ const TRANSLATIONS: Record<string, any> = {
     depositAction: 'Storten',
     withdrawAction: 'Opnemen',
     popularBadge: 'Populair',
-    universalBadge: 'Universal',
+    universalBadge: 'Universeel',
     testBadge: 'Test',
     liveLobby: 'Lobby',
     adminPrivilegeTitle: 'Admin',
@@ -879,7 +881,7 @@ const TRANSLATIONS: Record<string, any> = {
     refStatsTotalEarned: 'Всего',
     refBonusNotice: '⚠️ Подключите кошелек.',
     stakeRequiredAlert: '⚠️ Нужен стейкинг.',
-    maxBetNotice: '💡 Макс 20 USDT.',
+    maxBetNotice: '💡 Max 20 USDT.',
     justNow: 'Только что',
     headsName: 'ОРЕЛ',
     tailsName: 'РЕШКА',
@@ -1170,10 +1172,12 @@ export default function PlatformPage() {
   const isRollingRef = useRef<boolean>(false);
   const currentBetRef = useRef<number>(0);
 
-  // Doğrudan bağlı adrese duyarlı Admin kontrolü
-  const isContractOwner = Boolean(
-    account && account.toLowerCase() === OFFICIAL_OWNER_ADDRESS.toLowerCase()
-  );
+  // KESİN ADMİN YETKİ KONTROLÜ (Whitelist tabanlı)
+  const isContractOwner = useMemo(() => {
+    if (!account) return false;
+    const cleanAccount = account.trim().toLowerCase();
+    return ADMIN_WHITELIST.includes(cleanAccount);
+  }, [account]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -1311,7 +1315,7 @@ export default function PlatformPage() {
 
   const switchToBSCNetwork = async () => {
     const win = window as any;
-    const providerObj = win.ethereum || win.BinanceChain || win.okxwallet;
+    const providerObj = win.BinanceChain || win.ethereum || win.okxwallet;
     if (!providerObj) return;
 
     try {
@@ -1344,7 +1348,7 @@ export default function PlatformPage() {
 
     try {
       const win = window as any;
-      const providerObj = win.ethereum || win.BinanceChain || win.okxwallet;
+      const providerObj = win.BinanceChain || win.ethereum || win.okxwallet;
       if (!providerObj) return;
 
       const browserProvider = new ethers.BrowserProvider(providerObj);
@@ -1428,6 +1432,38 @@ export default function PlatformPage() {
     } catch (err) {}
   }, [checkSpinCooldown]);
 
+  // Cüzdan değişikliklerini anlık yakalama (Admin state senkronizasyonu için)
+  useEffect(() => {
+    const win = window as any;
+    const providerObj = win.BinanceChain || win.ethereum || win.okxwallet;
+    if (providerObj && providerObj.on) {
+      const handleAccountsChanged = (accounts: string[]) => {
+        if (accounts && accounts.length > 0) {
+          setAccount(accounts[0]);
+          syncBlockchainBalances(accounts[0]);
+        } else {
+          setAccount(null);
+          setIsDemoWallet(false);
+          setBalance(0);
+        }
+      };
+
+      const handleChainChanged = () => {
+        window.location.reload();
+      };
+
+      providerObj.on('accountsChanged', handleAccountsChanged);
+      providerObj.on('chainChanged', handleChainChanged);
+
+      return () => {
+        if (providerObj.removeListener) {
+          providerObj.removeListener('accountsChanged', handleAccountsChanged);
+          providerObj.removeListener('chainChanged', handleChainChanged);
+        }
+      };
+    }
+  }, [syncBlockchainBalances]);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedLang = localStorage.getItem('dd_lang');
@@ -1464,7 +1500,7 @@ export default function PlatformPage() {
 
       const initCheck = async () => {
         const win = window as any;
-        const providerObj = win.ethereum || win.BinanceChain || win.okxwallet;
+        const providerObj = win.BinanceChain || win.ethereum || win.okxwallet;
         if (providerObj) {
           try {
             const browserProvider = new ethers.BrowserProvider(providerObj);
@@ -1631,6 +1667,7 @@ export default function PlatformPage() {
     confetti({ particleCount: 90, spread: 75, origin: { y: 0.6 } });
   };
 
+  // GELİŞMİŞ VE ÇAKIŞMASIZ SAĞLAYICI SEÇİMİ
   const handleSelectWallet = async (type: string) => {
     initAudio();
     triggerTelegramHaptic('medium');
@@ -1651,13 +1688,18 @@ export default function PlatformPage() {
     let providerToUse: any = null;
 
     if (type === 'binance') {
-      providerToUse = win.BinanceChain || win.ethereum?.providers?.find((p: any) => p.isBinance) || (win.ethereum?.isBinance ? win.ethereum : null);
+      providerToUse = win.BinanceChain || 
+                      (win.ethereum?.isBinance ? win.ethereum : null) || 
+                      win.ethereum?.providers?.find((p: any) => p.isBinance) ||
+                      win.ethereum;
     } else if (type === 'metamask') {
-      providerToUse = win.ethereum?.providers?.find((p: any) => p.isMetaMask && !p.isBinance) || (win.ethereum?.isMetaMask ? win.ethereum : null);
+      providerToUse = (win.ethereum?.isMetaMask && !win.ethereum?.isBinance ? win.ethereum : null) ||
+                      win.ethereum?.providers?.find((p: any) => p.isMetaMask && !p.isBinance) ||
+                      win.ethereum;
     } else if (type === 'okx') {
-      providerToUse = win.okxwallet || win.ethereum?.providers?.find((p: any) => p.isOkxWallet);
+      providerToUse = win.okxwallet || win.ethereum?.providers?.find((p: any) => p.isOkxWallet) || win.ethereum;
     } else {
-      providerToUse = win.ethereum || win.BinanceChain || win.okxwallet;
+      providerToUse = win.BinanceChain || win.ethereum || win.okxwallet;
     }
 
     if (providerToUse) {
@@ -1672,12 +1714,12 @@ export default function PlatformPage() {
           return;
         }
       } catch (err: any) {
-        alert('Cüzdan bağlantısı iptal edildi.');
+        alert('Cüzdan bağlantısı reddedildi veya iptal edildi.');
         return;
       }
     }
 
-    alert('Cüzdan eklentisi bulunamadı.');
+    alert('Cüzdan eklentisi bulunamadı. Lütfen eklentinizin tarayıcıda açık ve aktif olduğundan emin olun.');
   };
 
   const handleBalanceTransaction = async () => {
@@ -2368,7 +2410,7 @@ export default function PlatformPage() {
                 {isLangMenuOpen && (
                   <motion.div 
                     initial={{ opacity: 0, y: -5 }} 
-                    animate={{ opacity: 1, y: 0 }} 
+                    animate={{ opacity: 1, scale: 1 }} 
                     exit={{ opacity: 0, y: -5 }} 
                     className="absolute right-0 top-full mt-1.5 bg-slate-900 border border-slate-800 rounded-2xl p-1.5 shadow-2xl z-50 min-w-[140px] space-y-1"
                   >
@@ -2387,7 +2429,7 @@ export default function PlatformPage() {
               </AnimatePresence>
             </div>
 
-            {/* DOĞRUDAN REAKTİF ADMIN BUTONU */}
+            {/* WHITELIST TABANLI KESİN ADMIN BUTONU */}
             {isContractOwner && (
               <button 
                 onClick={() => setIsAdminModalOpen(true)}
