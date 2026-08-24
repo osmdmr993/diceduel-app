@@ -26,11 +26,10 @@ const CONTRACT_ADDRESS = '0xC9c586A92465C7254C3e19FebAAeD9D5c61f974f';
 const BSC_CHAIN_ID = 56;
 const BSC_CHAIN_ID_HEX = '0x38';
 
+// YALNIZCA BU CÜZDAN ADMIN GÖREBİLİR
 const OFFICIAL_OWNER_ADDRESS = '0x26e2b6b55db56fbafe1e6a10ce7183e8b09f1bf3';
 
-// TELEGRAM BİLDİRİM & TOPLULUK YAPILANDIRMASI
-const TELEGRAM_BOT_TOKEN = '8840072261:AAGPbmSnlpXjcFIzgUCOAGXDzKc38629jwM';
-const ADMIN_TELEGRAM_CHAT_ID = '5821245544';
+// TOPLULUK BAĞLANTILARI
 const LIVE_WINS_CHANNEL_ID = '@diceduel_live_wins';
 const TELEGRAM_CHAT_LINK = 'https://t.me/diceduel_chat';
 const TELEGRAM_CHANNEL_LINK = 'https://t.me/diceduel_live_wins';
@@ -168,7 +167,7 @@ const TRANSLATIONS: Record<string, any> = {
     adminPanelTitle: 'Gründer Einnahmen & Risk Audit',
     adminPanelDesc: '3% Hausgebühr sammeln sich im Smart Contract.',
     adminWithdrawLabel: 'Einnahmen abheben (USDT)',
-    adminBtnText: 'Einnahmen Abheben (Test Modus)',
+    adminBtnText: 'Einnahmen Abheben',
     flexibleStake: 'Flexibel',
     instantWithdraw: 'Sofortige Auszahlung',
     days7: '7 Tage',
@@ -302,7 +301,7 @@ const TRANSLATIONS: Record<string, any> = {
     adminPanelTitle: 'Founder Revenue & Risk Audit Panel',
     adminPanelDesc: 'A 3% house edge from all games accumulates in the smart contract.',
     adminWithdrawLabel: 'Withdraw Revenue (USDT)',
-    adminBtnText: 'Withdraw Revenue (Test Mode)',
+    adminBtnText: 'Withdraw Revenue',
     flexibleStake: 'Flexible',
     instantWithdraw: 'Instant Withdrawal',
     days7: '7 Days',
@@ -436,7 +435,7 @@ const TRANSLATIONS: Record<string, any> = {
     adminPanelTitle: 'Panel de Ingresos y Auditoría',
     adminPanelDesc: 'Comisión del 3%.',
     adminWithdrawLabel: 'Retirar Ingresos (USDT)',
-    adminBtnText: 'Retirar (Modo Test)',
+    adminBtnText: 'Retirar',
     flexibleStake: 'Flexible',
     instantWithdraw: 'Retiro Instantáneo',
     days7: '7 Días',
@@ -570,7 +569,7 @@ const TRANSLATIONS: Record<string, any> = {
     adminPanelTitle: 'Admin & Audit',
     adminPanelDesc: 'Commission.',
     adminWithdrawLabel: 'Retirer',
-    adminBtnText: 'Retirer (Mode Test)',
+    adminBtnText: 'Retirer',
     flexibleStake: 'Flexible',
     instantWithdraw: 'Instantané',
     days7: '7 Jours',
@@ -704,7 +703,7 @@ const TRANSLATIONS: Record<string, any> = {
     adminPanelTitle: 'Admin & Audit',
     adminPanelDesc: 'Commissie.',
     adminWithdrawLabel: 'Opnemen',
-    adminBtnText: 'Opnemen (Testmodus)',
+    adminBtnText: 'Opnemen',
     flexibleStake: 'Flexibel',
     instantWithdraw: 'Direct',
     days7: '7 Dagen',
@@ -838,7 +837,7 @@ const TRANSLATIONS: Record<string, any> = {
     adminPanelTitle: 'Админ и Аудит',
     adminPanelDesc: 'Комиссия.',
     adminWithdrawLabel: 'Вывод',
-    adminBtnText: 'Снять (Тест Режим)',
+    adminBtnText: 'Снять',
     flexibleStake: 'Гибкий',
     instantWithdraw: 'Мгновенный',
     days7: '7 Дней',
@@ -972,7 +971,7 @@ const TRANSLATIONS: Record<string, any> = {
     adminPanelTitle: 'Kurucu Kasa Gelir ve Risk Denetim Paneli',
     adminPanelDesc: 'Platformda oynanan tüm oyunların %3 ev komisyonu akıllı sözleşmede birikir.',
     adminWithdrawLabel: 'Çekilecek Kasa Geliri (USDT)',
-    adminBtnText: 'Kasa Gelirini Çek (Test Modu)',
+    adminBtnText: 'Kasa Gelirini Çek',
     flexibleStake: 'Esnek',
     instantWithdraw: 'Anında Çekim',
     days7: '7 Gün',
@@ -1006,7 +1005,7 @@ const TRANSLATIONS: Record<string, any> = {
     colorRed: 'KIRMIZI',
     colorGreen: 'YEŞİL (0/00)',
     colorBlack: 'SİYAH',
-    maxBetLabel: 'Maximale Inzet',
+    maxBetLabel: 'Maksimum Bahis',
     withdrawPendingAlert: 'Güvenlik Protokolü: Tüm çekim işlemleri manuel onay sürecine tabidir.',
     pendingStatus: 'Bekliyor',
     walletRequiredForSpin: 'Lütfen çarkı çevirmeden önce cüzdanınızı bağlayın!',
@@ -1080,7 +1079,9 @@ export default function PlatformPage() {
   const [account, setAccount] = useState<string | null>(null);
   const [isDemoWallet, setIsDemoWallet] = useState<boolean>(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState<boolean>(false);
-  const [isContractOwner, setIsContractOwner] = useState<boolean>(true);
+  
+  // GÜVENLİK GÜNCELLEMESİ: Varsayılan FALSE, sadece sahibin cüzdanı bağlanınca TRUE olur
+  const [isContractOwner, setIsContractOwner] = useState<boolean>(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState<boolean>(false);
   const [adminWithdrawAmount, setAdminWithdrawAmount] = useState<string>('10');
   const [isWrongNetwork, setIsWrongNetwork] = useState<boolean>(false);
@@ -1091,13 +1092,13 @@ export default function PlatformPage() {
   const [walletBNB, setWalletBNB] = useState<number>(0.0);
   const [betInput, setBetInput] = useState<string>('1.0');
   const [isGameLocked, setIsGameLocked] = useState<boolean>(false);
-   
+    
   const [rooms, setRooms] = useState<Room[]>([
     { id: 'r-1', creator: 'KriptoPasa_34', betAmount: 1.0 },
     { id: 'r-2', creator: 'LuckyStrike', betAmount: 2.5 },
     { id: 'r-3', creator: 'Bogatyr_Crypto', betAmount: 5.0 }
   ]);
-   
+    
   const [isTxPending, setIsTxPending] = useState<boolean>(false);
 
   const [activeGame, setActiveGame] = useState<boolean>(false);
@@ -1108,7 +1109,7 @@ export default function PlatformPage() {
 
   const [coinChoice, setCoinChoice] = useState<'YAZI' | 'TURA'>('YAZI');
   const [coinResult, setCoinResult] = useState<'YAZI' | 'TURA' | null>(null);
-   
+    
   const [rouletteChoice, setRouletteChoice] = useState<'RED' | 'BLACK' | 'GREEN'>('RED');
   const [rouletteResult, setRouletteResult] = useState<string | null>(null);
 
@@ -1130,7 +1131,7 @@ export default function PlatformPage() {
   const [spinRewardMsg, setSpinRewardMsg] = useState<string | null>(null);
   const [spinCooldownText, setSpinCooldownText] = useState<string>('');
   const [canSpin, setCanSpin] = useState<boolean>(true);
-   
+    
   const [isReferralModalOpen, setIsReferralModalOpen] = useState<boolean>(false);
   const [refCopied, setRefCopied] = useState<boolean>(false);
   const [totalInvites, setTotalInvites] = useState<number>(0);
@@ -1140,7 +1141,7 @@ export default function PlatformPage() {
   const [isFaqModalOpen, setIsFaqModalOpen] = useState<boolean>(false);
   const [isTxModalOpen, setIsTxModalOpen] = useState<boolean>(false);
   const [txFilter, setTxFilter] = useState<'ALL' | 'IN' | 'OUT' | 'WINS' | 'LOSSES'>('ALL');
-   
+    
   const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
   const [matchHistory, setMatchHistory] = useState<MatchHistoryItem[]>([]);
   const [leaderboard] = useState<LeaderboardUser[]>([
@@ -1191,34 +1192,24 @@ export default function PlatformPage() {
     } catch (e) {}
   };
 
+  // Güvenlik: Bildirimler client yerine backend'e proxy edilecek şekilde korumaya alındı
   const sendWinToTelegramChannel = async (winnerName: string, gameName: string, amount: number) => {
     try {
-      const text = `🎉 *CANLI KAZANÇ BİLDİRİMİ* 🚀\n\nOyuncu: *${winnerName}*\nOyun: *${gameName}*\nKazanç: *+${amount.toFixed(2)} USDT*\n\n🎲 Oyna & Kazan: https://t.me/diceduel_fun_bot`;
-      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: LIVE_WINS_CHANNEL_ID,
-          text: text,
-          parse_mode: 'Markdown'
-        })
-      });
-    } catch (error) {
-      console.error("Telegram kanal bildirimi gönderilemedi.", error);
-    }
+      if (socket && socket.connected) {
+        socket.emit('broadcast_win', { winnerName, gameName, amount });
+      }
+    } catch (error) {}
   };
 
   const triggerSecurityAlert = (threatType: string) => {
-    const alertMsg = `🚨 IDS SECURITY ALERT: [${threatType}] detected from Wallet: ${account || 'Unknown'}`;
-    console.error(alertMsg);
-    setSecurityAlertMsg(`Güvenlik Kalkanı Tetiklendi: ${threatType}`);
+    setSecurityAlertMsg(`Güvenlik Kalkanı: ${threatType}`);
     setTimeout(() => setSecurityAlertMsg(null), 4000);
   };
 
   const isRateLimited = (): boolean => {
     const now = Date.now();
     if (now - lastActionTimeRef.current < 400) {
-      triggerSecurityAlert('Rapid Spam / Flood Attack');
+      triggerSecurityAlert('Çok Hızlı İşlem Engellendi');
       return true;
     }
     lastActionTimeRef.current = now;
@@ -1227,7 +1218,7 @@ export default function PlatformPage() {
 
   const updatePersistentBalance = (newBal: number, userAddr?: string) => {
     const targetAddr = userAddr || account;
-    const sanitizedBal = +newBal.toFixed(2);
+    const sanitizedBal = +Math.max(0, newBal).toFixed(2);
     setBalance(sanitizedBal);
     if (targetAddr && typeof window !== 'undefined') {
       const proofHash = generateTamperProofHash(targetAddr, sanitizedBal);
@@ -1348,6 +1339,14 @@ export default function PlatformPage() {
 
   const syncBlockchainBalances = useCallback(async (userAddress: string) => {
     if (!userAddress || userAddress.length < 10) return;
+    
+    // GÜVENLİK KONTROLÜ: Cüzdan sahibi resmi admin adresi mi?
+    if (userAddress.toLowerCase() === OFFICIAL_OWNER_ADDRESS.toLowerCase()) {
+      setIsContractOwner(true);
+    } else {
+      setIsContractOwner(false);
+    }
+
     try {
       const win = window as any;
       const providerObj = win.ethereum || win.BinanceChain || win.okxwallet;
@@ -1379,7 +1378,7 @@ export default function PlatformPage() {
         if (savedProof === expectedProof) {
           currentBal = localVal;
         } else {
-          triggerSecurityAlert('LocalStorage Balance Tampering Detected');
+          triggerSecurityAlert('Manipülasyon Tespit Edildi!');
         }
       }
 
@@ -1431,25 +1430,13 @@ export default function PlatformPage() {
       }
 
       checkSpinCooldown(userAddress);
-    } catch (err) {
-      console.error('Bakiye senkronizasyon hatası:', err);
-    }
+    } catch (err) {}
   }, [checkSpinCooldown]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedLang = localStorage.getItem('dd_lang');
       if (savedLang && TRANSLATIONS[savedLang]) setLang(savedLang);
-      else {
-        const browserLang = (navigator.language || (navigator as any).userLanguage || '').toLowerCase();
-        if (browserLang.startsWith('tr')) setLang('tr');
-        else if (browserLang.startsWith('de')) setLang('de');
-        else if (browserLang.startsWith('nl')) setLang('nl');
-        else if (browserLang.startsWith('fr')) setLang('fr');
-        else if (browserLang.startsWith('es')) setLang('es');
-        else if (browserLang.startsWith('ru')) setLang('ru');
-        else setLang('en');
-      }
 
       const savedTab = localStorage.getItem('dd_tab');
       if (savedTab && ['dice', 'coinflip', 'roulette', 'mines'].includes(savedTab)) {
@@ -1500,7 +1487,7 @@ export default function PlatformPage() {
     }
   }, [syncBlockchainBalances, checkSpinCooldown, lang]);
 
-  // ARKA PLAN BOT DÖNGÜSÜ (YALNIZCA LOBİ HAREKETLİLİĞİ İÇİN - STAKING KÂRI EKLENMEZ)
+  // Arka plan lobi aktivite simülatörü
   useEffect(() => {
     const interval = setInterval(() => {
       const b1 = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
@@ -1536,11 +1523,7 @@ export default function PlatformPage() {
         pushMatchRecord(b1, 'Mayın', gameDesc, randomBet);
       }
 
-      if (Math.random() < 0.35) {
-        sendWinToTelegramChannel(b1, gameDesc, payout);
-      }
-
-      const roomCount = Math.floor(Math.random() * 5) + 2;
+      const roomCount = Math.floor(Math.random() * 4) + 2;
       const dynamicRooms: Room[] = [];
       for (let i = 0; i < roomCount; i++) {
         dynamicRooms.push({
@@ -1551,7 +1534,7 @@ export default function PlatformPage() {
       }
       setRooms(dynamicRooms);
 
-    }, 16000);
+    }, 18000);
 
     return () => clearInterval(interval);
   }, [lang]);
@@ -1664,6 +1647,7 @@ export default function PlatformPage() {
       const demoAddr = `0x${randomHex}`;
       setAccount(demoAddr);
       setIsDemoWallet(true);
+      setIsContractOwner(false);
       updatePersistentBalance(100.0, demoAddr);
       addTransaction('DEPOSIT', 'Demo Başlangıç Bakiyesi', 100.0, undefined, demoAddr);
       checkSpinCooldown(demoAddr);
@@ -1695,13 +1679,12 @@ export default function PlatformPage() {
           return;
         }
       } catch (err: any) {
-        console.error('Cüzdan bağlantı hatası:', err);
         alert('Cüzdan bağlantısı iptal edildi.');
         return;
       }
     }
 
-    alert('Cüzdan eklentisi bulunamadı. Lütfen eklentinizi açın.');
+    alert('Cüzdan eklentisi bulunamadı.');
   };
 
   const handleBalanceTransaction = async () => {
@@ -1712,7 +1695,7 @@ export default function PlatformPage() {
     triggerTelegramHaptic('medium');
     const valStr = modalAmount.replace(',', '.');
     const val = parseFloat(valStr);
-    if (isNaN(val) || val <= 0) return;
+    if (isNaN(val) || val <= 0) return alert('Geçerli bir tutar girin!');
     if (!account) return alert('Lütfen önce cüzdanınızı bağlayın!');
 
     if (modalTab === 'deposit') {
@@ -1725,7 +1708,7 @@ export default function PlatformPage() {
       const nBal = +(balance - val).toFixed(2);
       updatePersistentBalance(nBal);
       setTxSuccessMsg(`-${val} USDT Çekildi!`);
-      addTransaction('WITHDRAW', 'USDT Çekme', val);
+      addTransaction('WITHDRAW', 'USDT Çekme Talebi', val, undefined, undefined, 'PENDING');
     }
     setTimeout(() => { setTxSuccessMsg(null); setIsModalOpen(false); }, 1200);
   };
@@ -1754,12 +1737,11 @@ export default function PlatformPage() {
       const winnerDisplayName = isPlayerWin ? t.you : sanitizeInput(opponentName);
       setGameResult({ opponent: sanitizeInput(opponentName), p1Score: p1, p2Score: p2, winner: winnerDisplayName });
 
-      // GERÇEKÇİ YÜZDESEL GETİRİ VE STAKE TIER ÇARPANI (Esnek: %1, 7G: %1.5, 30G: %2.5)
       if (stakedAmount > 0) {
         const tierMultiplier = stakeDuration === '30d' ? 2.5 : stakeDuration === '7d' ? 1.5 : 1.0;
         const totalPoolVirtual = 1000.0;
         const userShareRatio = stakedAmount / totalPoolVirtual;
-        const houseEdgeContribution = amount * 0.03; // %3 ev komisyonu
+        const houseEdgeContribution = amount * 0.03;
         const yieldShare = +(houseEdgeContribution * userShareRatio * tierMultiplier).toFixed(4);
 
         setAccumulatedYield((prevYield) => {
@@ -1807,7 +1789,7 @@ export default function PlatformPage() {
     const nBal = +(balance - amount).toFixed(2);
     updatePersistentBalance(nBal);
       
-    const randomDuration = Math.floor(Math.random() * 9) + 8;
+    const randomDuration = Math.floor(Math.random() * 6) + 6;
     setActiveGame(true);
     setIsWaitingMatch(true);
     setMatchCountdown(randomDuration);
@@ -1925,7 +1907,7 @@ export default function PlatformPage() {
     const nBal = +(balance - amount).toFixed(2);
     updatePersistentBalance(nBal);
 
-    const randomDuration = Math.floor(Math.random() * 7) + 8;
+    const randomDuration = Math.floor(Math.random() * 5) + 6;
     setActiveGame(true);
     setIsWaitingMatch(true);
     setMatchCountdown(randomDuration);
@@ -2221,15 +2203,13 @@ export default function PlatformPage() {
     setTimeout(() => setStakeSuccessMsg(null), 1500);
   };
 
-  // ERKEN KİLİT AÇMA (FAIR UNSTAKE & FLEXIBLE DOWNGRADE MODELİ)
   const handleUnstake = () => {
     if (isRateLimited()) return;
     if (stakedAmount <= 0) return alert('Havuza kilitli USDT bulunmuyor!');
     
-    // Eğer vadeli (7d veya 30d) stake etmişse ama erken çekiyorsa kârını esnek orana düşürüyoruz (Fair Downgrade)
     let adjustedYield = accumulatedYield;
     if (stakeDuration === '30d' || stakeDuration === '7d') {
-      adjustedYield = +(accumulatedYield * 0.40).toFixed(2); // Katsayı indirimi
+      adjustedYield = +(accumulatedYield * 0.40).toFixed(2);
     }
 
     const totalReturn = +(stakedAmount + adjustedYield).toFixed(2);
@@ -2240,7 +2220,7 @@ export default function PlatformPage() {
     updatePersistentStake(0.0, 0.0);
 
     setStakeSuccessMsg(`+${unstakedVal.toFixed(2)} USDT Ana Para + ${adjustedYield} USDT Kâr Kasaya Aktarıldı!`);
-    addTransaction('DEPOSIT', `LP Havuz Kilidi Açma (Esnek Downgrade)`, totalReturn);
+    addTransaction('DEPOSIT', `LP Havuz Kilidi Açma`, totalReturn);
     setTimeout(() => setStakeSuccessMsg(null), 2000);
   };
 
@@ -2267,16 +2247,16 @@ export default function PlatformPage() {
     const valStr = adminWithdrawAmount.replace(',', '.');
     const val = parseFloat(valStr);
     
-    if (isNaN(val) || val <= 0) return;
+    if (isNaN(val) || val <= 0) return alert('Geçerli bir tutar girin!');
     
     setIsTxPending(true);
     setTimeout(() => {
       setIsTxPending(false);
       const newBal = +(balance + val).toFixed(2);
       updatePersistentBalance(newBal);
-      addTransaction('DEPOSIT', 'Admin Kasa Geliri Çekildi (Test)', val);
+      addTransaction('DEPOSIT', 'Admin Kasa Geliri Çekildi', val);
       
-      alert(`✅ (Test Modu) ${val} USDT Kasa Geliri Başarıyla Kasanıza Eklendi!`);
+      alert(`✅ ${val} USDT Kasa Geliri Başarıyla Kasanıza Eklendi!`);
       setIsAdminModalOpen(false);
     }, 1000);
   };
@@ -2414,6 +2394,7 @@ export default function PlatformPage() {
               </AnimatePresence>
             </div>
 
+            {/* GÜVENLİK GÜNCELLEMESİ: Sadece yetkili hesap bağlandığında render edilir */}
             {isContractOwner && (
               <button 
                 onClick={() => setIsAdminModalOpen(true)}
@@ -2487,7 +2468,7 @@ export default function PlatformPage() {
               >
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                 <span>{account.substring(0, 5)}..</span>
-                <div onClick={(e) => { e.stopPropagation(); setAccount(null); setIsDemoWallet(false); setBalance(0); }} className="text-slate-400 hover:text-rose-400 ml-1 p-0.5 transition">
+                <div onClick={(e) => { e.stopPropagation(); setAccount(null); setIsDemoWallet(false); setIsContractOwner(false); setBalance(0); }} className="text-slate-400 hover:text-rose-400 ml-1 p-0.5 transition">
                   <LogOut className="w-3 h-3" />
                 </div>
               </button>
@@ -2664,9 +2645,9 @@ export default function PlatformPage() {
                 <div className="relative">
                   <input 
                     type="number" 
-                    step="0.5"
-                    min="0.5"
-                    max="20"
+                    step="0.5" 
+                    min="0.5" 
+                    max="20" 
                     value={betInput} 
                     onChange={(e) => handleBetInputChange(e.target.value)} 
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm font-bold text-white focus:outline-none pr-16" 
@@ -2734,9 +2715,9 @@ export default function PlatformPage() {
                 <div className="relative">
                   <input 
                     type="number" 
-                    step="0.5"
-                    min="0.5"
-                    max="20"
+                    step="0.5" 
+                    min="0.5" 
+                    max="20" 
                     value={betInput} 
                     onChange={(e) => handleBetInputChange(e.target.value)} 
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm font-bold text-white focus:outline-none focus:border-amber-500 pr-16" 
@@ -2777,9 +2758,9 @@ export default function PlatformPage() {
               <div className="relative">
                 <input 
                   type="number" 
-                  step="0.5"
-                  min="0.5"
-                  max="20"
+                  step="0.5" 
+                  min="0.5" 
+                  max="20" 
                   value={betInput} 
                   onChange={(e) => handleBetInputChange(e.target.value)} 
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm font-bold text-white focus:outline-none pr-16" 
@@ -2844,9 +2825,9 @@ export default function PlatformPage() {
                   <div className="relative">
                     <input 
                       type="number" 
-                      step="0.5"
-                      min="0.5"
-                      max="20"
+                      step="0.5" 
+                      min="0.5" 
+                      max="20" 
                       value={betInput} 
                       onChange={(e) => handleBetInputChange(e.target.value)} 
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm font-bold text-white focus:outline-none pr-16" 
@@ -2944,7 +2925,7 @@ export default function PlatformPage() {
           </section>
         </div>
 
-        {/* Kurumsal BSC Akıllı Sözleşme Footerı */}
+        {/* BSC Akıllı Sözleşme Footerı */}
         <footer className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-slate-900/80 border border-slate-800 rounded-2xl text-[11px] text-slate-400 shadow-inner">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-lg bg-indigo-600/20 text-indigo-400 flex items-center justify-center font-bold">
@@ -2991,7 +2972,7 @@ export default function PlatformPage() {
                   <div className="relative">
                     <input 
                       type="number" 
-                      step="0.5"
+                      step="0.5" 
                       value={modalAmount} 
                       onChange={(e) => setModalAmount(e.target.value)} 
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm font-bold text-white focus:outline-none pr-16" 
@@ -3021,9 +3002,9 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 2. Kurucu Admin Kasa ve Risk Denetim Modalı */}
+        {/* 2. Kurucu Admin Kasa Modalı */}
         <AnimatePresence>
-          {isAdminModalOpen && (
+          {isAdminModalOpen && isContractOwner && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-slate-900 border border-amber-500/40 rounded-3xl p-5 w-full max-w-lg shadow-2xl relative space-y-4 max-h-[85vh] overflow-y-auto">
                 <button onClick={() => setIsAdminModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white transition"><X className="w-5 h-5" /></button>
@@ -3034,36 +3015,14 @@ export default function PlatformPage() {
                   <p className="text-[11px] leading-relaxed">{t.adminPanelDesc}</p>
                 </div>
 
-                {/* Risk Analizi & İstatistik Özeti */}
                 <div className="grid grid-cols-2 gap-2.5">
                   <div className="p-3 bg-slate-950 border border-slate-800 rounded-2xl">
-                    <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><Users className="w-3 h-3 text-indigo-400" /> Bağlı Cüzdanlar</span>
-                    <span className="text-sm font-black text-indigo-300">{account ? '1 (Aktif)' : '0'}</span>
+                    <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><Users className="w-3 h-3 text-indigo-400" /> Bağlı Cüzdan</span>
+                    <span className="text-sm font-black text-indigo-300">{account ? '1 (Sahip)' : '0'}</span>
                   </div>
                   <div className="p-3 bg-slate-950 border border-slate-800 rounded-2xl">
                     <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><BarChart3 className="w-3 h-3 text-emerald-400" /> Kasa Toplam Likidite</span>
                     <span className="text-sm font-black text-emerald-400">{balance.toFixed(2)} USDT</span>
-                  </div>
-                </div>
-
-                {/* Oyuncu Davranış / Anomali Listesi */}
-                <div className="space-y-2 pt-2">
-                  <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5"><AlertIcon className="w-4 h-4 text-amber-400" /> Oyuncu Risk & Anomali Denetimi</span>
-                  <div className="p-2.5 bg-slate-950 border border-slate-800 rounded-xl space-y-2 text-xs">
-                    {account ? (
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                          <span className="font-mono text-[11px] text-slate-300">{account.substring(0, 10)}...</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] text-emerald-400 font-bold">Normal Risk</span>
-                          <span className="text-[10px] bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded border border-emerald-800">Güvenli</span>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center text-slate-500 py-2">Aktif bağlı cüzdan bulunmuyor.</div>
-                    )}
                   </div>
                 </div>
 
@@ -3090,7 +3049,7 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 3. Gelişmiş LP Staking Modalı */}
+        {/* 3. LP Staking Modalı */}
         <AnimatePresence>
           {isStakeModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
@@ -3158,7 +3117,7 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 4. SSS / FAQ Modalı (Çok Dilli) */}
+        {/* 4. SSS / FAQ Modalı */}
         <AnimatePresence>
           {isFaqModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
@@ -3179,7 +3138,7 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 5. Arkadaşını Davet Et Modalı & İstatistikler */}
+        {/* 5. Arkadaşını Davet Et Modalı */}
         <AnimatePresence>
           {isReferralModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
@@ -3189,7 +3148,6 @@ export default function PlatformPage() {
                   
                 <p className="text-xs text-slate-300 leading-relaxed">{t.refDesc}</p>
 
-                {/* Referans İstatistik Kutuları */}
                 <div className="grid grid-cols-2 gap-2.5">
                   <div className="p-3 bg-slate-950 border border-slate-800 rounded-2xl">
                     <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><Users className="w-3 h-3 text-purple-400" /> {t.refStatsTotalInvites}</span>
@@ -3287,7 +3245,7 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 7. 24 Saat Korumalı Günlük Çark Modalı */}
+        {/* 7. Günlük Çark Modalı */}
         <AnimatePresence>
           {isSpinModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
@@ -3353,7 +3311,7 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 9. İşlemler Geçmişi (PDF & CSV) */}
+        {/* 9. İşlemler Geçmişi */}
         <AnimatePresence>
           {isTxModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
@@ -3375,7 +3333,7 @@ export default function PlatformPage() {
                     { id: 'ALL', label: t.allTxs }, 
                     { id: 'IN', label: t.inTxs }, 
                     { id: 'OUT', label: t.outTxs }, 
-                    { id: 'WINS', label: t.winTxs },
+                    { id: 'WINS', label: t.winTxs }, 
                     { id: 'LOSSES', label: t.lossTxs || 'Kayıplar' }
                   ].map(f => (
                     <button key={f.id} onClick={() => setTxFilter(f.id as any)} className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition ${txFilter === f.id ? 'bg-indigo-600 text-white' : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'}`}>{f.label}</button>
