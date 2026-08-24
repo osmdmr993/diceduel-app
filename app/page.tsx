@@ -818,7 +818,7 @@ const TRANSLATIONS: Record<string, any> = {
     rouletteSubText: 'Красное / Черное',
     minesSubText: 'RNG',
     maxBetText: 'Макс:',
-    minBetText: 'Мин:',
+    minBetText: 'Min:',
     activeRoomsText: 'Комнаты',
     restartText: 'Заново',
     allTxs: 'Все',
@@ -1167,7 +1167,6 @@ export default function PlatformPage() {
   const isRollingRef = useRef<boolean>(false);
   const currentBetRef = useRef<number>(0);
 
-  // WHITELIST TABANLI KESİN ADMİN YETKİSİ
   const isContractOwner = useMemo(() => {
     if (!account) return false;
     const cleanAccount = account.trim().toLowerCase();
@@ -1194,7 +1193,6 @@ export default function PlatformPage() {
     } catch (e) {}
   };
 
-  // VERCEL API ROUTE ÜZERİNDEN GÜVENLİ BİLDİRİM
   const sendWinToTelegramChannel = async (winnerName: string, gameName: string, amount: number) => {
     try {
       await fetch('/api/telegram-broadcast', {
@@ -1202,9 +1200,7 @@ export default function PlatformPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ winnerName, gameName, amount })
       });
-    } catch (error) {
-      console.error('Telegram bildirim isteği başarısız oldu:', error);
-    }
+    } catch (error) {}
   };
 
   const triggerSecurityAlert = (threatType: string) => {
@@ -1750,7 +1746,8 @@ export default function PlatformPage() {
     setTimeout(() => { setTxSuccessMsg(null); setIsModalOpen(false); }, 1200);
   };
 
-  const executeDiceDuel = (amount: number, opponentName: string) => {
+  // 1. SUNUCU DESTEKLİ ZAR OYUNU
+  const executeDiceDuel = async (amount: number, opponentName: string) => {
     setIsWaitingMatch(false);
     setIsRolling(true);
     isRollingRef.current = true;
@@ -1761,53 +1758,70 @@ export default function PlatformPage() {
 
     setGameResult({ opponent: sanitizeInput(opponentName), p1Score: null, p2Score: null, winner: null });
 
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/play-game', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gameType: 'dice', betAmount: amount })
+      });
+      const data = await response.json();
+
+      setTimeout(() => {
+        if (rollSoundIntervalRef.current) clearInterval(rollSoundIntervalRef.current);
+        isRollingRef.current = false;
+        setIsRolling(false);
+        setIsGameLocked(false);
+
+        if (!data.success) {
+          alert(data.error || 'Oyun sonucu alınamadı.');
+          return;
+        }
+
+        const p1 = data.p1Score;
+        const p2 = data.p2Score;
+        const isPlayerWin = data.won;
+        const payout = data.payout;
+
+        const winnerDisplayName = isPlayerWin ? t.you : sanitizeInput(opponentName);
+        setGameResult({ opponent: sanitizeInput(opponentName), p1Score: p1, p2Score: p2, winner: winnerDisplayName });
+
+        if (stakedAmount > 0) {
+          const tierMultiplier = stakeDuration === '30d' ? 2.5 : stakeDuration === '7d' ? 1.5 : 1.0;
+          const userShareRatio = stakedAmount / 1000.0;
+          const yieldShare = +(amount * 0.03 * userShareRatio * tierMultiplier).toFixed(4);
+
+          setAccumulatedYield((prevYield) => {
+            const newY = +(prevYield + Math.max(yieldShare, 0.0005)).toFixed(2);
+            if (typeof window !== 'undefined') {
+              const targetAddr = account || 'guest';
+              localStorage.setItem(`dd_yield_${targetAddr.toLowerCase()}`, newY.toString());
+            }
+            return newY;
+          });
+        }
+
+        const winnerPlayer = isPlayerWin ? (account ? `${account.substring(0, 6)}...` : t.you) : sanitizeInput(opponentName);
+        const loserPlayer = isPlayerWin ? sanitizeInput(opponentName) : (account ? `${account.substring(0, 6)}...` : t.you);
+        pushMatchRecord(winnerPlayer, loserPlayer, `🎲 Zar (${p1}-${p2})`, amount);
+
+        if (isPlayerWin) {
+          triggerConfetti();
+          playWinSound();
+          const nBal = +(balance + payout).toFixed(2);
+          updatePersistentBalance(nBal);
+          addTransaction('GAME_WIN', `Zar Galibiyeti (${p1} vs ${p2})`, payout);
+          sendWinToTelegramChannel(account ? `${account.substring(0, 6)}...` : t.you, `🎲 Zar Düellosu`, payout);
+        } else {
+          playLoseSound();
+          addTransaction('GAME_LOSS', `Zar Kaybı (${p1} vs ${p2})`, amount);
+        }
+      }, 3500);
+    } catch (err) {
       if (rollSoundIntervalRef.current) clearInterval(rollSoundIntervalRef.current);
-      isRollingRef.current = false;
       setIsRolling(false);
       setIsGameLocked(false);
-
-      const isPlayerWin = Math.random() < 0.40;
-      let p1 = isPlayerWin ? Math.floor(Math.random() * 40) + 60 : Math.floor(Math.random() * 50) + 1;
-      let p2 = isPlayerWin ? Math.floor(Math.random() * 50) + 1 : Math.floor(Math.random() * 40) + 60;
-
-      const winnerDisplayName = isPlayerWin ? t.you : sanitizeInput(opponentName);
-      setGameResult({ opponent: sanitizeInput(opponentName), p1Score: p1, p2Score: p2, winner: winnerDisplayName });
-
-      if (stakedAmount > 0) {
-        const tierMultiplier = stakeDuration === '30d' ? 2.5 : stakeDuration === '7d' ? 1.5 : 1.0;
-        const totalPoolVirtual = 1000.0;
-        const userShareRatio = stakedAmount / totalPoolVirtual;
-        const houseEdgeContribution = amount * 0.03;
-        const yieldShare = +(houseEdgeContribution * userShareRatio * tierMultiplier).toFixed(4);
-
-        setAccumulatedYield((prevYield) => {
-          const newY = +(prevYield + Math.max(yieldShare, 0.0005)).toFixed(2);
-          if (typeof window !== 'undefined') {
-            const targetAddr = account || 'guest';
-            localStorage.setItem(`dd_yield_${targetAddr.toLowerCase()}`, newY.toString());
-          }
-          return newY;
-        });
-      }
-
-      const winnerPlayer = isPlayerWin ? (account ? `${account.substring(0, 6)}...` : t.you) : sanitizeInput(opponentName);
-      const loserPlayer = isPlayerWin ? sanitizeInput(opponentName) : (account ? `${account.substring(0, 6)}...` : t.you);
-      pushMatchRecord(winnerPlayer, loserPlayer, `🎲 Zar (${p1}-${p2})`, amount);
-
-      if (isPlayerWin) {
-        const netWin = amount * 2 * 0.97;
-        triggerConfetti();
-        playWinSound();
-        const nBal = +(balance + netWin).toFixed(2);
-        updatePersistentBalance(nBal);
-        addTransaction('GAME_WIN', `Zar Galibiyeti (${p1} vs ${p2})`, +netWin.toFixed(2));
-        sendWinToTelegramChannel(account ? `${account.substring(0, 6)}...` : t.you, `🎲 Zar Düellosu`, +netWin.toFixed(2));
-      } else {
-        playLoseSound();
-        addTransaction('GAME_LOSS', `Zar Kaybı (${p1} vs ${p2})`, amount);
-      }
-    }, 4000);
+      alert('Sunucu bağlantı hatası oluştu.');
+    }
   };
 
   const handleOpenRoom = () => {
@@ -1826,7 +1840,7 @@ export default function PlatformPage() {
     const nBal = +(balance - amount).toFixed(2);
     updatePersistentBalance(nBal);
       
-    const randomDuration = Math.floor(Math.random() * 6) + 6;
+    const randomDuration = Math.floor(Math.random() * 5) + 5;
     setActiveGame(true);
     setIsWaitingMatch(true);
     setMatchCountdown(randomDuration);
@@ -1867,7 +1881,8 @@ export default function PlatformPage() {
     executeDiceDuel(room.betAmount, room.creator);
   };
 
-  const executeCoinFlipDuel = (amount: number, opponentName: string) => {
+  // 2. SUNUCU DESTEKLİ YAZI-TURA OYUNU
+  const executeCoinFlipDuel = async (amount: number, opponentName: string) => {
     setIsWaitingMatch(false);
     setIsRolling(true);
     setCoinResult(null);
@@ -1879,53 +1894,70 @@ export default function PlatformPage() {
     const playerChoiceLabel = coinChoice === 'YAZI' ? t.headsName : t.tailsName;
     setGameResult({ opponent: sanitizeInput(opponentName), p1Score: playerChoiceLabel, p2Score: null, winner: null });
 
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/play-game', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gameType: 'coinflip', betAmount: amount, choice: coinChoice })
+      });
+      const data = await response.json();
+
+      setTimeout(() => {
+        if (rollSoundIntervalRef.current) clearInterval(rollSoundIntervalRef.current);
+        setIsRolling(false);
+        setIsGameLocked(false);
+
+        if (!data.success) {
+          alert(data.error || 'Oyun sonucu alınamadı.');
+          return;
+        }
+
+        const landed: 'YAZI' | 'TURA' = data.resultFace;
+        const isPlayerWin = data.won;
+        const payout = data.payout;
+        const landedLabel = landed === 'YAZI' ? t.headsName : t.tailsName;
+
+        setCoinResult(landed);
+        const winnerName = isPlayerWin ? t.you : sanitizeInput(opponentName);
+        setGameResult({ opponent: sanitizeInput(opponentName), p1Score: playerChoiceLabel, p2Score: landedLabel, winner: winnerName });
+
+        if (stakedAmount > 0) {
+          const tierMultiplier = stakeDuration === '30d' ? 2.5 : stakeDuration === '7d' ? 1.5 : 1.0;
+          const userShareRatio = stakedAmount / 1000.0;
+          const yieldShare = +(amount * 0.03 * userShareRatio * tierMultiplier).toFixed(4);
+
+          setAccumulatedYield((prevYield) => {
+            const newY = +(prevYield + Math.max(yieldShare, 0.0005)).toFixed(2);
+            if (typeof window !== 'undefined') {
+              const targetAddr = account || 'guest';
+              localStorage.setItem(`dd_yield_${targetAddr.toLowerCase()}`, newY.toString());
+            }
+            return newY;
+          });
+        }
+
+        const winnerPlayer = isPlayerWin ? (account ? `${account.substring(0, 6)}...` : t.you) : sanitizeInput(opponentName);
+        const loserPlayer = isPlayerWin ? sanitizeInput(opponentName) : (account ? `${account.substring(0, 6)}...` : t.you);
+        pushMatchRecord(winnerPlayer, loserPlayer, `🪙 Coin Flip (${landedLabel})`, amount);
+
+        if (isPlayerWin) {
+          triggerConfetti();
+          playWinSound();
+          const newTotalBal = +(balance + payout).toFixed(2);
+          updatePersistentBalance(newTotalBal);
+          addTransaction('GAME_WIN', `Coin Flip Win (${landedLabel})`, payout);
+          sendWinToTelegramChannel(account ? `${account.substring(0, 6)}...` : t.you, `🪙 Coin Flip (${landedLabel})`, payout);
+        } else {
+          playLoseSound();
+          addTransaction('GAME_LOSS', `Coin Flip Loss (${landedLabel})`, amount);
+        }
+      }, 3000);
+    } catch (err) {
       if (rollSoundIntervalRef.current) clearInterval(rollSoundIntervalRef.current);
       setIsRolling(false);
       setIsGameLocked(false);
-
-      const isPlayerWin = Math.random() < 0.40;
-      let landed: 'YAZI' | 'TURA' = isPlayerWin ? coinChoice : (coinChoice === 'YAZI' ? 'TURA' : 'YAZI');
-      const landedLabel = landed === 'YAZI' ? t.headsName : t.tailsName;
-
-      setCoinResult(landed);
-      const winnerName = isPlayerWin ? t.you : sanitizeInput(opponentName);
-      setGameResult({ opponent: sanitizeInput(opponentName), p1Score: playerChoiceLabel, p2Score: landedLabel, winner: winnerName });
-
-      if (stakedAmount > 0) {
-        const tierMultiplier = stakeDuration === '30d' ? 2.5 : stakeDuration === '7d' ? 1.5 : 1.0;
-        const totalPoolVirtual = 1000.0;
-        const userShareRatio = stakedAmount / totalPoolVirtual;
-        const houseEdgeContribution = amount * 0.03;
-        const yieldShare = +(houseEdgeContribution * userShareRatio * tierMultiplier).toFixed(4);
-
-        setAccumulatedYield((prevYield) => {
-          const newY = +(prevYield + Math.max(yieldShare, 0.0005)).toFixed(2);
-          if (typeof window !== 'undefined') {
-            const targetAddr = account || 'guest';
-            localStorage.setItem(`dd_yield_${targetAddr.toLowerCase()}`, newY.toString());
-          }
-          return newY;
-        });
-      }
-
-      const winnerPlayer = isPlayerWin ? (account ? `${account.substring(0, 6)}...` : t.you) : sanitizeInput(opponentName);
-      const loserPlayer = isPlayerWin ? sanitizeInput(opponentName) : (account ? `${account.substring(0, 6)}...` : t.you);
-      pushMatchRecord(winnerPlayer, loserPlayer, `🪙 Coin Flip (${landedLabel})`, amount);
-
-      if (isPlayerWin) {
-        const netWin = amount * 2 * 0.97;
-        triggerConfetti();
-        playWinSound();
-        const newTotalBal = +(balance + netWin).toFixed(2);
-        updatePersistentBalance(newTotalBal);
-        addTransaction('GAME_WIN', `Coin Flip Win (${landedLabel})`, +netWin.toFixed(2));
-        sendWinToTelegramChannel(account ? `${account.substring(0, 6)}...` : t.you, `🪙 Coin Flip (${landedLabel})`, +netWin.toFixed(2));
-      } else {
-        playLoseSound();
-        addTransaction('GAME_LOSS', `Coin Flip Loss (${landedLabel})`, amount);
-      }
-    }, 3500);
+      alert('Sunucu bağlantı hatası oluştu.');
+    }
   };
 
   const handleStartCoinFlipDuel = () => {
@@ -1944,7 +1976,7 @@ export default function PlatformPage() {
     const nBal = +(balance - amount).toFixed(2);
     updatePersistentBalance(nBal);
 
-    const randomDuration = Math.floor(Math.random() * 5) + 6;
+    const randomDuration = Math.floor(Math.random() * 5) + 5;
     setActiveGame(true);
     setIsWaitingMatch(true);
     setMatchCountdown(randomDuration);
@@ -1967,7 +1999,8 @@ export default function PlatformPage() {
     }, 1000);
   };
 
-  const handleStartRoulette = () => {
+  // 3. SUNUCU DESTEKLİ RULET OYUNU
+  const handleStartRoulette = async () => {
     if (isRateLimited()) return;
     if (isGameLocked) return alert(t.inGameLock);
 
@@ -1993,62 +2026,72 @@ export default function PlatformPage() {
     const houseName = lang === 'tr' ? 'Kasa' : 'House';
     setGameResult({ opponent: houseName, p1Score: rouletteChoice, p2Score: null, winner: null });
 
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/play-game', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gameType: 'roulette', betAmount: amount, choice: rouletteChoice })
+      });
+      const data = await response.json();
+
+      setTimeout(() => {
+        if (rollSoundIntervalRef.current) clearInterval(rollSoundIntervalRef.current);
+        setIsRolling(false);
+        setIsGameLocked(false);
+
+        if (!data.success) {
+          alert(data.error || 'Oyun sonucu alınamadı.');
+          return;
+        }
+
+        const landedColor: 'RED' | 'BLACK' | 'GREEN' = data.resultColor;
+        const isPlayerWin = data.won;
+        const payout = data.payout;
+
+        setRouletteResult(landedColor);
+        const winnerName = isPlayerWin ? t.you : houseName;
+        setGameResult({ opponent: houseName, p1Score: rouletteChoice, p2Score: landedColor, winner: winnerName });
+
+        if (stakedAmount > 0) {
+          const tierMultiplier = stakeDuration === '30d' ? 2.5 : stakeDuration === '7d' ? 1.5 : 1.0;
+          const userShareRatio = stakedAmount / 1000.0;
+          const yieldShare = +(amount * 0.03 * userShareRatio * tierMultiplier).toFixed(4);
+
+          setAccumulatedYield((prevYield) => {
+            const newY = +(prevYield + Math.max(yieldShare, 0.0005)).toFixed(2);
+            if (typeof window !== 'undefined') {
+              const targetAddr = account || 'guest';
+              localStorage.setItem(`dd_yield_${targetAddr.toLowerCase()}`, newY.toString());
+            }
+            return newY;
+          });
+        }
+
+        const winnerPlayer = isPlayerWin ? (account ? `${account.substring(0, 6)}...` : t.you) : houseName;
+        const loserPlayer = isPlayerWin ? houseName : (account ? `${account.substring(0, 6)}...` : t.you);
+        pushMatchRecord(winnerPlayer, loserPlayer, `🔴 Rulet (${landedColor})`, amount);
+
+        if (isPlayerWin) {
+          triggerConfetti();
+          playWinSound();
+          const newTotalBal = +(balance + payout).toFixed(2);
+          updatePersistentBalance(newTotalBal);
+          addTransaction('GAME_WIN', `Rulet Kazancı (${landedColor})`, payout);
+          sendWinToTelegramChannel(account ? `${account.substring(0, 6)}...` : t.you, `🔴 Rulet (${landedColor})`, payout);
+        } else {
+          playLoseSound();
+          addTransaction('GAME_LOSS', `Rulet Kaybı (${landedColor})`, amount);
+        }
+      }, 3500);
+    } catch (err) {
       if (rollSoundIntervalRef.current) clearInterval(rollSoundIntervalRef.current);
       setIsRolling(false);
       setIsGameLocked(false);
-
-      const isPlayerWin = Math.random() < 0.40;
-      let landedColor: 'RED' | 'BLACK' | 'GREEN';
-
-      if (isPlayerWin) {
-        landedColor = rouletteChoice;
-      } else {
-        const randFail = Math.random();
-        if (randFail < 0.15) landedColor = 'GREEN';
-        else landedColor = rouletteChoice === 'RED' ? 'BLACK' : 'RED';
-      }
-
-      setRouletteResult(landedColor);
-      const winnerName = isPlayerWin ? t.you : houseName;
-      setGameResult({ opponent: houseName, p1Score: rouletteChoice, p2Score: landedColor, winner: winnerName });
-
-      if (stakedAmount > 0) {
-        const tierMultiplier = stakeDuration === '30d' ? 2.5 : stakeDuration === '7d' ? 1.5 : 1.0;
-        const totalPoolVirtual = 1000.0;
-        const userShareRatio = stakedAmount / totalPoolVirtual;
-        const houseEdgeContribution = amount * 0.03;
-        const yieldShare = +(houseEdgeContribution * userShareRatio * tierMultiplier).toFixed(4);
-
-        setAccumulatedYield((prevYield) => {
-          const newY = +(prevYield + Math.max(yieldShare, 0.0005)).toFixed(2);
-          if (typeof window !== 'undefined') {
-            const targetAddr = account || 'guest';
-            localStorage.setItem(`dd_yield_${targetAddr.toLowerCase()}`, newY.toString());
-          }
-          return newY;
-        });
-      }
-
-      const winnerPlayer = isPlayerWin ? (account ? `${account.substring(0, 6)}...` : t.you) : houseName;
-      const loserPlayer = isPlayerWin ? houseName : (account ? `${account.substring(0, 6)}...` : t.you);
-      pushMatchRecord(winnerPlayer, loserPlayer, `🔴 Rulet (${landedColor})`, amount);
-
-      if (isPlayerWin) {
-        const netWin = amount * 2 * 0.97;
-        triggerConfetti();
-        playWinSound();
-        const newTotalBal = +(balance + netWin).toFixed(2);
-        updatePersistentBalance(newTotalBal);
-        addTransaction('GAME_WIN', `Rulet Kazancı (${landedColor})`, +netWin.toFixed(2));
-        sendWinToTelegramChannel(account ? `${account.substring(0, 6)}...` : t.you, `🔴 Rulet (${landedColor})`, +netWin.toFixed(2));
-      } else {
-        playLoseSound();
-        addTransaction('GAME_LOSS', `Rulet Kaybı (${landedColor})`, amount);
-      }
-    }, 3800);
+      alert('Sunucu bağlantı hatası oluştu.');
+    }
   };
 
+  // 4. SUNUCU DESTEKLİ MAYIN TARLASI OYUNU
   const handleStartMines = () => {
     if (isRateLimited()) return;
     if (isGameLocked) return alert(t.inGameLock);
@@ -2077,52 +2120,63 @@ export default function PlatformPage() {
     setMinesGameOver(false);
   };
 
-  const handleRevealTile = (index: number) => {
+  const handleRevealTile = async (index: number) => {
     if (!minesActive || minesGameOver || minesField[index].revealed) return;
     if (isRateLimited()) return;
 
     initAudio();
-      
-    const currentStep = revealedCount + 1;
-    const hitMineChance = currentStep <= 2 ? 0.18 : currentStep <= 4 ? 0.35 : 0.65;
-    const isMineHit = Math.random() < hitMineChance;
+    const nextStep = revealedCount + 1;
 
-    if (isMineHit) {
-      playLoseSound();
-      setMinesGameOver(true);
-      setMinesActive(false);
-      setIsGameLocked(false);
-        
-      setMinesField((prev) => prev.map((t, idx) => {
-        if (idx === index) return { ...t, revealed: true, state: 'mine' };
-        if (!t.revealed && Math.random() < 0.25) return { ...t, revealed: true, state: 'mine' };
-        return { ...t, revealed: true, state: t.state === 'gem' ? 'gem' : 'hidden' };
-      }));
-        
-      pushMatchRecord('Kasa', account ? `${account.substring(0, 6)}...` : t.you, `💣 Mayına Basıldı`, minesBetAmount);
-      addTransaction('GAME_LOSS', `Mayın Kaybı (Patladı)`, minesBetAmount);
-      return;
-    }
-
-    playClickSound();
-    setRevealedCount(currentStep);
-    setMinesField((prev) => prev.map((t, idx) => (idx === index ? { ...t, revealed: true, state: 'gem' } : t)));
-
-    if (stakedAmount > 0) {
-      const tierMultiplier = stakeDuration === '30d' ? 2.5 : stakeDuration === '7d' ? 1.5 : 1.0;
-      const totalPoolVirtual = 1000.0;
-      const userShareRatio = stakedAmount / totalPoolVirtual;
-      const houseEdgeContribution = minesBetAmount * 0.03;
-      const yieldShare = +(houseEdgeContribution * userShareRatio * tierMultiplier).toFixed(4);
-
-      setAccumulatedYield((prevYield) => {
-        const newY = +(prevYield + Math.max(yieldShare, 0.0005)).toFixed(2);
-        if (typeof window !== 'undefined') {
-          const targetAddr = account || 'guest';
-          localStorage.setItem(`dd_yield_${targetAddr.toLowerCase()}`, newY.toString());
-        }
-        return newY;
+    try {
+      const response = await fetch('/api/play-game', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gameType: 'mines', betAmount: minesBetAmount, step: nextStep })
       });
+      const data = await response.json();
+
+      if (!data.success) {
+        alert(data.error || 'Mayın adımı doğrulanamadı.');
+        return;
+      }
+
+      if (data.exploded) {
+        playLoseSound();
+        setMinesGameOver(true);
+        setMinesActive(false);
+        setIsGameLocked(false);
+          
+        setMinesField((prev) => prev.map((t, idx) => {
+          if (idx === index) return { ...t, revealed: true, state: 'mine' };
+          if (!t.revealed && Math.random() < 0.25) return { ...t, revealed: true, state: 'mine' };
+          return { ...t, revealed: true, state: t.state === 'gem' ? 'gem' : 'hidden' };
+        }));
+          
+        pushMatchRecord('Kasa', account ? `${account.substring(0, 6)}...` : t.you, `💣 Mayına Basıldı`, minesBetAmount);
+        addTransaction('GAME_LOSS', `Mayın Kaybı (Patladı)`, minesBetAmount);
+        return;
+      }
+
+      playClickSound();
+      setRevealedCount(nextStep);
+      setMinesField((prev) => prev.map((t, idx) => (idx === index ? { ...t, revealed: true, state: 'gem' } : t)));
+
+      if (stakedAmount > 0) {
+        const tierMultiplier = stakeDuration === '30d' ? 2.5 : stakeDuration === '7d' ? 1.5 : 1.0;
+        const userShareRatio = stakedAmount / 1000.0;
+        const yieldShare = +(minesBetAmount * 0.03 * userShareRatio * tierMultiplier).toFixed(4);
+
+        setAccumulatedYield((prevYield) => {
+          const newY = +(prevYield + Math.max(yieldShare, 0.0005)).toFixed(2);
+          if (typeof window !== 'undefined') {
+            const targetAddr = account || 'guest';
+            localStorage.setItem(`dd_yield_${targetAddr.toLowerCase()}`, newY.toString());
+          }
+          return newY;
+        });
+      }
+    } catch (err) {
+      alert('Sunucu ile bağlantı kurulamadı.');
     }
   };
 
@@ -2693,7 +2747,7 @@ export default function PlatformPage() {
 
                 <div className="grid grid-cols-4 gap-1">
                   {['0.5', '1', '5', '10'].map((preset) => (
-                    <button key={preset} onClick={() => { handleBetInputChange(preset); triggerTelegramHaptic('light'); }} className="py-1 bg-slate-800 hover:bg-slate-700 text-[10px] font-bold text-slate-300 rounded-lg transition">
+                    <button key={preset} onClick={() => { handleBetInputChange(preset); triggerTelegramHaptic('light'); }} className="py-1 bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 rounded-lg transition">
                       +{preset} USDT
                     </button>
                   ))}
