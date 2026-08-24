@@ -26,7 +26,7 @@ const CONTRACT_ADDRESS = '0xC9c586A92465C7254C3e19FebAAeD9D5c61f974f';
 const BSC_CHAIN_ID = 56;
 const BSC_CHAIN_ID_HEX = '0x38';
 
-// YALNIZCA BU CÜZDAN ADMIN GÖREBİLİR
+// YALNIZCA BU CÜZDAN ADMIN BUTONUNU GÖRÜR
 const OFFICIAL_OWNER_ADDRESS = '0x26e2b6b55db56fbafe1e6a10ce7183e8b09f1bf3';
 
 // TOPLULUK BAĞLANTILARI
@@ -730,7 +730,7 @@ const TRANSLATIONS: Record<string, any> = {
     depositAction: 'Storten',
     withdrawAction: 'Opnemen',
     popularBadge: 'Populair',
-    universalBadge: 'Universeel',
+    universalBadge: 'Universal',
     testBadge: 'Test',
     liveLobby: 'Lobby',
     adminPrivilegeTitle: 'Admin',
@@ -1080,8 +1080,6 @@ export default function PlatformPage() {
   const [isDemoWallet, setIsDemoWallet] = useState<boolean>(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState<boolean>(false);
   
-  // GÜVENLİK GÜNCELLEMESİ: Varsayılan FALSE, sadece sahibin cüzdanı bağlanınca TRUE olur
-  const [isContractOwner, setIsContractOwner] = useState<boolean>(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState<boolean>(false);
   const [adminWithdrawAmount, setAdminWithdrawAmount] = useState<string>('10');
   const [isWrongNetwork, setIsWrongNetwork] = useState<boolean>(false);
@@ -1172,6 +1170,11 @@ export default function PlatformPage() {
   const isRollingRef = useRef<boolean>(false);
   const currentBetRef = useRef<number>(0);
 
+  // Doğrudan bağlı adrese duyarlı Admin kontrolü
+  const isContractOwner = Boolean(
+    account && account.toLowerCase() === OFFICIAL_OWNER_ADDRESS.toLowerCase()
+  );
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (langMenuRef.current && !langMenuRef.current.contains(event.target as Node)) {
@@ -1192,7 +1195,6 @@ export default function PlatformPage() {
     } catch (e) {}
   };
 
-  // Güvenlik: Bildirimler client yerine backend'e proxy edilecek şekilde korumaya alındı
   const sendWinToTelegramChannel = async (winnerName: string, gameName: string, amount: number) => {
     try {
       if (socket && socket.connected) {
@@ -1339,13 +1341,6 @@ export default function PlatformPage() {
 
   const syncBlockchainBalances = useCallback(async (userAddress: string) => {
     if (!userAddress || userAddress.length < 10) return;
-    
-    // GÜVENLİK KONTROLÜ: Cüzdan sahibi resmi admin adresi mi?
-    if (userAddress.toLowerCase() === OFFICIAL_OWNER_ADDRESS.toLowerCase()) {
-      setIsContractOwner(true);
-    } else {
-      setIsContractOwner(false);
-    }
 
     try {
       const win = window as any;
@@ -1487,7 +1482,6 @@ export default function PlatformPage() {
     }
   }, [syncBlockchainBalances, checkSpinCooldown, lang]);
 
-  // Arka plan lobi aktivite simülatörü
   useEffect(() => {
     const interval = setInterval(() => {
       const b1 = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
@@ -1647,7 +1641,6 @@ export default function PlatformPage() {
       const demoAddr = `0x${randomHex}`;
       setAccount(demoAddr);
       setIsDemoWallet(true);
-      setIsContractOwner(false);
       updatePersistentBalance(100.0, demoAddr);
       addTransaction('DEPOSIT', 'Demo Başlangıç Bakiyesi', 100.0, undefined, demoAddr);
       checkSpinCooldown(demoAddr);
@@ -2394,7 +2387,7 @@ export default function PlatformPage() {
               </AnimatePresence>
             </div>
 
-            {/* GÜVENLİK GÜNCELLEMESİ: Sadece yetkili hesap bağlandığında render edilir */}
+            {/* DOĞRUDAN REAKTİF ADMIN BUTONU */}
             {isContractOwner && (
               <button 
                 onClick={() => setIsAdminModalOpen(true)}
@@ -2468,7 +2461,7 @@ export default function PlatformPage() {
               >
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                 <span>{account.substring(0, 5)}..</span>
-                <div onClick={(e) => { e.stopPropagation(); setAccount(null); setIsDemoWallet(false); setIsContractOwner(false); setBalance(0); }} className="text-slate-400 hover:text-rose-400 ml-1 p-0.5 transition">
+                <div onClick={(e) => { e.stopPropagation(); setAccount(null); setIsDemoWallet(false); setBalance(0); }} className="text-slate-400 hover:text-rose-400 ml-1 p-0.5 transition">
                   <LogOut className="w-3 h-3" />
                 </div>
               </button>
