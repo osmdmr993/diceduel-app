@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { io, Socket } from 'socket.io-client';
 import confetti from 'canvas-confetti';
 import { ethers } from 'ethers';
 import { 
@@ -20,19 +19,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 // ==========================================
 // 1. SABİTLER & KONTRAT YAPILANDIRMASI
 // ==========================================
-const SERVER_URL = 'https://diceduel-server.onrender.com';
 const BSC_USDT_ADDRESS = '0x55d398326f99059fF775485246999027B3197955';
 const CONTRACT_ADDRESS = '0xC9c586A92465C7254C3e19FebAAeD9D5c61f974f';
 const BSC_CHAIN_ID = 56;
 const BSC_CHAIN_ID_HEX = '0x38';
 
-// YETKİLİ ADMİN ADRESLERİ (GÜNCELLENDİ)
+// YETKİLİ ADMİN ADRESİ
 const ADMIN_WHITELIST = [
   '0x26e2620e91ece1f24edbf9c0b714179f4a0e787b'.toLowerCase()
 ];
 
 // TOPLULUK BAĞLANTILARI
-const LIVE_WINS_CHANNEL_ID = '@diceduel_live_wins';
 const TELEGRAM_CHAT_LINK = 'https://t.me/diceduel_chat';
 const TELEGRAM_CHANNEL_LINK = 'https://t.me/diceduel_live_wins';
 
@@ -66,8 +63,6 @@ const PLATFORM_ABI = [
   "function owner() view returns (address)",
   "function withdrawHouseEdge(uint256 amount) external"
 ];
-
-let socket: Socket;
 
 const sanitizeInput = (input: string): string => {
   if (!input) return '';
@@ -887,7 +882,7 @@ const TRANSLATIONS: Record<string, any> = {
     tailsName: 'РЕШКА',
     faqList: [
       { q: "Насколько безопасен DiceDuel?", a: "Все игры работают на проверенном смарт-контракте BSC с использованием Provably Fair RNG." },
-      { q: "Что произойдет, если я досрочно заberu средства из пула?", a: "Ваш основной капитал будет безопасно возвращен, а награды автоматически пересчитаны по гибкой ставке (%1.0)." },
+      { q: "Что произойдет, если я досрочно заберу средства из пула?", a: "Ваш основной капитал будет безопасно возвращен, а награды автоматически пересчитаны по гибкой ставке (%1.0)." },
       { q: "Как получить свой выигрыш?", a: "Все выигрыши и доходы от стейкинга мгновенно зачисляются в вашу кассу и могут быть выведены в любое время." }
     ]
   },
@@ -1172,7 +1167,7 @@ export default function PlatformPage() {
   const isRollingRef = useRef<boolean>(false);
   const currentBetRef = useRef<number>(0);
 
-  // WHITELIST TABANLI ADMİN YETKİ KONTROLÜ
+  // WHITELIST TABANLI KESİN ADMİN YETKİSİ
   const isContractOwner = useMemo(() => {
     if (!account) return false;
     const cleanAccount = account.trim().toLowerCase();
@@ -1199,12 +1194,17 @@ export default function PlatformPage() {
     } catch (e) {}
   };
 
+  // VERCEL API ROUTE ÜZERİNDEN GÜVENLİ BİLDİRİM
   const sendWinToTelegramChannel = async (winnerName: string, gameName: string, amount: number) => {
     try {
-      if (socket && socket.connected) {
-        socket.emit('broadcast_win', { winnerName, gameName, amount });
-      }
-    } catch (error) {}
+      await fetch('/api/telegram-broadcast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ winnerName, gameName, amount })
+      });
+    } catch (error) {
+      console.error('Telegram bildirim isteği başarısız oldu:', error);
+    }
   };
 
   const triggerSecurityAlert = (threatType: string) => {
@@ -1550,6 +1550,10 @@ export default function PlatformPage() {
         gameDesc = `💣 Mayın (1.85x)`;
         payout = +(randomBet * 1.85).toFixed(2);
         pushMatchRecord(b1, 'Mayın', gameDesc, randomBet);
+      }
+
+      if (Math.random() < 0.35) {
+        sendWinToTelegramChannel(b1, gameDesc, payout);
       }
 
       const roomCount = Math.floor(Math.random() * 4) + 2;
