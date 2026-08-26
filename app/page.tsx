@@ -12,7 +12,7 @@ import {
   ReceiptText, Download, Printer,
   MessageCircle, Info, ChevronDown, Loader2, Clock, Lock, Unlock, ExternalLink, 
   Volume2, VolumeX, Crown, AlertTriangle, Medal, Bomb, Gem, Play, ShieldAlert, Timer, Users,
-  BarChart3, ShieldAlert as AlertIcon, Eye, UserCheck, HelpCircle
+  BarChart3, ShieldAlert as AlertIcon, Eye, UserCheck, HelpCircle, RefreshCw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -50,18 +50,6 @@ const ERC20_ABI = [
   "function approve(address spender, uint256 amount) returns (bool)",
   "function allowance(address owner, address spender) view returns (uint256)",
   "function decimals() view returns (uint8)"
-];
-
-const PLATFORM_ABI = [
-  "function deposit(uint256 amount, address referrer) external",
-  "function withdraw(uint256 amount) external",
-  "function userBalances(address user) view returns (uint256)",
-  "function stakedLP(address user) view returns (uint256)",
-  "function accumulatedLPYield(address user) view returns (uint256)",
-  "function stakeToLP(uint256 amount) external",
-  "function claimLPYield() external",
-  "function owner() view returns (address)",
-  "function withdrawHouseEdge(uint256 amount) external"
 ];
 
 const sanitizeInput = (input: string): string => {
@@ -161,8 +149,8 @@ const TRANSLATIONS: Record<string, any> = {
     depositUsdt: 'USDT Einzahlen',
     withdrawUsdt: 'USDT Auszahlen',
     amountLabel: 'Betrag',
-    adminPanelTitle: 'Gründer Einnahmen & Risk Audit',
-    adminPanelDesc: '3% Hausgebühr sammeln sich im Smart Contract.',
+    adminPanelTitle: 'Live Analytics & Kasa Gelir Paneli',
+    adminPanelDesc: '3% Hausgebühr und Live Platform Metrikleri.',
     adminWithdrawLabel: 'Einnahmen abheben (USDT)',
     adminBtnText: 'Einnahmen Abheben',
     flexibleStake: 'Flexibel',
@@ -295,8 +283,8 @@ const TRANSLATIONS: Record<string, any> = {
     depositUsdt: 'Deposit USDT',
     withdrawUsdt: 'Withdraw USDT',
     amountLabel: 'Amount',
-    adminPanelTitle: 'Founder Revenue & Risk Audit Panel',
-    adminPanelDesc: 'A 3% house edge from all games accumulates in the smart contract.',
+    adminPanelTitle: 'Live Analytics & Founder Revenue Panel',
+    adminPanelDesc: 'Live platform metrics & 3% house edge tracking.',
     adminWithdrawLabel: 'Withdraw Revenue (USDT)',
     adminBtnText: 'Withdraw Revenue',
     flexibleStake: 'Flexible',
@@ -429,8 +417,8 @@ const TRANSLATIONS: Record<string, any> = {
     depositUsdt: 'Depositar USDT',
     withdrawUsdt: 'Retirar USDT',
     amountLabel: 'Cantidad',
-    adminPanelTitle: 'Panel de Ingresos y Auditoría',
-    adminPanelDesc: 'Comisión del 3%.',
+    adminPanelTitle: 'Panel de Ingresos y Analítica en Vivo',
+    adminPanelDesc: 'Comisión del 3% y métricas en vivo.',
     adminWithdrawLabel: 'Retirar Ingresos (USDT)',
     adminBtnText: 'Retirar',
     flexibleStake: 'Flexible',
@@ -563,8 +551,8 @@ const TRANSLATIONS: Record<string, any> = {
     depositUsdt: 'Déposer',
     withdrawUsdt: 'Retirer',
     amountLabel: 'Montant',
-    adminPanelTitle: 'Admin & Audit',
-    adminPanelDesc: 'Commission.',
+    adminPanelTitle: 'Panel Admin & Statistiques en Direct',
+    adminPanelDesc: 'Commission et métriques de la plateforme.',
     adminWithdrawLabel: 'Retirer',
     adminBtnText: 'Retirer',
     flexibleStake: 'Flexible',
@@ -697,8 +685,8 @@ const TRANSLATIONS: Record<string, any> = {
     depositUsdt: 'Stort',
     withdrawUsdt: 'Opnemen',
     amountLabel: 'Bedrag',
-    adminPanelTitle: 'Admin & Audit',
-    adminPanelDesc: 'Commissie.',
+    adminPanelTitle: 'Live Analytics & Beheerder Paneel',
+    adminPanelDesc: 'Commissie en statistieken.',
     adminWithdrawLabel: 'Opnemen',
     adminBtnText: 'Opnemen',
     flexibleStake: 'Flexibel',
@@ -831,8 +819,8 @@ const TRANSLATIONS: Record<string, any> = {
     depositUsdt: 'Внести',
     withdrawUsdt: 'Снять',
     amountLabel: 'Сумма',
-    adminPanelTitle: 'Админ и Аудит',
-    adminPanelDesc: 'Комиссия.',
+    adminPanelTitle: 'Панель Аналитики и Доходов',
+    adminPanelDesc: 'Метрики платформы и комиссия 3%.',
     adminWithdrawLabel: 'Вывод',
     adminBtnText: 'Снять',
     flexibleStake: 'Гибкий',
@@ -965,8 +953,8 @@ const TRANSLATIONS: Record<string, any> = {
     depositUsdt: 'USDT Yatır',
     withdrawUsdt: 'USDT Çek',
     amountLabel: 'Tutar',
-    adminPanelTitle: 'Kurucu Kasa Gelir ve Risk Denetim Paneli',
-    adminPanelDesc: 'Platformda oynanan tüm oyunların %3 ev komisyonu akıllı sözleşmede birikir.',
+    adminPanelTitle: 'Canlı Analitik ve Kasa Gelir Paneli',
+    adminPanelDesc: 'Tüm oyunların %3 ev komisyonu ve canlı ziyaretçi metrikleri.',
     adminWithdrawLabel: 'Çekilecek Kasa Geliri (USDT)',
     adminBtnText: 'Kasa Gelirini Çek',
     flexibleStake: 'Esnek',
@@ -1066,6 +1054,15 @@ interface LeaderboardUser {
   badge: string;
 }
 
+interface AnalyticsState {
+  totalVisitors: number;
+  connectedWalletsCount: number;
+  totalGamesPlayed: number;
+  totalBetVolumeUSDT: number;
+  totalHouseEdgeUSDT: number;
+  totalFreeSpinsClaimed: number;
+}
+
 export default function PlatformPage() {
   const [lang, setLang] = useState<string>('tr');
   const [isLangMenuOpen, setIsLangMenuOpen] = useState<boolean>(false);
@@ -1147,6 +1144,17 @@ export default function PlatformPage() {
     { rank: 5, name: 'AnadoluKaplani', wins: 22, profit: 43.80, badge: '⭐' }
   ]);
 
+  // CANLI ANALİTİK STATE
+  const [analytics, setAnalytics] = useState<AnalyticsState>({
+    totalVisitors: 0,
+    connectedWalletsCount: 0,
+    totalGamesPlayed: 0,
+    totalBetVolumeUSDT: 0.0,
+    totalHouseEdgeUSDT: 0.0,
+    totalFreeSpinsClaimed: 0
+  });
+  const [isLoadingAnalytics, setIsLoadingAnalytics] = useState<boolean>(false);
+
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const rollSoundIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -1167,11 +1175,47 @@ export default function PlatformPage() {
   const isRollingRef = useRef<boolean>(false);
   const currentBetRef = useRef<number>(0);
 
+  // WHITELIST TABANLI KESİN ADMİN YETKİSİ
   const isContractOwner = useMemo(() => {
     if (!account) return false;
     const cleanAccount = account.trim().toLowerCase();
     return ADMIN_WHITELIST.includes(cleanAccount);
   }, [account]);
+
+  // ANALİTİK TETİKLEME FONKSİYONLARI
+  const trackAnalyticsEvent = async (eventType: 'VISIT' | 'CONNECT_WALLET' | 'GAME_PLAY' | 'SPIN_CLAIMED', payload?: { walletAddress?: string; betAmount?: number }) => {
+    try {
+      await fetch('/api/analytics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventType,
+          walletAddress: payload?.walletAddress,
+          betAmount: payload?.betAmount
+        })
+      });
+    } catch (e) {}
+  };
+
+  const fetchLiveAnalytics = async () => {
+    if (!isContractOwner) return;
+    setIsLoadingAnalytics(true);
+    try {
+      const res = await fetch('/api/analytics');
+      const data = await res.json();
+      if (data.success) {
+        setAnalytics({
+          totalVisitors: data.totalVisitors,
+          connectedWalletsCount: data.connectedWalletsCount,
+          totalGamesPlayed: data.totalGamesPlayed,
+          totalBetVolumeUSDT: data.totalBetVolumeUSDT,
+          totalHouseEdgeUSDT: data.totalHouseEdgeUSDT,
+          totalFreeSpinsClaimed: data.totalFreeSpinsClaimed
+        });
+      }
+    } catch (e) {}
+    setIsLoadingAnalytics(false);
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -1436,6 +1480,7 @@ export default function PlatformPage() {
         if (accounts && accounts.length > 0) {
           setAccount(accounts[0]);
           syncBlockchainBalances(accounts[0]);
+          trackAnalyticsEvent('CONNECT_WALLET', { walletAddress: accounts[0] });
         } else {
           setAccount(null);
           setIsDemoWallet(false);
@@ -1461,6 +1506,9 @@ export default function PlatformPage() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // Sayfa Ziyaretini Say
+      trackAnalyticsEvent('VISIT');
+
       const savedLang = localStorage.getItem('dd_lang');
       if (savedLang && TRANSLATIONS[savedLang]) setLang(savedLang);
 
@@ -1504,6 +1552,7 @@ export default function PlatformPage() {
               setAccount(accounts[0]);
               setIsDemoWallet(false);
               syncBlockchainBalances(accounts[0]);
+              trackAnalyticsEvent('CONNECT_WALLET', { walletAddress: accounts[0] });
             }
           } catch (e) {}
         }
@@ -1512,6 +1561,12 @@ export default function PlatformPage() {
       checkSpinCooldown();
     }
   }, [syncBlockchainBalances, checkSpinCooldown, lang]);
+
+  useEffect(() => {
+    if (isAdminModalOpen && isContractOwner) {
+      fetchLiveAnalytics();
+    }
+  }, [isAdminModalOpen, isContractOwner]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -1679,6 +1734,7 @@ export default function PlatformPage() {
       updatePersistentBalance(100.0, demoAddr);
       addTransaction('DEPOSIT', 'Demo Başlangıç Bakiyesi', 100.0, undefined, demoAddr);
       checkSpinCooldown(demoAddr);
+      trackAnalyticsEvent('CONNECT_WALLET', { walletAddress: demoAddr });
       return;
     }
 
@@ -1709,6 +1765,7 @@ export default function PlatformPage() {
           setAccount(accounts[0]);
           setIsDemoWallet(false);
           await syncBlockchainBalances(accounts[0]);
+          trackAnalyticsEvent('CONNECT_WALLET', { walletAddress: accounts[0] });
           return;
         }
       } catch (err: any) {
@@ -1757,6 +1814,9 @@ export default function PlatformPage() {
     rollSoundIntervalRef.current = setInterval(playClickSound, 110);
 
     setGameResult({ opponent: sanitizeInput(opponentName), p1Score: null, p2Score: null, winner: null });
+
+    // Analitik: Bahis ve Oyun Kaydı
+    trackAnalyticsEvent('GAME_PLAY', { betAmount: amount });
 
     try {
       const response = await fetch('/api/play-game', {
@@ -1894,6 +1954,9 @@ export default function PlatformPage() {
     const playerChoiceLabel = coinChoice === 'YAZI' ? t.headsName : t.tailsName;
     setGameResult({ opponent: sanitizeInput(opponentName), p1Score: playerChoiceLabel, p2Score: null, winner: null });
 
+    // Analitik: Bahis ve Oyun Kaydı
+    trackAnalyticsEvent('GAME_PLAY', { betAmount: amount });
+
     try {
       const response = await fetch('/api/play-game', {
         method: 'POST',
@@ -2026,6 +2089,9 @@ export default function PlatformPage() {
     const houseName = lang === 'tr' ? 'Kasa' : 'House';
     setGameResult({ opponent: houseName, p1Score: rouletteChoice, p2Score: null, winner: null });
 
+    // Analitik: Bahis ve Oyun Kaydı
+    trackAnalyticsEvent('GAME_PLAY', { betAmount: amount });
+
     try {
       const response = await fetch('/api/play-game', {
         method: 'POST',
@@ -2107,6 +2173,9 @@ export default function PlatformPage() {
     setIsGameLocked(true);
     const nBal = +(balance - amount).toFixed(2);
     updatePersistentBalance(nBal);
+
+    // Analitik: Bahis ve Oyun Kaydı
+    trackAnalyticsEvent('GAME_PLAY', { betAmount: amount });
 
     const cleanGrid = Array.from({ length: 25 }, (_, i) => ({
       id: i,
@@ -2216,6 +2285,9 @@ export default function PlatformPage() {
     triggerTelegramHaptic('medium');
     setIsSpinning(true);
     setSpinRewardMsg(null);
+
+    // Analitik: Çark Çevrilmesini Say
+    trackAnalyticsEvent('SPIN_CLAIMED');
 
     const rand = Math.random() * 100;
     let outcomeType: 'EMPTY' | 'LP' | 'COUPON' | 'BOOST' | 'CASH' = 'EMPTY';
@@ -2492,7 +2564,7 @@ export default function PlatformPage() {
                 className="flex items-center gap-1.5 px-2.5 py-2 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 rounded-xl text-xs font-black text-amber-300 transition active:scale-95 shadow-sm animate-pulse"
               >
                 <Crown className="w-3.5 h-3.5 text-amber-400" />
-                <span className="hidden sm:inline">Admin</span>
+                <span className="hidden sm:inline">Admin Dashboard</span>
               </button>
             )}
 
@@ -2747,7 +2819,7 @@ export default function PlatformPage() {
 
                 <div className="grid grid-cols-4 gap-1">
                   {['0.5', '1', '5', '10'].map((preset) => (
-                    <button key={preset} onClick={() => { handleBetInputChange(preset); triggerTelegramHaptic('light'); }} className="py-1 bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 rounded-lg transition">
+                    <button key={preset} onClick={() => { handleBetInputChange(preset); triggerTelegramHaptic('light'); }} className="py-1 bg-slate-800 hover:bg-slate-700 text-[10px] font-bold text-slate-300 rounded-lg transition">
                       +{preset} USDT
                     </button>
                   ))}
@@ -3092,27 +3164,58 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 2. Kurucu Admin Kasa Modalı */}
+        {/* 2. CANLI ANALİTİK & KURUCU ADMİN KASA MODALI */}
         <AnimatePresence>
           {isAdminModalOpen && isContractOwner && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-slate-900 border border-amber-500/40 rounded-3xl p-5 w-full max-w-lg shadow-2xl relative space-y-4 max-h-[85vh] overflow-y-auto">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-slate-900 border border-amber-500/40 rounded-3xl p-5 w-full max-w-2xl shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto">
                 <button onClick={() => setIsAdminModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white transition"><X className="w-5 h-5" /></button>
-                <h3 className="font-bold text-base text-amber-300 flex items-center gap-2"><Crown className="w-5 h-5 text-amber-400" /> {t.adminPanelTitle}</h3>
+                
+                <div className="flex items-center justify-between pr-8">
+                  <h3 className="font-bold text-base text-amber-300 flex items-center gap-2"><Crown className="w-5 h-5 text-amber-400" /> {t.adminPanelTitle}</h3>
+                  <button 
+                    onClick={fetchLiveAnalytics}
+                    className="p-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-xl transition flex items-center gap-1 text-[10px] font-bold"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isLoadingAnalytics ? 'animate-spin' : ''}`} /> Yenile
+                  </button>
+                </div>
                   
-                <div className="p-3 bg-amber-950/30 border border-amber-800/40 rounded-2xl text-xs space-y-1.5 text-slate-300">
+                <div className="p-3 bg-amber-950/30 border border-amber-800/40 rounded-2xl text-xs space-y-1 text-slate-300">
                   <div className="font-bold text-amber-300 flex items-center gap-1.5"><ShieldAlert className="w-4 h-4 text-amber-400" /> {t.adminPrivilegeTitle}</div>
                   <p className="text-[11px] leading-relaxed">{t.adminPanelDesc}</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2.5">
+                {/* CANLI İSTATİSTİK KARTLARI */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                   <div className="p-3 bg-slate-950 border border-slate-800 rounded-2xl">
-                    <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><Users className="w-3 h-3 text-indigo-400" /> Bağlı Cüzdan</span>
-                    <span className="text-sm font-black text-indigo-300">{account ? '1 (Sahip)' : '0'}</span>
+                    <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><Eye className="w-3.5 h-3.5 text-sky-400" /> Toplam Ziyaretçi</span>
+                    <span className="text-base font-black text-sky-300">{analytics.totalVisitors}</span>
                   </div>
+                  
                   <div className="p-3 bg-slate-950 border border-slate-800 rounded-2xl">
-                    <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><BarChart3 className="w-3 h-3 text-emerald-400" /> Kasa Toplam Likidite</span>
-                    <span className="text-sm font-black text-emerald-400">{balance.toFixed(2)} USDT</span>
+                    <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><UserCheck className="w-3.5 h-3.5 text-indigo-400" /> Bağlanan Cüzdan</span>
+                    <span className="text-base font-black text-indigo-300">{analytics.connectedWalletsCount}</span>
+                  </div>
+
+                  <div className="p-3 bg-slate-950 border border-slate-800 rounded-2xl">
+                    <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><Dices className="w-3.5 h-3.5 text-amber-400" /> Oynanan Oyun</span>
+                    <span className="text-base font-black text-amber-300">{analytics.totalGamesPlayed}</span>
+                  </div>
+
+                  <div className="p-3 bg-slate-950 border border-slate-800 rounded-2xl">
+                    <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><BarChart3 className="w-3.5 h-3.5 text-purple-400" /> Toplam Bahis Hacmi</span>
+                    <span className="text-base font-black text-purple-300">{analytics.totalBetVolumeUSDT.toFixed(2)} USDT</span>
+                  </div>
+
+                  <div className="p-3 bg-slate-950 border border-slate-800 rounded-2xl">
+                    <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><TrendingUp className="w-3.5 h-3.5 text-emerald-400" /> Kasa %3 Net Gelir</span>
+                    <span className="text-base font-black text-emerald-400">+{analytics.totalHouseEdgeUSDT.toFixed(2)} USDT</span>
+                  </div>
+
+                  <div className="p-3 bg-slate-950 border border-slate-800 rounded-2xl">
+                    <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><Gift className="w-3.5 h-3.5 text-rose-400" /> Çark Çevirenler</span>
+                    <span className="text-base font-black text-rose-300">{analytics.totalFreeSpinsClaimed}</span>
                   </div>
                 </div>
 
