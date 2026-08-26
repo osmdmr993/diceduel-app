@@ -12,7 +12,7 @@ import {
   ReceiptText, Download, Printer,
   MessageCircle, Info, ChevronDown, Loader2, Clock, Lock, Unlock, ExternalLink, 
   Volume2, VolumeX, Crown, AlertTriangle, Medal, Bomb, Gem, Play, ShieldAlert, Timer, Users,
-  BarChart3, ShieldAlert as AlertIcon, Eye, UserCheck, HelpCircle, RefreshCw
+  BarChart3, Eye, UserCheck, HelpCircle, RefreshCw, MousePointerClick, Smartphone, Laptop
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -954,7 +954,7 @@ const TRANSLATIONS: Record<string, any> = {
     withdrawUsdt: 'USDT Çek',
     amountLabel: 'Tutar',
     adminPanelTitle: 'Canlı Analitik ve Kasa Gelir Paneli',
-    adminPanelDesc: 'Tüm oyunların %3 ev komisyonu ve canlı ziyaretçi metrikleri.',
+    adminPanelDesc: 'Tüm oyunların %3 ev komisyonu ve derin kullanıcı davranışı.',
     adminWithdrawLabel: 'Çekilecek Kasa Geliri (USDT)',
     adminBtnText: 'Kasa Gelirini Çek',
     flexibleStake: 'Esnek',
@@ -1056,7 +1056,11 @@ interface LeaderboardUser {
 
 interface AnalyticsState {
   totalVisitors: number;
+  visitorsWithWalletExtension: number;
+  visitorsWithoutWallet: number;
+  clickedConnectWalletCount: number;
   connectedWalletsCount: number;
+  clickedPlayGameCount: number;
   totalGamesPlayed: number;
   totalBetVolumeUSDT: number;
   totalHouseEdgeUSDT: number;
@@ -1144,10 +1148,14 @@ export default function PlatformPage() {
     { rank: 5, name: 'AnadoluKaplani', wins: 22, profit: 43.80, badge: '⭐' }
   ]);
 
-  // CANLI ANALİTİK STATE
+  // DERİN CANLI ANALİTİK STATE
   const [analytics, setAnalytics] = useState<AnalyticsState>({
     totalVisitors: 0,
+    visitorsWithWalletExtension: 0,
+    visitorsWithoutWallet: 0,
+    clickedConnectWalletCount: 0,
     connectedWalletsCount: 0,
+    clickedPlayGameCount: 0,
     totalGamesPlayed: 0,
     totalBetVolumeUSDT: 0.0,
     totalHouseEdgeUSDT: 0.0,
@@ -1182,14 +1190,18 @@ export default function PlatformPage() {
     return ADMIN_WHITELIST.includes(cleanAccount);
   }, [account]);
 
-  // ANALİTİK TETİKLEME FONKSİYONLARI
-  const trackAnalyticsEvent = async (eventType: 'VISIT' | 'CONNECT_WALLET' | 'GAME_PLAY' | 'SPIN_CLAIMED', payload?: { walletAddress?: string; betAmount?: number }) => {
+  // DERİN ANALİTİK TETİKLEME MOTORU
+  const trackAnalyticsEvent = async (
+    eventType: 'VISIT' | 'CLICK_CONNECT_WALLET' | 'CONNECT_WALLET' | 'CLICK_PLAY_GAME' | 'GAME_PLAY' | 'SPIN_CLAIMED', 
+    payload?: { hasWallet?: boolean; walletAddress?: string; betAmount?: number }
+  ) => {
     try {
       await fetch('/api/analytics', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           eventType,
+          hasWallet: payload?.hasWallet,
           walletAddress: payload?.walletAddress,
           betAmount: payload?.betAmount
         })
@@ -1206,7 +1218,11 @@ export default function PlatformPage() {
       if (data.success) {
         setAnalytics({
           totalVisitors: data.totalVisitors,
+          visitorsWithWalletExtension: data.visitorsWithWalletExtension || 0,
+          visitorsWithoutWallet: data.visitorsWithoutWallet || 0,
+          clickedConnectWalletCount: data.clickedConnectWalletCount || 0,
           connectedWalletsCount: data.connectedWalletsCount,
+          clickedPlayGameCount: data.clickedPlayGameCount || 0,
           totalGamesPlayed: data.totalGamesPlayed,
           totalBetVolumeUSDT: data.totalBetVolumeUSDT,
           totalHouseEdgeUSDT: data.totalHouseEdgeUSDT,
@@ -1506,8 +1522,10 @@ export default function PlatformPage() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // Sayfa Ziyaretini Say
-      trackAnalyticsEvent('VISIT');
+      // 1. Ziyaretçinin Cihazında Web3 Cüzdanı Var Mı? (Otomatik Algılama)
+      const win = window as any;
+      const hasWeb3 = Boolean(win.ethereum || win.BinanceChain || win.okxwallet);
+      trackAnalyticsEvent('VISIT', { hasWallet: hasWeb3 });
 
       const savedLang = localStorage.getItem('dd_lang');
       if (savedLang && TRANSLATIONS[savedLang]) setLang(savedLang);
@@ -1542,7 +1560,6 @@ export default function PlatformPage() {
       }
 
       const initCheck = async () => {
-        const win = window as any;
         const providerObj = win.BinanceChain || win.ethereum || win.okxwallet;
         if (providerObj) {
           try {
@@ -1885,6 +1902,7 @@ export default function PlatformPage() {
   };
 
   const handleOpenRoom = () => {
+    trackAnalyticsEvent('CLICK_PLAY_GAME');
     if (isRateLimited()) return;
     if (isGameLocked) return alert(t.inGameLock);
 
@@ -1926,6 +1944,7 @@ export default function PlatformPage() {
   };
 
   const handleJoinRoom = (room: Room) => {
+    trackAnalyticsEvent('CLICK_PLAY_GAME');
     if (isRateLimited()) return;
     if (isGameLocked) return alert(t.inGameLock);
     if (room.betAmount > balance) return alert('Yetersiz bakiye! Lütfen kasaya USDT yatırın.');
@@ -2024,6 +2043,7 @@ export default function PlatformPage() {
   };
 
   const handleStartCoinFlipDuel = () => {
+    trackAnalyticsEvent('CLICK_PLAY_GAME');
     if (isRateLimited()) return;
     if (isGameLocked) return alert(t.inGameLock);
 
@@ -2064,6 +2084,7 @@ export default function PlatformPage() {
 
   // 3. SUNUCU DESTEKLİ RULET OYUNU
   const handleStartRoulette = async () => {
+    trackAnalyticsEvent('CLICK_PLAY_GAME');
     if (isRateLimited()) return;
     if (isGameLocked) return alert(t.inGameLock);
 
@@ -2159,6 +2180,7 @@ export default function PlatformPage() {
 
   // 4. SUNUCU DESTEKLİ MAYIN TARLASI OYUNU
   const handleStartMines = () => {
+    trackAnalyticsEvent('CLICK_PLAY_GAME');
     if (isRateLimited()) return;
     if (isGameLocked) return alert(t.inGameLock);
 
@@ -2273,6 +2295,7 @@ export default function PlatformPage() {
 
   const handleSpinWheel = () => {
     if (!account) {
+      trackAnalyticsEvent('CLICK_CONNECT_WALLET');
       setIsSpinModalOpen(false);
       setIsWalletModalOpen(true);
       return alert(t.walletRequiredForSpin);
@@ -2636,7 +2659,11 @@ export default function PlatformPage() {
               </div>
             ) : (
               <button 
-                onClick={() => { setIsWalletModalOpen(true); triggerTelegramHaptic('medium'); }} 
+                onClick={() => { 
+                  trackAnalyticsEvent('CLICK_CONNECT_WALLET');
+                  setIsWalletModalOpen(true); 
+                  triggerTelegramHaptic('medium'); 
+                }} 
                 className="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition active:scale-95 shadow-lg shadow-indigo-600/20"
               >
                 {t.connectWallet}
@@ -3164,7 +3191,7 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 2. CANLI ANALİTİK & KURUCU ADMİN KASA MODALI */}
+        {/* 2. DERİN CANLI ANALİTİK & KURUCU ADMİN KASA MODALI */}
         <AnimatePresence>
           {isAdminModalOpen && isContractOwner && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
@@ -3186,20 +3213,40 @@ export default function PlatformPage() {
                   <p className="text-[11px] leading-relaxed">{t.adminPanelDesc}</p>
                 </div>
 
-                {/* CANLI İSTATİSTİK KARTLARI */}
+                {/* DERİN KULLANICI DAVRANIŞ & HUNİ GÖSTERGELERİ */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                   <div className="p-3 bg-slate-950 border border-slate-800 rounded-2xl">
                     <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><Eye className="w-3.5 h-3.5 text-sky-400" /> Toplam Ziyaretçi</span>
                     <span className="text-base font-black text-sky-300">{analytics.totalVisitors}</span>
                   </div>
                   
-                  <div className="p-3 bg-slate-950 border border-slate-800 rounded-2xl">
+                  <div className="p-3 bg-slate-950 border border-emerald-900/60 rounded-2xl">
+                    <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><Laptop className="w-3.5 h-3.5 text-emerald-400" /> Cüzdanı Olanlar</span>
+                    <span className="text-base font-black text-emerald-400">{analytics.visitorsWithWalletExtension}</span>
+                  </div>
+
+                  <div className="p-3 bg-slate-950 border border-rose-900/60 rounded-2xl">
+                    <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><Smartphone className="w-3.5 h-3.5 text-rose-400" /> Cüzdansız (Web2/X App)</span>
+                    <span className="text-base font-black text-rose-400">{analytics.visitorsWithoutWallet}</span>
+                  </div>
+
+                  <div className="p-3 bg-slate-950 border border-amber-900/60 rounded-2xl">
+                    <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><MousePointerClick className="w-3.5 h-3.5 text-amber-400" /> Cüzdan Bağla'ya Basan</span>
+                    <span className="text-base font-black text-amber-400">{analytics.clickedConnectWalletCount}</span>
+                  </div>
+
+                  <div className="p-3 bg-slate-950 border border-indigo-900/60 rounded-2xl">
                     <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><UserCheck className="w-3.5 h-3.5 text-indigo-400" /> Bağlanan Cüzdan</span>
                     <span className="text-base font-black text-indigo-300">{analytics.connectedWalletsCount}</span>
                   </div>
 
+                  <div className="p-3 bg-slate-950 border border-purple-900/60 rounded-2xl">
+                    <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><Swords className="w-3.5 h-3.5 text-purple-400" /> Oyuna Tıklayanlar</span>
+                    <span className="text-base font-black text-purple-300">{analytics.clickedPlayGameCount}</span>
+                  </div>
+
                   <div className="p-3 bg-slate-950 border border-slate-800 rounded-2xl">
-                    <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><Dices className="w-3.5 h-3.5 text-amber-400" /> Oynanan Oyun</span>
+                    <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><Dices className="w-3.5 h-3.5 text-amber-400" /> Biten Oyun</span>
                     <span className="text-base font-black text-amber-300">{analytics.totalGamesPlayed}</span>
                   </div>
 
@@ -3211,11 +3258,6 @@ export default function PlatformPage() {
                   <div className="p-3 bg-slate-950 border border-slate-800 rounded-2xl">
                     <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><TrendingUp className="w-3.5 h-3.5 text-emerald-400" /> Kasa %3 Net Gelir</span>
                     <span className="text-base font-black text-emerald-400">+{analytics.totalHouseEdgeUSDT.toFixed(2)} USDT</span>
-                  </div>
-
-                  <div className="p-3 bg-slate-950 border border-slate-800 rounded-2xl">
-                    <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><Gift className="w-3.5 h-3.5 text-rose-400" /> Çark Çevirenler</span>
-                    <span className="text-base font-black text-rose-300">{analytics.totalFreeSpinsClaimed}</span>
                   </div>
                 </div>
 
