@@ -12,7 +12,8 @@ import {
   ReceiptText, Download, Printer,
   MessageCircle, Info, ChevronDown, Loader2, Clock, Lock, Unlock, ExternalLink, 
   Volume2, VolumeX, Crown, AlertTriangle, Medal, Bomb, Gem, Play, ShieldAlert, Timer, Users,
-  BarChart3, Eye, UserCheck, HelpCircle, RefreshCw, MousePointerClick, Smartphone, Laptop
+  BarChart3, Eye, UserCheck, HelpCircle, RefreshCw, MousePointerClick, Smartphone, Laptop,
+  Compass, Link2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -1065,6 +1066,7 @@ interface AnalyticsState {
   totalBetVolumeUSDT: number;
   totalHouseEdgeUSDT: number;
   totalFreeSpinsClaimed: number;
+  trafficSources: Record<string, number>;
 }
 
 export default function PlatformPage() {
@@ -1148,7 +1150,7 @@ export default function PlatformPage() {
     { rank: 5, name: 'AnadoluKaplani', wins: 22, profit: 43.80, badge: '⭐' }
   ]);
 
-  // DERİN CANLI ANALİTİK STATE
+  // DERİN CANLI ANALİTİK & KAYNAK STATE
   const [analytics, setAnalytics] = useState<AnalyticsState>({
     totalVisitors: 0,
     visitorsWithWalletExtension: 0,
@@ -1159,7 +1161,8 @@ export default function PlatformPage() {
     totalGamesPlayed: 0,
     totalBetVolumeUSDT: 0.0,
     totalHouseEdgeUSDT: 0.0,
-    totalFreeSpinsClaimed: 0
+    totalFreeSpinsClaimed: 0,
+    trafficSources: {}
   });
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState<boolean>(false);
 
@@ -1193,7 +1196,7 @@ export default function PlatformPage() {
   // DERİN ANALİTİK TETİKLEME MOTORU
   const trackAnalyticsEvent = async (
     eventType: 'VISIT' | 'CLICK_CONNECT_WALLET' | 'CONNECT_WALLET' | 'CLICK_PLAY_GAME' | 'GAME_PLAY' | 'SPIN_CLAIMED', 
-    payload?: { hasWallet?: boolean; walletAddress?: string; betAmount?: number }
+    payload?: { hasWallet?: boolean; walletAddress?: string; betAmount?: number; source?: string }
   ) => {
     try {
       await fetch('/api/analytics', {
@@ -1203,7 +1206,8 @@ export default function PlatformPage() {
           eventType,
           hasWallet: payload?.hasWallet,
           walletAddress: payload?.walletAddress,
-          betAmount: payload?.betAmount
+          betAmount: payload?.betAmount,
+          source: payload?.source
         })
       });
     } catch (e) {}
@@ -1226,7 +1230,8 @@ export default function PlatformPage() {
           totalGamesPlayed: data.totalGamesPlayed,
           totalBetVolumeUSDT: data.totalBetVolumeUSDT,
           totalHouseEdgeUSDT: data.totalHouseEdgeUSDT,
-          totalFreeSpinsClaimed: data.totalFreeSpinsClaimed
+          totalFreeSpinsClaimed: data.totalFreeSpinsClaimed,
+          trafficSources: data.trafficSources || {}
         });
       }
     } catch (e) {}
@@ -1522,10 +1527,13 @@ export default function PlatformPage() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // 1. Ziyaretçinin Cihazında Web3 Cüzdanı Var Mı? (Otomatik Algılama)
+      // 1. Ziyaretçi Kaynağı (?src=binance) ve Cüzdan Taraması
       const win = window as any;
       const hasWeb3 = Boolean(win.ethereum || win.BinanceChain || win.okxwallet);
-      trackAnalyticsEvent('VISIT', { hasWallet: hasWeb3 });
+      const urlParams = new URLSearchParams(window.location.search);
+      const sourceTag = urlParams.get('src') || 'Direct/Organik';
+
+      trackAnalyticsEvent('VISIT', { hasWallet: hasWeb3, source: sourceTag });
 
       const savedLang = localStorage.getItem('dd_lang');
       if (savedLang && TRANSLATIONS[savedLang]) setLang(savedLang);
@@ -2951,7 +2959,7 @@ export default function PlatformPage() {
                   min="0.5" 
                   max="20" 
                   value={betInput} 
-                  onChange={(e) => handleBetInputChange(e.target.value)} 
+                    onChange={(e) => handleBetInputChange(e.target.value)} 
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm font-bold text-white focus:outline-none pr-16" 
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-amber-400">USDT</span>
@@ -3191,7 +3199,7 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 2. DERİN CANLI ANALİTİK & KURUCU ADMİN KASA MODALI */}
+        {/* 2. DERİN CANLI ANALİTİK, KAYNAK TAKİBİ & KURUCU ADMİN KASA MODALI */}
         <AnimatePresence>
           {isAdminModalOpen && isContractOwner && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
@@ -3259,6 +3267,33 @@ export default function PlatformPage() {
                     <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><TrendingUp className="w-3.5 h-3.5 text-emerald-400" /> Kasa %3 Net Gelir</span>
                     <span className="text-base font-black text-emerald-400">+{analytics.totalHouseEdgeUSDT.toFixed(2)} USDT</span>
                   </div>
+                </div>
+
+                {/* CANLI TRAFİK KAYNAKLARI (KAMPANYA / TWEET ANALİZİ) */}
+                <div className="p-3.5 bg-slate-950 border border-slate-800 rounded-2xl space-y-2">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-200">
+                    <span className="flex items-center gap-1.5"><Compass className="w-4 h-4 text-amber-400" /> Trafik Kaynakları Analizi</span>
+                    <span className="text-[10px] text-slate-400 font-normal">Link Formatı: ?src=etiket_adi</span>
+                  </div>
+
+                  {Object.keys(analytics.trafficSources).length === 0 ? (
+                    <div className="text-[11px] text-slate-500 italic py-1">Henüz kayıtlı kaynak verisi bulunmuyor.</div>
+                  ) : (
+                    <div className="space-y-1.5 pt-1">
+                      {Object.entries(analytics.trafficSources).map(([srcName, count]) => (
+                        <div key={srcName} className="flex items-center justify-between p-2 bg-slate-900 border border-slate-800 rounded-xl text-xs">
+                          <div className="flex items-center gap-2 font-mono text-indigo-300">
+                            <Link2 className="w-3.5 h-3.5 text-slate-500" />
+                            <span>{srcName}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 font-bold">
+                            <span className="text-white">{count}</span>
+                            <span className="text-[10px] text-slate-500">Ziyaret</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2 pt-2 border-t border-slate-800">
