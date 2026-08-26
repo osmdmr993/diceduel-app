@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-// Sunucu tarafı derin kullanıcı davranış ve huni deposu
+// Sunucu tarafı derin kullanıcı davranış, huni ve kaynak takip deposu
 let analyticsData = {
   totalVisitors: 0,
   visitorsWithWalletExtension: 0,
@@ -12,6 +12,7 @@ let analyticsData = {
   totalBetVolumeUSDT: 0.0,
   totalHouseEdgeUSDT: 0.0,
   totalFreeSpinsClaimed: 0,
+  trafficSources: {} as Record<string, number>,
   lastUpdated: Date.now()
 };
 
@@ -29,6 +30,7 @@ export async function GET() {
       totalBetVolumeUSDT: +analyticsData.totalBetVolumeUSDT.toFixed(2),
       totalHouseEdgeUSDT: +analyticsData.totalHouseEdgeUSDT.toFixed(2),
       totalFreeSpinsClaimed: analyticsData.totalFreeSpinsClaimed,
+      trafficSources: analyticsData.trafficSources,
       lastUpdated: analyticsData.lastUpdated
     });
   } catch (error: any) {
@@ -39,7 +41,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { eventType, hasWallet, walletAddress, betAmount } = body;
+    const { eventType, hasWallet, walletAddress, betAmount, source } = body;
 
     analyticsData.lastUpdated = Date.now();
 
@@ -50,6 +52,11 @@ export async function POST(request: Request) {
       } else {
         analyticsData.visitorsWithoutWallet += 1;
       }
+
+      // Kaynak Takibi (?src=binance vb.)
+      const cleanSource = source ? String(source).replace(/[^a-zA-Z0-9_-]/g, '').substring(0, 30) : 'Direct/Organik';
+      analyticsData.trafficSources[cleanSource] = (analyticsData.trafficSources[cleanSource] || 0) + 1;
+
     } else if (eventType === 'CLICK_CONNECT_WALLET') {
       analyticsData.clickedConnectWalletCount += 1;
     } else if (eventType === 'CONNECT_WALLET' && walletAddress) {
