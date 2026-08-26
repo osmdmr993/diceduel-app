@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 
-// Sunucu tarafı hafif bellek içi istatistik deposu
+// Sunucu tarafı derin kullanıcı davranış ve huni deposu
 let analyticsData = {
   totalVisitors: 0,
+  visitorsWithWalletExtension: 0,
+  visitorsWithoutWallet: 0,
+  clickedConnectWalletCount: 0,
   uniqueWalletsConnected: new Set<string>(),
+  clickedPlayGameCount: 0,
   totalGamesPlayed: 0,
   totalBetVolumeUSDT: 0.0,
   totalHouseEdgeUSDT: 0.0,
@@ -16,7 +20,11 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       totalVisitors: analyticsData.totalVisitors,
+      visitorsWithWalletExtension: analyticsData.visitorsWithWalletExtension,
+      visitorsWithoutWallet: analyticsData.visitorsWithoutWallet,
+      clickedConnectWalletCount: analyticsData.clickedConnectWalletCount,
       connectedWalletsCount: analyticsData.uniqueWalletsConnected.size,
+      clickedPlayGameCount: analyticsData.clickedPlayGameCount,
       totalGamesPlayed: analyticsData.totalGamesPlayed,
       totalBetVolumeUSDT: +analyticsData.totalBetVolumeUSDT.toFixed(2),
       totalHouseEdgeUSDT: +analyticsData.totalHouseEdgeUSDT.toFixed(2),
@@ -31,14 +39,23 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { eventType, walletAddress, betAmount } = body;
+    const { eventType, hasWallet, walletAddress, betAmount } = body;
 
     analyticsData.lastUpdated = Date.now();
 
     if (eventType === 'VISIT') {
       analyticsData.totalVisitors += 1;
+      if (hasWallet) {
+        analyticsData.visitorsWithWalletExtension += 1;
+      } else {
+        analyticsData.visitorsWithoutWallet += 1;
+      }
+    } else if (eventType === 'CLICK_CONNECT_WALLET') {
+      analyticsData.clickedConnectWalletCount += 1;
     } else if (eventType === 'CONNECT_WALLET' && walletAddress) {
       analyticsData.uniqueWalletsConnected.add(walletAddress.toLowerCase());
+    } else if (eventType === 'CLICK_PLAY_GAME') {
+      analyticsData.clickedPlayGameCount += 1;
     } else if (eventType === 'GAME_PLAY') {
       analyticsData.totalGamesPlayed += 1;
       const bet = parseFloat(betAmount || '0');
