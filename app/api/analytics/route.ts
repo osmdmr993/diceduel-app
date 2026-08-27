@@ -5,6 +5,9 @@ interface ActiveSession {
   source: string;
 }
 
+// YETKİLİ ADMİN ADRESİ
+const ADMIN_ADDRESS = '0x26e2620e91ece1f24edbf9c0b714179f4a0e787b'.toLowerCase();
+
 let analyticsState = {
   totalVisitors: 0,
   returningVisitors: 0,
@@ -26,6 +29,7 @@ let analyticsState = {
     other: 0
   },
   activeSessions: {} as Record<string, ActiveSession>,
+  countedSessions: new Set<string>(),
   lastUpdated: Date.now()
 };
 
@@ -40,7 +44,7 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       totalVisitors: analyticsState.totalVisitors,
-      activeVisitorsNow: Math.max(activeVisitorsCount, 1),
+      activeVisitorsNow: Math.max(activeVisitorsCount, 0),
       returningVisitors: analyticsState.returningVisitors,
       visitorsWithWalletExtension: analyticsState.visitorsWithWalletExtension,
       visitorsWithoutWallet: analyticsState.visitorsWithoutWallet,
@@ -73,16 +77,40 @@ export async function POST(request: Request) {
       walletAddress, 
       betAmount, 
       source,
-      clientSyncStats
+      isAdmin,
+      resetData
     } = body;
 
-    analyticsState.lastUpdated = Date.now();
-
-    if (clientSyncStats) {
-      if (clientSyncStats.totalVisitors > analyticsState.totalVisitors) {
-        analyticsState.totalVisitors = clientSyncStats.totalVisitors;
-      }
+    // ADMİN PANELİNDEN SIFIRLAMA TALEBİ
+    if (resetData && isAdmin) {
+      analyticsState = {
+        totalVisitors: 0,
+        returningVisitors: 0,
+        visitorsWithWalletExtension: 0,
+        visitorsWithoutWallet: 0,
+        clickedConnectWalletCount: 0,
+        uniqueWalletsConnected: new Set<string>(),
+        clickedPlayGameCount: 0,
+        totalGamesPlayed: 0,
+        totalBetVolumeUSDT: 0.0,
+        totalHouseEdgeUSDT: 0.0,
+        totalFreeSpinsClaimed: 0,
+        totalWelcomeBonusesClaimed: 0,
+        trafficSources: {},
+        walletTypes: { metamask: 0, binance: 0, okx: 0, other: 0 },
+        activeSessions: {},
+        countedSessions: new Set<string>(),
+        lastUpdated: Date.now()
+      };
+      return NextResponse.json({ success: true, message: 'İstatistikler sıfırlandı.' });
     }
+
+    // ADMİN KENDİ İŞLEMLERİNİ SAYDIRMAZ
+    if (isAdmin || (walletAddress && walletAddress.toLowerCase() === ADMIN_ADDRESS)) {
+      return NextResponse.json({ success: true, ignored: 'Admin işlemi sayılmadı.' });
+    }
+
+    analyticsState.lastUpdated = Date.now();
 
     if (sessionId) {
       analyticsState.activeSessions[sessionId] = {
@@ -92,6 +120,15 @@ export async function POST(request: Request) {
     }
 
     if (eventType === 'VISIT') {
+      // AYNI OTURUMDAKİ F5 YENİLEMELERİNİ SAYMA (TEKİL KORUMASI)
+      if (sessionId && analyticsState.countedSessions.has(sessionId)) {
+        return NextResponse.json({ success: true, ignored: 'Oturum zaten sayıldı.' });
+      }
+
+      if (sessionId) {
+        analyticsState.countedSessions.add(sessionId);
+      }
+
       analyticsState.totalVisitors += 1;
       if (isReturning) {
         analyticsState.returningVisitors += 1;
