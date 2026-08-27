@@ -200,12 +200,10 @@ const TRANSLATIONS: Record<string, any> = {
     justNow: 'Gerade eben',
     headsName: 'KOPF',
     tailsName: 'ZAHL',
-    welcomeBonusTag: '3.00 USDT Willkommensbonus',
+    welcomeBonusHeaderBtn: '🎁 +3.00 USDT Bonus',
     bonusBalLabel: 'Bonus Guthaben (Nur Spiel)',
-    welcomePopupTitle: '🎁 3.00 USDT Willkommensbonus!',
-    welcomePopupDesc: 'Verbinden Sie Ihr Wallet und sichern Sie sich 3.00 USDT Spielguthaben + 1 kostenlosen Glücksrad-Dreh alle 24 Stunden.',
-    claimBonusBtn: 'Bonus Beanspruchen & Verbinden',
     faqList: [
+      { q: "Wie funktioniert der Willkommensbonus (3.00 USDT)?", a: "Wenn Sie Ihr Wallet zum ersten Mal verbinden, wird Ihrem Konto automatisch ein Spielguthaben von 3.00 USDT gutgeschrieben. Dieser Bonus kann in Spielen verwendet werden. Aus Spielen erzielte Nettogewinne können sofort auf Ihr Wallet ausgezahlt werden." },
       { q: "Wie sicher ist DiceDuel?", a: "Alle Spiele laufen auf einem verifizierten BSC Smart Contract mit Provably Fair RNG." },
       { q: "Was passiert, wenn ich meinen Staking-Pool vorzeitig schließe?", a: "Ihre Hauptsumme wird sofort freigegeben, und Ihre Belohnungen werden fair auf den flexiblen Zinssatz (%1.0) angepasst." },
       { q: "Wie erhalte ich meine Gewinne?", a: "Gewinne werden sofort Ihrem Tresor gutgeschrieben und können jederzeit ausgezahlt werden." }
@@ -339,12 +337,10 @@ const TRANSLATIONS: Record<string, any> = {
     justNow: 'Just now',
     headsName: 'HEADS',
     tailsName: 'TAILS',
-    welcomeBonusTag: '3.00 USDT Welcome Bonus',
+    welcomeBonusHeaderBtn: '🎁 +3.00 USDT Bonus',
     bonusBalLabel: 'Bonus Balance (Play Only)',
-    welcomePopupTitle: '🎁 3.00 USDT Welcome Bonus!',
-    welcomePopupDesc: 'Connect your BSC wallet now and receive 3.00 USDT game credit + 1 Free Spin every 24 hours.',
-    claimBonusBtn: 'Claim Bonus & Connect',
     faqList: [
+      { q: "How does the Welcome Bonus (3.00 USDT) work?", a: "When you connect your wallet for the first time, a 3.00 USDT game credit is automatically added to your account. This bonus can be used across all games. Any net profits earned from games are credited to your real balance and can be withdrawn anytime." },
       { q: "How secure is DiceDuel?", a: "All games operate on a verified BSC smart contract using Provably Fair RNG technology." },
       { q: "What happens if I unstake my locked pool early?", a: "Your principal is released safely, and your rewards are automatically recalculated based on the flexible rate (%1.0)." },
       { q: "How do I claim my earnings?", a: "All gaming winnings and staking yields are credited instantly to your vault and can be withdrawn anytime." }
@@ -478,12 +474,10 @@ const TRANSLATIONS: Record<string, any> = {
     justNow: 'Ahora',
     headsName: 'CARA',
     tailsName: 'CRUZ',
-    welcomeBonusTag: '3.00 USDT Bono de Bienvenida',
+    welcomeBonusHeaderBtn: '🎁 Bono +3.00 USDT',
     bonusBalLabel: 'Saldo de Bono (Solo Juego)',
-    welcomePopupTitle: '🎁 ¡Bono de Bienvenida 3.00 USDT!',
-    welcomePopupDesc: 'Conecta tu wallet BSC y recibe 3.00 USDT para jugar + 1 Giro Gratis cada 24 horas.',
-    claimBonusBtn: 'Reclamar Bono y Conectar',
     faqList: [
+      { q: "¿Cómo funciona el Bono de Bienvenida (3.00 USDT)?", a: "Al conectar su wallet por primera vez, se agrega automáticamente un crédito de 3.00 USDT para jugar. Las ganancias netas obtenidas se acreditan directamente a su saldo real y se pueden retirar en cualquier momento." },
       { q: "¿Qué tan seguro es DiceDuel?", a: "Todos los juegos operan en un contrato inteligente verificado en BSC utilizando Provably Fair RNG." },
       { q: "¿Qué pasa si retiro mi staking antes de tiempo?", a: "Su capital se libera de forma segura y las recompensas se recalculan automáticamente según la tasa flexible (%1.0)." },
       { q: "¿Cómo reclamo mis ganancias?", a: "Todas las ganancias se acreditan instantáneamente en su bóveda y se pueden retirar en cualquier momento." }
@@ -617,12 +611,10 @@ const TRANSLATIONS: Record<string, any> = {
     justNow: 'À l\'instant',
     headsName: 'FACE',
     tailsName: 'PILE',
-    welcomeBonusTag: 'Bonus de 3.00 USDT',
+    welcomeBonusHeaderBtn: '🎁 Bonus +3.00 USDT',
     bonusBalLabel: 'Solde Bonus (Jeu Uniquement)',
-    welcomePopupTitle: '🎁 Bonus de Bienvenue 3.00 USDT!',
-    welcomePopupDesc: 'Connectez votre portefeuille BSC et recevez 3.00 USDT de crédit + 1 tour gratuit toutes les 24h.',
-    claimBonusBtn: 'Réclamer le Bonus & Connecter',
     faqList: [
+      { q: "Comment fonctionne le Bonus de Bienvenue (3.00 USDT) ?", a: "Lors de votre première connexion, un crédit de 3.00 USDT est automatiquement ajouté. Les gains nets réalisés lors des parties sont immédiatement versés sur votre solde réel et peuvent être retirés à tout moment." },
       { q: "Quel est le niveau de sécurité de DiceDuel ?", a: "Tous les jeux fonctionnent sur un smart contract BSC vérifié utilisant le RNG Provably Fair." },
       { q: "Que se passe-t-il si je retire mon staking par anticipation ?", a: "Votre capital est libéré en toute sécurité et vos récompenses sont automatiquement recalculées sur la base du taux flexible (%1.0)." },
       { q: "Comment réclamer mes gains ?", a: "Tous les gains sont crédités instantanément dans votre coffre et peuvent être retirés à tout moment." }
@@ -756,12 +748,10 @@ const TRANSLATIONS: Record<string, any> = {
     justNow: 'Zojuist',
     headsName: 'KOP',
     tailsName: 'MUNT',
-    welcomeBonusTag: '3.00 USDT Welkomstbonus',
+    welcomeBonusHeaderBtn: '🎁 +3.00 USDT Bonus',
     bonusBalLabel: 'Bonus Saldo (Alleen Spelen)',
-    welcomePopupTitle: '🎁 3.00 USDT Welkomstbonus!',
-    welcomePopupDesc: 'Verbind uw BSC wallet en ontvang 3.00 USDT speelbonus + elke 24 uur een gratis draai aan het rad.',
-    claimBonusBtn: 'Claim Bonus & Verbinden',
     faqList: [
+      { q: "Hoe werkt de Welkomstbonus (3.00 USDT)?", a: "Wanneer u voor de eerste keer uw wallet koppelt, ontvangt u automatisch 3.00 USDT speeltegoed. Behaalde nettowinsten worden direct bijgeschreven op uw echte saldo en kunnen op elk moment worden opgenomen." },
       { q: "Hoe veilig is DiceDuel?", a: "Alle spellen draaien op een geverifieerd BSC smart contract met Provably Fair RNG." },
       { q: "Wat gebeurt er als ik mijn staking pool vroegtijdig opneem?", a: "Uw hoofdsom wordt veilig vrijgegeven en beloningen worden automatisch herberekend op basis van het flexibele tarief (%1.0)." },
       { q: "Hoe claim ik mijn verdiensten?", a: "Alle verdiensten worden direct bijgeschreven in uw kluis en kunnen op elk moment worden opgenomen." }
@@ -895,12 +885,10 @@ const TRANSLATIONS: Record<string, any> = {
     justNow: 'Только что',
     headsName: 'ОРЕЛ',
     tailsName: 'РЕШКА',
-    welcomeBonusTag: '3.00 USDT Приветственный Бонус',
+    welcomeBonusHeaderBtn: '🎁 Бонус +3.00 USDT',
     bonusBalLabel: 'Бонусный Баланс (Только Игра)',
-    welcomePopupTitle: '🎁 Приветственный Бонус 3.00 USDT!',
-    welcomePopupDesc: 'Подключите кошелек BSC и получите 3.00 USDT для игры + 1 бесплатное вращение колеса каждые 24 часа.',
-    claimBonusBtn: 'Забрать Бонус & Подключить',
     faqList: [
+      { q: "Как работает приветственный бонус (3.00 USDT)?", a: "При первом подключении кошелька на ваш баланс автоматически начисляется 3.00 USDT для игры. Чистая прибыль от игр сразу переводится на ваш реальный баланс и доступна к выводу в любое время." },
       { q: "Насколько безопасен DiceDuel?", a: "Все игры работают на проверенном смарт-контракте BSC с использованием Provably Fair RNG." },
       { q: "Что произойдет, если я досрочно заберу средства из пула?", a: "Ваш основной капитал будет безопасно возвращен, а награды автоматически пересчитаны по гибкой ставке (%1.0)." },
       { q: "Как получить свой выигрыш?", a: "Все выигрыши и доходы от стейкинга мгновенно зачисляются в вашу кассу и могут быть выведены в любое время." }
@@ -1034,12 +1022,10 @@ const TRANSLATIONS: Record<string, any> = {
     justNow: 'Az önce',
     headsName: 'YAZI',
     tailsName: 'TURA',
-    welcomeBonusTag: '3.00 USDT Hoş Geldin Bonusu',
+    welcomeBonusHeaderBtn: '🎁 +3.00 USDT Bonus',
     bonusBalLabel: 'Bonus Bakiye (Oyun Bonusu)',
-    welcomePopupTitle: '🎁 3.00 USDT Hoş Geldin Bonusu!',
-    welcomePopupDesc: 'BSC Cüzdanını bağla, 3.00 USDT oyun kredisi ve 24 Saatte 1 Ücretsiz Çark hakkını anında kap!',
-    claimBonusBtn: 'Bonusu Al & Cüzdan Bağla',
     faqList: [
+      { q: "Hoş Geldin Bonusu (3.00 USDT) Nasıl Çalışır?", a: "Cüzdanınızı ilk kez bağladığınızda hesabınıza otomatik olarak 3.00 USDT oyun kredisi tanımlanır. Bu bonus tüm oyunlarda kullanılabilir; oyunlardan elde ettiğiniz net kazançlar anında gerçek bakiyenize aktarılır ve dilediğiniz zaman çekilebilir." },
       { q: "DiceDuel ne kadar güvenli?", a: "Tüm oyunlar Provably Fair RNG teknolojisi kullanan doğrulanmış bir BSC akıllı sözleşmesi üzerinde çalışır." },
       { q: "Kilidi vadesinden önce açarsam ne olur?", a: "Anaparanız güvenle iade edilir, kâr oranınız ise adil bir şekilde esnek oran (%1.0) üzerinden yeniden hesaplanır." },
       { q: "Kazançlarımı nasıl çekerim?", a: "Tüm oyun kazançları ve staking gelirleri anında kasanıza yansır ve dilediğiniz zaman çekilebilir." }
@@ -1120,9 +1106,6 @@ export default function PlatformPage() {
   const [isDemoWallet, setIsDemoWallet] = useState<boolean>(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState<boolean>(false);
 
-  // OTOMATİK HOŞ GELDİN POP-UP
-  const [isWelcomeModalOpen, setIsWelcomeModalOpen] = useState<boolean>(false);
-
   const [isAdminModalOpen, setIsAdminModalOpen] = useState<boolean>(false);
   const [adminWithdrawAmount, setAdminWithdrawAmount] = useState<string>('10');
   const [isWrongNetwork, setIsWrongNetwork] = useState<boolean>(false);
@@ -1194,7 +1177,7 @@ export default function PlatformPage() {
     { rank: 5, name: 'AnadoluKaplani', wins: 22, profit: 43.80, badge: '⭐' }
   ]);
 
-  // KALICI & KAPSAMLI CANLI ANALİTİK STATE
+  // KALICI CANLI ANALİTİK STATE
   const [analytics, setAnalytics] = useState<AnalyticsState>({
     totalVisitors: 0,
     activeVisitorsNow: 1,
@@ -1247,7 +1230,7 @@ export default function PlatformPage() {
     return +(balance + bonusBalance).toFixed(2);
   }, [balance, bonusBalance]);
 
-  // DERİN ANALİTİK TETİKLEME MOTORU (KALICI SAYAÇ KORUMASIYLA)
+  // DERİN ANALİTİK TETİKLEME MOTORU
   const trackAnalyticsEvent = async (
     eventType: 'VISIT' | 'CLICK_CONNECT_WALLET' | 'CONNECT_WALLET' | 'CLAIM_WELCOME_BONUS' | 'CLICK_PLAY_GAME' | 'GAME_PLAY' | 'SPIN_CLAIMED', 
     payload?: { hasWallet?: boolean; walletType?: string; walletAddress?: string; betAmount?: number; source?: string; isReturning?: boolean }
@@ -1541,7 +1524,7 @@ export default function PlatformPage() {
         }
       }
 
-      // HOŞ GELDİN BONUSU (3.00 USDT) İLK BAĞLANTIDA HESABA YAZILIR
+      // HOŞ GELDİN BONUSU (3.00 USDT) İLK BAĞLANTIDA TANIMLANIR
       const welcomeClaimed = localStorage.getItem(`dd_welcome_claimed_${userAddress.toLowerCase()}`);
       if (!welcomeClaimed && currentBonus === 0.0) {
         currentBonus = WELCOME_BONUS_AMOUNT;
@@ -1636,7 +1619,6 @@ export default function PlatformPage() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // Benzersiz Oturum ID
       let sid = sessionStorage.getItem('dd_sid');
       if (!sid) {
         sid = `s_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
@@ -1644,7 +1626,6 @@ export default function PlatformPage() {
       }
       sessionIdRef.current = sid;
 
-      // Ziyaretçi Taraması & Geri Dönen Kontrolü
       const win = window as any;
       const hasWeb3 = Boolean(win.ethereum || win.BinanceChain || win.okxwallet);
       const urlParams = new URLSearchParams(window.location.search);
@@ -1653,11 +1634,8 @@ export default function PlatformPage() {
       const isReturningVisitor = Boolean(localStorage.getItem('dd_has_visited'));
       if (!isReturningVisitor) {
         localStorage.setItem('dd_has_visited', 'true');
-        // Yeni ziyaretçiye karşılama modalını otomatik aç
-        setTimeout(() => setIsWelcomeModalOpen(true), 900);
       }
 
-      // Kümülatif yerel sayaç
       const currentLocalVis = parseInt(localStorage.getItem('dd_perm_total_visitors') || '0', 10) + 1;
       localStorage.setItem('dd_perm_total_visitors', currentLocalVis.toString());
 
@@ -1878,7 +1856,6 @@ export default function PlatformPage() {
     initAudio();
     triggerTelegramHaptic('medium');
     setIsWalletModalOpen(false);
-    setIsWelcomeModalOpen(false);
 
     if (type === 'demo') {
       const randomHex = Array.from({ length: 40 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
@@ -1948,7 +1925,6 @@ export default function PlatformPage() {
       setTxSuccessMsg(`+${val} USDT Kasaya Eklendi!`);
       addTransaction('DEPOSIT', 'USDT Yatırma', val);
     } else {
-      // ÇEKİM YALNIZCA GERÇEK BAKİYEDEN YAPILABİLİR
       if (val > balance) {
         return alert(`Yetersiz çekilebilir bakiye! (Bonus bakiyesi doğrudan çekilemez, oyunlarda kullanılabilir).`);
       }
@@ -1972,7 +1948,6 @@ export default function PlatformPage() {
 
     setGameResult({ opponent: sanitizeInput(opponentName), p1Score: null, p2Score: null, winner: null });
 
-    // Analitik: Bahis ve Oyun Kaydı
     trackAnalyticsEvent('GAME_PLAY', { betAmount: amount });
 
     try {
@@ -2024,7 +1999,6 @@ export default function PlatformPage() {
         if (isPlayerWin) {
           triggerConfetti();
           playWinSound();
-          // Kazanılan net tutar gerçek çekilebilir bakiyeye eklenir
           const nBal = +(balance + payout).toFixed(2);
           updatePersistentBalance(nBal);
           addTransaction('GAME_WIN', `Zar Galibiyeti (${p1} vs ${p2})`, payout);
@@ -2781,27 +2755,43 @@ export default function PlatformPage() {
               <MessageCircle className="w-4 h-4" />
             </button>
 
-            {/* Bakiye Kutusu (Gerçek USDT + Bonus USDT) */}
-            <div className="flex items-center bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-inner">
-              <div className="flex flex-col px-2.5 py-1 text-right">
-                <div className="flex items-center gap-1 text-xs font-bold text-amber-400">
-                  <Wallet className="w-3 h-3 text-slate-400" />
-                  <span>{balance.toFixed(2)} USDT</span>
-                </div>
-                {bonusBalance > 0 && (
-                  <div className="text-[9px] text-purple-300 font-semibold flex items-center gap-0.5 justify-end">
-                    <Sparkles className="w-2.5 h-2.5 text-purple-400" />
-                    <span>+{bonusBalance.toFixed(2)} Bonus</span>
-                  </div>
-                )}
-              </div>
+            {/* CÜZDAN BAĞLI DEĞİLKEN GÖZÜKEN HOŞ GELDİN BONUSU ROZETİ */}
+            {!account && (
               <button 
-                onClick={() => { setIsModalOpen(true); triggerTelegramHaptic('medium'); }}
-                className="px-2.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-[11px] font-bold text-white border-l border-indigo-500 transition active:scale-95"
+                onClick={() => { 
+                  trackAnalyticsEvent('CLICK_CONNECT_WALLET');
+                  setIsWalletModalOpen(true); 
+                  triggerTelegramHaptic('medium'); 
+                }} 
+                className="flex items-center gap-1 px-3 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-black text-xs rounded-xl shadow-lg shadow-purple-600/30 transition active:scale-95 animate-pulse"
               >
-                {t.vault}
+                <span>{t.welcomeBonusHeaderBtn}</span>
               </button>
-            </div>
+            )}
+
+            {/* Bakiye Kutusu (Cüzdan Bağlandığında Görünür) */}
+            {account && (
+              <div className="flex items-center bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-inner">
+                <div className="flex flex-col px-2.5 py-1 text-right">
+                  <div className="flex items-center gap-1 text-xs font-bold text-amber-400">
+                    <Wallet className="w-3 h-3 text-slate-400" />
+                    <span>{balance.toFixed(2)} USDT</span>
+                  </div>
+                  {bonusBalance > 0 && (
+                    <div className="text-[9px] text-purple-300 font-semibold flex items-center gap-0.5 justify-end">
+                      <Sparkles className="w-2.5 h-2.5 text-purple-400" />
+                      <span>+{bonusBalance.toFixed(2)} Bonus</span>
+                    </div>
+                  )}
+                </div>
+                <button 
+                  onClick={() => { setIsModalOpen(true); triggerTelegramHaptic('medium'); }}
+                  className="px-2.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-[11px] font-bold text-white border-l border-indigo-500 transition active:scale-95"
+                >
+                  {t.vault}
+                </button>
+              </div>
+            )}
 
             {account ? (
               <div className="flex items-center bg-slate-800 border border-slate-700 rounded-xl px-2 py-1.5">
@@ -3296,49 +3286,6 @@ export default function PlatformPage() {
           </div>
         </footer>
 
-        {/* 0. OTOMATİK HOŞ GELDİN & 3 USDT BONUS MODALI */}
-        <AnimatePresence>
-          {isWelcomeModalOpen && !account && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-              <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="bg-slate-900 border border-indigo-500/50 rounded-3xl p-6 w-full max-w-md shadow-2xl relative text-center space-y-4">
-                <button onClick={() => setIsWelcomeModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white transition"><X className="w-5 h-5" /></button>
-                
-                <div className="w-16 h-16 rounded-3xl bg-indigo-600/20 border border-indigo-500/40 text-indigo-400 flex items-center justify-center mx-auto text-3xl shadow-lg">
-                  🎁
-                </div>
-
-                <div className="space-y-1">
-                  <h3 className="font-black text-lg text-white">{t.welcomePopupTitle}</h3>
-                  <p className="text-xs text-slate-300 leading-relaxed">{t.welcomePopupDesc}</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 p-3 bg-slate-950 border border-slate-800 rounded-2xl text-left">
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] text-slate-500 font-semibold block">Hoş Geldin Bakiyesi</span>
-                    <span className="text-sm font-black text-purple-400">+3.00 USDT</span>
-                  </div>
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] text-slate-500 font-semibold block">Günlük Çark</span>
-                    <span className="text-sm font-black text-amber-400">1 Ücretsiz Çevir</span>
-                  </div>
-                </div>
-
-                <button 
-                  onClick={() => {
-                    setIsWelcomeModalOpen(false);
-                    trackAnalyticsEvent('CLICK_CONNECT_WALLET');
-                    setIsWalletModalOpen(true);
-                  }}
-                  className="w-full py-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white font-black text-xs md:text-sm rounded-xl transition shadow-lg shadow-indigo-600/30 active:scale-95 flex items-center justify-center gap-2"
-                >
-                  <Sparkles className="w-4 h-4 text-amber-300" />
-                  <span>{t.claimBonusBtn}</span>
-                </button>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
-
         {/* 1. Kasa Yönetim Modalı */}
         <AnimatePresence>
           {isModalOpen && (
@@ -3612,7 +3559,7 @@ export default function PlatformPage() {
                 <div className="space-y-2 pt-2 border-t border-slate-800">
                   <label className="text-[11px] text-slate-300 font-bold block">{t.joinPoolLabel}</label>
                   <div className="flex gap-2">
-                    <input type="number" value={stakeInput} onChange={(e) => setStakeInput(e.target.value)} className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs font-bold text-white focus:outline-none" />
+                    <input type="number" value={stakeInput} onChange={(e) => setStakeInput(e.target.value)} className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-1.5 text-xs font-bold text-white focus:outline-none" />
                     <button onClick={handleStakeAdd} className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition">{t.becomePartnerBtn}</button>
                   </div>
                 </div>
@@ -3622,7 +3569,7 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 4. SSS / FAQ Modalı */}
+        {/* 4. SSS / FAQ Modalı (7 DİLDE HOŞ GELDİN BONUSU DAHİL) */}
         <AnimatePresence>
           {isFaqModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
