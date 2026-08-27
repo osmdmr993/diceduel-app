@@ -13,7 +13,7 @@ import {
   MessageCircle, Info, ChevronDown, Loader2, Clock, Lock, Unlock, ExternalLink, 
   Volume2, VolumeX, Crown, AlertTriangle, Medal, Bomb, Gem, Play, ShieldAlert, Timer, Users,
   BarChart3, Eye, UserCheck, HelpCircle, RefreshCw, MousePointerClick, Smartphone, Laptop,
-  Compass, Link2
+  Compass, Link2, Sparkle, Zap, Radio
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -36,6 +36,7 @@ const TELEGRAM_CHANNEL_LINK = 'https://t.me/diceduel_live_wins';
 
 const MIN_BET = 0.5;
 const MAX_PLAYER_BET = 20.0;
+const WELCOME_BONUS_AMOUNT = 3.0; // 3 USDT Oyun Bonusu
 
 const BOT_NAMES = [
   'KriptoPasa_34', 'AnadoluKaplani', 'Bozkurt_06', 'ZarUstasi', 'AltinVurus_TR', 
@@ -63,8 +64,8 @@ const sanitizeInput = (input: string): string => {
     .replace(/\//g, "&#x2F;");
 };
 
-const generateTamperProofHash = (addr: string, bal: number): string => {
-  const payload = `${addr.toLowerCase()}_${bal.toFixed(2)}_dd_salt_2026_sec_ids_shield`;
+const generateTamperProofHash = (addr: string, bal: number, bonusBal: number): string => {
+  const payload = `${addr.toLowerCase()}_${bal.toFixed(2)}_${bonusBal.toFixed(2)}_dd_salt_2026_sec_ids_shield`;
   return ethers.keccak256(ethers.toUtf8Bytes(payload));
 };
 
@@ -199,6 +200,11 @@ const TRANSLATIONS: Record<string, any> = {
     justNow: 'Gerade eben',
     headsName: 'KOPF',
     tailsName: 'ZAHL',
+    welcomeBonusTag: '3.00 USDT Willkommensbonus',
+    bonusBalLabel: 'Bonus Guthaben (Nur Spiel)',
+    welcomePopupTitle: '🎁 3.00 USDT Willkommensbonus!',
+    welcomePopupDesc: 'Verbinden Sie Ihr Wallet und sichern Sie sich 3.00 USDT Spielguthaben + 1 kostenlosen Glücksrad-Dreh alle 24 Stunden.',
+    claimBonusBtn: 'Bonus Beanspruchen & Verbinden',
     faqList: [
       { q: "Wie sicher ist DiceDuel?", a: "Alle Spiele laufen auf einem verifizierten BSC Smart Contract mit Provably Fair RNG." },
       { q: "Was passiert, wenn ich meinen Staking-Pool vorzeitig schließe?", a: "Ihre Hauptsumme wird sofort freigegeben, und Ihre Belohnungen werden fair auf den flexiblen Zinssatz (%1.0) angepasst." },
@@ -333,6 +339,11 @@ const TRANSLATIONS: Record<string, any> = {
     justNow: 'Just now',
     headsName: 'HEADS',
     tailsName: 'TAILS',
+    welcomeBonusTag: '3.00 USDT Welcome Bonus',
+    bonusBalLabel: 'Bonus Balance (Play Only)',
+    welcomePopupTitle: '🎁 3.00 USDT Welcome Bonus!',
+    welcomePopupDesc: 'Connect your BSC wallet now and receive 3.00 USDT game credit + 1 Free Spin every 24 hours.',
+    claimBonusBtn: 'Claim Bonus & Connect',
     faqList: [
       { q: "How secure is DiceDuel?", a: "All games operate on a verified BSC smart contract using Provably Fair RNG technology." },
       { q: "What happens if I unstake my locked pool early?", a: "Your principal is released safely, and your rewards are automatically recalculated based on the flexible rate (%1.0)." },
@@ -467,6 +478,11 @@ const TRANSLATIONS: Record<string, any> = {
     justNow: 'Ahora',
     headsName: 'CARA',
     tailsName: 'CRUZ',
+    welcomeBonusTag: '3.00 USDT Bono de Bienvenida',
+    bonusBalLabel: 'Saldo de Bono (Solo Juego)',
+    welcomePopupTitle: '🎁 ¡Bono de Bienvenida 3.00 USDT!',
+    welcomePopupDesc: 'Conecta tu wallet BSC y recibe 3.00 USDT para jugar + 1 Giro Gratis cada 24 horas.',
+    claimBonusBtn: 'Reclamar Bono y Conectar',
     faqList: [
       { q: "¿Qué tan seguro es DiceDuel?", a: "Todos los juegos operan en un contrato inteligente verificado en BSC utilizando Provably Fair RNG." },
       { q: "¿Qué pasa si retiro mi staking antes de tiempo?", a: "Su capital se libera de forma segura y las recompensas se recalculan automáticamente según la tasa flexible (%1.0)." },
@@ -601,6 +617,11 @@ const TRANSLATIONS: Record<string, any> = {
     justNow: 'À l\'instant',
     headsName: 'FACE',
     tailsName: 'PILE',
+    welcomeBonusTag: 'Bonus de 3.00 USDT',
+    bonusBalLabel: 'Solde Bonus (Jeu Uniquement)',
+    welcomePopupTitle: '🎁 Bonus de Bienvenue 3.00 USDT!',
+    welcomePopupDesc: 'Connectez votre portefeuille BSC et recevez 3.00 USDT de crédit + 1 tour gratuit toutes les 24h.',
+    claimBonusBtn: 'Réclamer le Bonus & Connecter',
     faqList: [
       { q: "Quel est le niveau de sécurité de DiceDuel ?", a: "Tous les jeux fonctionnent sur un smart contract BSC vérifié utilisant le RNG Provably Fair." },
       { q: "Que se passe-t-il si je retire mon staking par anticipation ?", a: "Votre capital est libéré en toute sécurité et vos récompenses sont automatiquement recalculées sur la base du taux flexible (%1.0)." },
@@ -735,6 +756,11 @@ const TRANSLATIONS: Record<string, any> = {
     justNow: 'Zojuist',
     headsName: 'KOP',
     tailsName: 'MUNT',
+    welcomeBonusTag: '3.00 USDT Welkomstbonus',
+    bonusBalLabel: 'Bonus Saldo (Alleen Spelen)',
+    welcomePopupTitle: '🎁 3.00 USDT Welkomstbonus!',
+    welcomePopupDesc: 'Verbind uw BSC wallet en ontvang 3.00 USDT speelbonus + elke 24 uur een gratis draai aan het rad.',
+    claimBonusBtn: 'Claim Bonus & Verbinden',
     faqList: [
       { q: "Hoe veilig is DiceDuel?", a: "Alle spellen draaien op een geverifieerd BSC smart contract met Provably Fair RNG." },
       { q: "Wat gebeurt er als ik mijn staking pool vroegtijdig opneem?", a: "Uw hoofdsom wordt veilig vrijgegeven en beloningen worden automatisch herberekend op basis van het flexibele tarief (%1.0)." },
@@ -869,6 +895,11 @@ const TRANSLATIONS: Record<string, any> = {
     justNow: 'Только что',
     headsName: 'ОРЕЛ',
     tailsName: 'РЕШКА',
+    welcomeBonusTag: '3.00 USDT Приветственный Бонус',
+    bonusBalLabel: 'Бонусный Баланс (Только Игра)',
+    welcomePopupTitle: '🎁 Приветственный Бонус 3.00 USDT!',
+    welcomePopupDesc: 'Подключите кошелек BSC и получите 3.00 USDT для игры + 1 бесплатное вращение колеса каждые 24 часа.',
+    claimBonusBtn: 'Забрать Бонус & Подключить',
     faqList: [
       { q: "Насколько безопасен DiceDuel?", a: "Все игры работают на проверенном смарт-контракте BSC с использованием Provably Fair RNG." },
       { q: "Что произойдет, если я досрочно заберу средства из пула?", a: "Ваш основной капитал будет безопасно возвращен, а награды автоматически пересчитаны по гибкой ставке (%1.0)." },
@@ -1003,6 +1034,11 @@ const TRANSLATIONS: Record<string, any> = {
     justNow: 'Az önce',
     headsName: 'YAZI',
     tailsName: 'TURA',
+    welcomeBonusTag: '3.00 USDT Hoş Geldin Bonusu',
+    bonusBalLabel: 'Bonus Bakiye (Oyun Bonusu)',
+    welcomePopupTitle: '🎁 3.00 USDT Hoş Geldin Bonusu!',
+    welcomePopupDesc: 'BSC Cüzdanını bağla, 3.00 USDT oyun kredisi ve 24 Saatte 1 Ücretsiz Çark hakkını anında kap!',
+    claimBonusBtn: 'Bonusu Al & Cüzdan Bağla',
     faqList: [
       { q: "DiceDuel ne kadar güvenli?", a: "Tüm oyunlar Provably Fair RNG teknolojisi kullanan doğrulanmış bir BSC akıllı sözleşmesi üzerinde çalışır." },
       { q: "Kilidi vadesinden önce açarsam ne olur?", a: "Anaparanız güvenle iade edilir, kâr oranınız ise adil bir şekilde esnek oran (%1.0) üzerinden yeniden hesaplanır." },
@@ -1057,6 +1093,8 @@ interface LeaderboardUser {
 
 interface AnalyticsState {
   totalVisitors: number;
+  activeVisitorsNow: number;
+  returningVisitors: number;
   visitorsWithWalletExtension: number;
   visitorsWithoutWallet: number;
   clickedConnectWalletCount: number;
@@ -1066,7 +1104,9 @@ interface AnalyticsState {
   totalBetVolumeUSDT: number;
   totalHouseEdgeUSDT: number;
   totalFreeSpinsClaimed: number;
+  totalWelcomeBonusesClaimed: number;
   trafficSources: Record<string, number>;
+  walletTypes: Record<string, number>;
 }
 
 export default function PlatformPage() {
@@ -1080,12 +1120,16 @@ export default function PlatformPage() {
   const [isDemoWallet, setIsDemoWallet] = useState<boolean>(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState<boolean>(false);
 
+  // OTOMATİK HOŞ GELDİN POP-UP
+  const [isWelcomeModalOpen, setIsWelcomeModalOpen] = useState<boolean>(false);
+
   const [isAdminModalOpen, setIsAdminModalOpen] = useState<boolean>(false);
   const [adminWithdrawAmount, setAdminWithdrawAmount] = useState<string>('10');
   const [isWrongNetwork, setIsWrongNetwork] = useState<boolean>(false);
   const [securityAlertMsg, setSecurityAlertMsg] = useState<string | null>(null);
 
   const [balance, setBalance] = useState<number>(0.0);
+  const [bonusBalance, setBonusBalance] = useState<number>(0.0); // 3 USDT Kilitli Oyun Bonusu
   const [walletUSDT, setWalletUSDT] = useState<number>(0.0);
   const [walletBNB, setWalletBNB] = useState<number>(0.0);
   const [betInput, setBetInput] = useState<string>('1.0');
@@ -1150,9 +1194,11 @@ export default function PlatformPage() {
     { rank: 5, name: 'AnadoluKaplani', wins: 22, profit: 43.80, badge: '⭐' }
   ]);
 
-  // DERİN CANLI ANALİTİK & KAYNAK STATE
+  // KALICI & KAPSAMLI CANLI ANALİTİK STATE
   const [analytics, setAnalytics] = useState<AnalyticsState>({
     totalVisitors: 0,
+    activeVisitorsNow: 1,
+    returningVisitors: 0,
     visitorsWithWalletExtension: 0,
     visitorsWithoutWallet: 0,
     clickedConnectWalletCount: 0,
@@ -1162,7 +1208,9 @@ export default function PlatformPage() {
     totalBetVolumeUSDT: 0.0,
     totalHouseEdgeUSDT: 0.0,
     totalFreeSpinsClaimed: 0,
-    trafficSources: {}
+    totalWelcomeBonusesClaimed: 0,
+    trafficSources: {},
+    walletTypes: {}
   });
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState<boolean>(false);
 
@@ -1185,6 +1233,7 @@ export default function PlatformPage() {
 
   const isRollingRef = useRef<boolean>(false);
   const currentBetRef = useRef<number>(0);
+  const sessionIdRef = useRef<string>('');
 
   // WHITELIST TABANLI KESİN ADMİN YETKİSİ
   const isContractOwner = useMemo(() => {
@@ -1193,21 +1242,35 @@ export default function PlatformPage() {
     return ADMIN_WHITELIST.includes(cleanAccount);
   }, [account]);
 
-  // DERİN ANALİTİK TETİKLEME MOTORU
+  // TOPLAM KULLANILABİLİR BAKİYE (GERÇEK + BONUS)
+  const totalPlayableBalance = useMemo(() => {
+    return +(balance + bonusBalance).toFixed(2);
+  }, [balance, bonusBalance]);
+
+  // DERİN ANALİTİK TETİKLEME MOTORU (KALICI SAYAÇ KORUMASIYLA)
   const trackAnalyticsEvent = async (
-    eventType: 'VISIT' | 'CLICK_CONNECT_WALLET' | 'CONNECT_WALLET' | 'CLICK_PLAY_GAME' | 'GAME_PLAY' | 'SPIN_CLAIMED', 
-    payload?: { hasWallet?: boolean; walletAddress?: string; betAmount?: number; source?: string }
+    eventType: 'VISIT' | 'CLICK_CONNECT_WALLET' | 'CONNECT_WALLET' | 'CLAIM_WELCOME_BONUS' | 'CLICK_PLAY_GAME' | 'GAME_PLAY' | 'SPIN_CLAIMED', 
+    payload?: { hasWallet?: boolean; walletType?: string; walletAddress?: string; betAmount?: number; source?: string; isReturning?: boolean }
   ) => {
     try {
+      let localTotalVis = 0;
+      if (typeof window !== 'undefined') {
+        localTotalVis = parseInt(localStorage.getItem('dd_perm_total_visitors') || '0', 10);
+      }
+
       await fetch('/api/analytics', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           eventType,
+          sessionId: sessionIdRef.current,
+          isReturning: payload?.isReturning,
           hasWallet: payload?.hasWallet,
+          walletType: payload?.walletType,
           walletAddress: payload?.walletAddress,
           betAmount: payload?.betAmount,
-          source: payload?.source
+          source: payload?.source,
+          clientSyncStats: { totalVisitors: localTotalVis }
         })
       });
     } catch (e) {}
@@ -1222,16 +1285,20 @@ export default function PlatformPage() {
       if (data.success) {
         setAnalytics({
           totalVisitors: data.totalVisitors,
+          activeVisitorsNow: data.activeVisitorsNow || 1,
+          returningVisitors: data.returningVisitors || 0,
           visitorsWithWalletExtension: data.visitorsWithWalletExtension || 0,
           visitorsWithoutWallet: data.visitorsWithoutWallet || 0,
           clickedConnectWalletCount: data.clickedConnectWalletCount || 0,
-          connectedWalletsCount: data.connectedWalletsCount,
+          connectedWalletsCount: data.connectedWalletsCount || 0,
           clickedPlayGameCount: data.clickedPlayGameCount || 0,
-          totalGamesPlayed: data.totalGamesPlayed,
-          totalBetVolumeUSDT: data.totalBetVolumeUSDT,
-          totalHouseEdgeUSDT: data.totalHouseEdgeUSDT,
-          totalFreeSpinsClaimed: data.totalFreeSpinsClaimed,
-          trafficSources: data.trafficSources || {}
+          totalGamesPlayed: data.totalGamesPlayed || 0,
+          totalBetVolumeUSDT: data.totalBetVolumeUSDT || 0.0,
+          totalHouseEdgeUSDT: data.totalHouseEdgeUSDT || 0.0,
+          totalFreeSpinsClaimed: data.totalFreeSpinsClaimed || 0,
+          totalWelcomeBonusesClaimed: data.totalWelcomeBonusesClaimed || 0,
+          trafficSources: data.trafficSources || {},
+          walletTypes: data.walletTypes || {}
         });
       }
     } catch (e) {}
@@ -1283,15 +1350,41 @@ export default function PlatformPage() {
     return false;
   };
 
-  const updatePersistentBalance = (newBal: number, userAddr?: string) => {
+  const updatePersistentBalance = (newBal: number, newBonusBal?: number, userAddr?: string) => {
     const targetAddr = userAddr || account;
     const sanitizedBal = +Math.max(0, newBal).toFixed(2);
+    const sanitizedBonus = newBonusBal !== undefined ? +Math.max(0, newBonusBal).toFixed(2) : bonusBalance;
+    
     setBalance(sanitizedBal);
+    setBonusBalance(sanitizedBonus);
+
     if (targetAddr && typeof window !== 'undefined') {
-      const proofHash = generateTamperProofHash(targetAddr, sanitizedBal);
+      const proofHash = generateTamperProofHash(targetAddr, sanitizedBal, sanitizedBonus);
       localStorage.setItem(`dd_bal_${targetAddr.toLowerCase()}`, sanitizedBal.toString());
+      localStorage.setItem(`dd_bonus_${targetAddr.toLowerCase()}`, sanitizedBonus.toString());
       localStorage.setItem(`dd_proof_${targetAddr.toLowerCase()}`, proofHash);
     }
+  };
+
+  // BAHİS DÜŞME MOTORU (Önce bonustan, yetmezse gerçek bakiyeden harcar)
+  const deductBetFromBalances = (amount: number): boolean => {
+    if (amount > totalPlayableBalance) return false;
+    
+    let remainingToDeduct = amount;
+    let newBonus = bonusBalance;
+    let newReal = balance;
+
+    if (newBonus >= remainingToDeduct) {
+      newBonus = +(newBonus - remainingToDeduct).toFixed(2);
+      remainingToDeduct = 0;
+    } else {
+      remainingToDeduct = +(remainingToDeduct - newBonus).toFixed(2);
+      newBonus = 0;
+      newReal = +(newReal - remainingToDeduct).toFixed(2);
+    }
+
+    updatePersistentBalance(newReal, newBonus);
+    return true;
   };
 
   const updatePersistentStake = (newStake: number, newYield?: number, userAddr?: string) => {
@@ -1429,20 +1522,35 @@ export default function PlatformPage() {
       setWalletUSDT(+parseFloat(ethers.formatUnits(rawWalletBal, 18)).toFixed(2));
 
       const savedBal = localStorage.getItem(`dd_bal_${userAddress.toLowerCase()}`);
+      const savedBonus = localStorage.getItem(`dd_bonus_${userAddress.toLowerCase()}`);
       const savedProof = localStorage.getItem(`dd_proof_${userAddress.toLowerCase()}`);
 
       let currentBal = 0.0;
+      let currentBonus = 0.0;
+
       if (savedBal !== null && !isNaN(parseFloat(savedBal)) && savedProof) {
-        const expectedProof = generateTamperProofHash(userAddress, parseFloat(savedBal));
-        const localVal = parseFloat(savedBal);
+        const localReal = parseFloat(savedBal);
+        const localBonus = savedBonus ? parseFloat(savedBonus) : 0.0;
+        const expectedProof = generateTamperProofHash(userAddress, localReal, localBonus);
+        
         if (savedProof === expectedProof) {
-          currentBal = localVal;
+          currentBal = localReal;
+          currentBonus = localBonus;
         } else {
           triggerSecurityAlert('Manipülasyon Tespit Edildi!');
         }
       }
 
-      updatePersistentBalance(currentBal, userAddress);
+      // HOŞ GELDİN BONUSU (3.00 USDT) İLK BAĞLANTIDA HESABA YAZILIR
+      const welcomeClaimed = localStorage.getItem(`dd_welcome_claimed_${userAddress.toLowerCase()}`);
+      if (!welcomeClaimed && currentBonus === 0.0) {
+        currentBonus = WELCOME_BONUS_AMOUNT;
+        localStorage.setItem(`dd_welcome_claimed_${userAddress.toLowerCase()}`, 'true');
+        addTransaction('SPIN', '3.00 USDT Hoş Geldin Bonusu', WELCOME_BONUS_AMOUNT, undefined, userAddress);
+        trackAnalyticsEvent('CLAIM_WELCOME_BONUS', { walletAddress: userAddress });
+      }
+
+      updatePersistentBalance(currentBal, currentBonus, userAddress);
 
       if (typeof window !== 'undefined') {
         const urlParams = new URLSearchParams(window.location.search);
@@ -1451,7 +1559,7 @@ export default function PlatformPage() {
 
         if (refParam && !claimedRef && refParam.toLowerCase() !== userAddress.toLowerCase()) {
           currentBal += 0.50;
-          updatePersistentBalance(currentBal, userAddress);
+          updatePersistentBalance(currentBal, currentBonus, userAddress);
           addTransaction('REF_COMMISSION', 'Hoş Geldin Davet Bonusu', 0.50, undefined, userAddress);
           localStorage.setItem(`dd_ref_claimed_${userAddress.toLowerCase()}`, 'true');
 
@@ -1506,6 +1614,7 @@ export default function PlatformPage() {
           setAccount(null);
           setIsDemoWallet(false);
           setBalance(0);
+          setBonusBalance(0);
         }
       };
 
@@ -1527,13 +1636,32 @@ export default function PlatformPage() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // 1. Ziyaretçi Kaynağı (?src=binance) ve Cüzdan Taraması
+      // Benzersiz Oturum ID
+      let sid = sessionStorage.getItem('dd_sid');
+      if (!sid) {
+        sid = `s_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+        sessionStorage.setItem('dd_sid', sid);
+      }
+      sessionIdRef.current = sid;
+
+      // Ziyaretçi Taraması & Geri Dönen Kontrolü
       const win = window as any;
       const hasWeb3 = Boolean(win.ethereum || win.BinanceChain || win.okxwallet);
       const urlParams = new URLSearchParams(window.location.search);
       const sourceTag = urlParams.get('src') || 'Direct/Organik';
+      
+      const isReturningVisitor = Boolean(localStorage.getItem('dd_has_visited'));
+      if (!isReturningVisitor) {
+        localStorage.setItem('dd_has_visited', 'true');
+        // Yeni ziyaretçiye karşılama modalını otomatik aç
+        setTimeout(() => setIsWelcomeModalOpen(true), 900);
+      }
 
-      trackAnalyticsEvent('VISIT', { hasWallet: hasWeb3, source: sourceTag });
+      // Kümülatif yerel sayaç
+      const currentLocalVis = parseInt(localStorage.getItem('dd_perm_total_visitors') || '0', 10) + 1;
+      localStorage.setItem('dd_perm_total_visitors', currentLocalVis.toString());
+
+      trackAnalyticsEvent('VISIT', { hasWallet: hasWeb3, source: sourceTag, isReturning: isReturningVisitor });
 
       const savedLang = localStorage.getItem('dd_lang');
       if (savedLang && TRANSLATIONS[savedLang]) setLang(savedLang);
@@ -1750,16 +1878,17 @@ export default function PlatformPage() {
     initAudio();
     triggerTelegramHaptic('medium');
     setIsWalletModalOpen(false);
+    setIsWelcomeModalOpen(false);
 
     if (type === 'demo') {
       const randomHex = Array.from({ length: 40 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
       const demoAddr = `0x${randomHex}`;
       setAccount(demoAddr);
       setIsDemoWallet(true);
-      updatePersistentBalance(100.0, demoAddr);
+      updatePersistentBalance(100.0, WELCOME_BONUS_AMOUNT, demoAddr);
       addTransaction('DEPOSIT', 'Demo Başlangıç Bakiyesi', 100.0, undefined, demoAddr);
       checkSpinCooldown(demoAddr);
-      trackAnalyticsEvent('CONNECT_WALLET', { walletAddress: demoAddr });
+      trackAnalyticsEvent('CONNECT_WALLET', { walletAddress: demoAddr, walletType: 'demo' });
       return;
     }
 
@@ -1790,7 +1919,7 @@ export default function PlatformPage() {
           setAccount(accounts[0]);
           setIsDemoWallet(false);
           await syncBlockchainBalances(accounts[0]);
-          trackAnalyticsEvent('CONNECT_WALLET', { walletAddress: accounts[0] });
+          trackAnalyticsEvent('CONNECT_WALLET', { walletAddress: accounts[0], walletType: type });
           return;
         }
       } catch (err: any) {
@@ -1819,7 +1948,10 @@ export default function PlatformPage() {
       setTxSuccessMsg(`+${val} USDT Kasaya Eklendi!`);
       addTransaction('DEPOSIT', 'USDT Yatırma', val);
     } else {
-      if (val > balance) return alert('Yetersiz bakiye!');
+      // ÇEKİM YALNIZCA GERÇEK BAKİYEDEN YAPILABİLİR
+      if (val > balance) {
+        return alert(`Yetersiz çekilebilir bakiye! (Bonus bakiyesi doğrudan çekilemez, oyunlarda kullanılabilir).`);
+      }
       const nBal = +(balance - val).toFixed(2);
       updatePersistentBalance(nBal);
       setTxSuccessMsg(`-${val} USDT Çekildi!`);
@@ -1892,6 +2024,7 @@ export default function PlatformPage() {
         if (isPlayerWin) {
           triggerConfetti();
           playWinSound();
+          // Kazanılan net tutar gerçek çekilebilir bakiyeye eklenir
           const nBal = +(balance + payout).toFixed(2);
           updatePersistentBalance(nBal);
           addTransaction('GAME_WIN', `Zar Galibiyeti (${p1} vs ${p2})`, payout);
@@ -1917,14 +2050,16 @@ export default function PlatformPage() {
     const amount = parseFloat(betInput.replace(',', '.'));
     if (isNaN(amount) || amount < MIN_BET) return alert(`Minimum bahis ${MIN_BET} USDT olmalıdır!`);
     if (amount > MAX_PLAYER_BET) return alert(`Maksimum bahis sınırı ${MAX_PLAYER_BET} USDT'dir!`);
-    if (amount > balance) return alert('Yetersiz bakiye! Lütfen kasaya USDT yatırın.');
+    
+    if (amount > totalPlayableBalance) {
+      return alert('Yetersiz bakiye! Kasaya USDT yatırın veya hoş geldin bonusunuzu kullanın.');
+    }
 
     initAudio();
     triggerTelegramHaptic('heavy');
     currentBetRef.current = amount;
     setIsGameLocked(true);
-    const nBal = +(balance - amount).toFixed(2);
-    updatePersistentBalance(nBal);
+    deductBetFromBalances(amount);
       
     const randomDuration = Math.floor(Math.random() * 5) + 5;
     setActiveGame(true);
@@ -1955,14 +2090,16 @@ export default function PlatformPage() {
     trackAnalyticsEvent('CLICK_PLAY_GAME');
     if (isRateLimited()) return;
     if (isGameLocked) return alert(t.inGameLock);
-    if (room.betAmount > balance) return alert('Yetersiz bakiye! Lütfen kasaya USDT yatırın.');
+    
+    if (room.betAmount > totalPlayableBalance) {
+      return alert('Yetersiz bakiye! Kasaya USDT yatırın.');
+    }
 
     initAudio();
     triggerTelegramHaptic('heavy');
     currentBetRef.current = room.betAmount;
     setIsGameLocked(true);
-    const nBal = +(balance - room.betAmount).toFixed(2);
-    updatePersistentBalance(nBal);
+    deductBetFromBalances(room.betAmount);
       
     setActiveGame(true);
     executeDiceDuel(room.betAmount, room.creator);
@@ -1981,7 +2118,6 @@ export default function PlatformPage() {
     const playerChoiceLabel = coinChoice === 'YAZI' ? t.headsName : t.tailsName;
     setGameResult({ opponent: sanitizeInput(opponentName), p1Score: playerChoiceLabel, p2Score: null, winner: null });
 
-    // Analitik: Bahis ve Oyun Kaydı
     trackAnalyticsEvent('GAME_PLAY', { betAmount: amount });
 
     try {
@@ -2058,14 +2194,16 @@ export default function PlatformPage() {
     const amount = parseFloat(betInput.replace(',', '.'));
     if (isNaN(amount) || amount < MIN_BET) return alert(`Minimum bahis ${MIN_BET} USDT olmalıdır!`);
     if (amount > MAX_PLAYER_BET) return alert(`Maksimum bahis sınırı ${MAX_PLAYER_BET} USDT'dir!`);
-    if (amount > balance) return alert('Yetersiz bakiye! Lütfen kasaya USDT yatırın.');
+    
+    if (amount > totalPlayableBalance) {
+      return alert('Yetersiz bakiye! Lütfen kasaya USDT yatırın.');
+    }
 
     initAudio();
     triggerTelegramHaptic('heavy');
     currentBetRef.current = amount;
     setIsGameLocked(true);
-    const nBal = +(balance - amount).toFixed(2);
-    updatePersistentBalance(nBal);
+    deductBetFromBalances(amount);
 
     const randomDuration = Math.floor(Math.random() * 5) + 5;
     setActiveGame(true);
@@ -2099,14 +2237,16 @@ export default function PlatformPage() {
     const amount = parseFloat(betInput.replace(',', '.'));
     if (isNaN(amount) || amount < MIN_BET) return alert(`Minimum bahis ${MIN_BET} USDT olmalıdır!`);
     if (amount > MAX_PLAYER_BET) return alert(`Maksimum bahis sınırı ${MAX_PLAYER_BET} USDT'dir!`);
-    if (amount > balance) return alert('Yetersiz bakiye! Lütfen kasaya USDT yatırın.');
+    
+    if (amount > totalPlayableBalance) {
+      return alert('Yetersiz bakiye! Lütfen kasaya USDT yatırın.');
+    }
 
     initAudio();
     triggerTelegramHaptic('heavy');
     currentBetRef.current = amount;
     setIsGameLocked(true);
-    const nBal = +(balance - amount).toFixed(2);
-    updatePersistentBalance(nBal);
+    deductBetFromBalances(amount);
 
     setActiveGame(true);
     setIsRolling(true);
@@ -2118,7 +2258,6 @@ export default function PlatformPage() {
     const houseName = lang === 'tr' ? 'Kasa' : 'House';
     setGameResult({ opponent: houseName, p1Score: rouletteChoice, p2Score: null, winner: null });
 
-    // Analitik: Bahis ve Oyun Kaydı
     trackAnalyticsEvent('GAME_PLAY', { betAmount: amount });
 
     try {
@@ -2195,16 +2334,17 @@ export default function PlatformPage() {
     const amount = parseFloat(betInput.replace(',', '.'));
     if (isNaN(amount) || amount < MIN_BET) return alert(`Minimum bahis ${MIN_BET} USDT olmalıdır!`);
     if (amount > MAX_PLAYER_BET) return alert(`Maksimum bahis sınırı ${MAX_PLAYER_BET} USDT'dir!`);
-    if (amount > balance) return alert('Yetersiz bakiye! Lütfen kasaya USDT yatırın.');
+    
+    if (amount > totalPlayableBalance) {
+      return alert('Yetersiz bakiye! Lütfen kasaya USDT yatırın.');
+    }
 
     initAudio();
     triggerTelegramHaptic('heavy');
     setMinesBetAmount(amount);
     setIsGameLocked(true);
-    const nBal = +(balance - amount).toFixed(2);
-    updatePersistentBalance(nBal);
+    deductBetFromBalances(amount);
 
-    // Analitik: Bahis ve Oyun Kaydı
     trackAnalyticsEvent('GAME_PLAY', { betAmount: amount });
 
     const cleanGrid = Array.from({ length: 25 }, (_, i) => ({
@@ -2317,7 +2457,6 @@ export default function PlatformPage() {
     setIsSpinning(true);
     setSpinRewardMsg(null);
 
-    // Analitik: Çark Çevrilmesini Say
     trackAnalyticsEvent('SPIN_CLAIMED');
 
     const rand = Math.random() * 100;
@@ -2336,8 +2475,8 @@ export default function PlatformPage() {
     } else if (rand < 80) {
       outcomeType = 'COUPON';
       rewardText = '🎟️ +0.50 USDT Oyun Bonusu Eklendi!';
-      const nBal = +(balance + 0.50).toFixed(2);
-      updatePersistentBalance(nBal);
+      const nBonus = +(bonusBalance + 0.50).toFixed(2);
+      updatePersistentBalance(balance, nBonus);
       addTransaction('SPIN', '0.50 USDT Oyun Kuponu', 0.50);
     } else if (rand < 92) {
       outcomeType = 'BOOST';
@@ -2380,7 +2519,7 @@ export default function PlatformPage() {
   const handleStakeAdd = () => {
     if (isRateLimited()) return;
     const val = parseFloat(stakeInput.replace(',', '.'));
-    if (isNaN(val) || val <= 0 || val > balance) return alert('Yetersiz bakiye!');
+    if (isNaN(val) || val <= 0 || val > balance) return alert('Yetersiz bakiye! (Staking yalnızca gerçek USDT ile yapılabilir).');
     const nBal = +(balance - val).toFixed(2);
     const nStake = +(stakedAmount + val).toFixed(2);
 
@@ -2642,10 +2781,19 @@ export default function PlatformPage() {
               <MessageCircle className="w-4 h-4" />
             </button>
 
+            {/* Bakiye Kutusu (Gerçek USDT + Bonus USDT) */}
             <div className="flex items-center bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-inner">
-              <div className="flex items-center gap-1 px-2.5 py-2 text-xs font-bold text-amber-400">
-                <Wallet className="w-3.5 h-3.5 text-slate-400" />
-                <span>{balance.toFixed(2)} USDT</span>
+              <div className="flex flex-col px-2.5 py-1 text-right">
+                <div className="flex items-center gap-1 text-xs font-bold text-amber-400">
+                  <Wallet className="w-3 h-3 text-slate-400" />
+                  <span>{balance.toFixed(2)} USDT</span>
+                </div>
+                {bonusBalance > 0 && (
+                  <div className="text-[9px] text-purple-300 font-semibold flex items-center gap-0.5 justify-end">
+                    <Sparkles className="w-2.5 h-2.5 text-purple-400" />
+                    <span>+{bonusBalance.toFixed(2)} Bonus</span>
+                  </div>
+                )}
               </div>
               <button 
                 onClick={() => { setIsModalOpen(true); triggerTelegramHaptic('medium'); }}
@@ -2661,7 +2809,7 @@ export default function PlatformPage() {
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                   <span>{account.substring(0, 5)}...</span>
                 </div>
-                <div onClick={() => { setAccount(null); setIsDemoWallet(false); setBalance(0); }} className="text-slate-400 hover:text-rose-400 ml-2 p-0.5 transition cursor-pointer">
+                <div onClick={() => { setAccount(null); setIsDemoWallet(false); setBalance(0); setBonusBalance(0); }} className="text-slate-400 hover:text-rose-400 ml-2 p-0.5 transition cursor-pointer">
                   <LogOut className="w-3.5 h-3.5" />
                 </div>
               </div>
@@ -2959,7 +3107,7 @@ export default function PlatformPage() {
                   min="0.5" 
                   max="20" 
                   value={betInput} 
-                    onChange={(e) => handleBetInputChange(e.target.value)} 
+                  onChange={(e) => handleBetInputChange(e.target.value)} 
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm font-bold text-white focus:outline-none pr-16" 
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-amber-400">USDT</span>
@@ -3148,6 +3296,49 @@ export default function PlatformPage() {
           </div>
         </footer>
 
+        {/* 0. OTOMATİK HOŞ GELDİN & 3 USDT BONUS MODALI */}
+        <AnimatePresence>
+          {isWelcomeModalOpen && !account && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+              <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="bg-slate-900 border border-indigo-500/50 rounded-3xl p-6 w-full max-w-md shadow-2xl relative text-center space-y-4">
+                <button onClick={() => setIsWelcomeModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white transition"><X className="w-5 h-5" /></button>
+                
+                <div className="w-16 h-16 rounded-3xl bg-indigo-600/20 border border-indigo-500/40 text-indigo-400 flex items-center justify-center mx-auto text-3xl shadow-lg">
+                  🎁
+                </div>
+
+                <div className="space-y-1">
+                  <h3 className="font-black text-lg text-white">{t.welcomePopupTitle}</h3>
+                  <p className="text-xs text-slate-300 leading-relaxed">{t.welcomePopupDesc}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 p-3 bg-slate-950 border border-slate-800 rounded-2xl text-left">
+                  <div className="space-y-0.5">
+                    <span className="text-[10px] text-slate-500 font-semibold block">Hoş Geldin Bakiyesi</span>
+                    <span className="text-sm font-black text-purple-400">+3.00 USDT</span>
+                  </div>
+                  <div className="space-y-0.5">
+                    <span className="text-[10px] text-slate-500 font-semibold block">Günlük Çark</span>
+                    <span className="text-sm font-black text-amber-400">1 Ücretsiz Çevir</span>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => {
+                    setIsWelcomeModalOpen(false);
+                    trackAnalyticsEvent('CLICK_CONNECT_WALLET');
+                    setIsWalletModalOpen(true);
+                  }}
+                  className="w-full py-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white font-black text-xs md:text-sm rounded-xl transition shadow-lg shadow-indigo-600/30 active:scale-95 flex items-center justify-center gap-2"
+                >
+                  <Sparkles className="w-4 h-4 text-amber-300" />
+                  <span>{t.claimBonusBtn}</span>
+                </button>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
         {/* 1. Kasa Yönetim Modalı */}
         <AnimatePresence>
           {isModalOpen && (
@@ -3183,6 +3374,12 @@ export default function PlatformPage() {
                     ))}
                   </div>
 
+                  {bonusBalance > 0 && modalTab === 'withdraw' && (
+                    <div className="p-2.5 bg-purple-950/30 border border-purple-800/40 rounded-xl text-[10px] text-purple-300 leading-tight">
+                      ℹ️ {t.bonusBalLabel}: <strong>{bonusBalance.toFixed(2)} USDT</strong> doğrudan çekilemez; oyunlarda kazanılan net kârlar ana bakiyeye aktarılır.
+                    </div>
+                  )}
+
                   {txSuccessMsg && <div className="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 p-2.5 rounded-xl"><CheckCircle2 className="w-4 h-4" /><span>{txSuccessMsg}</span></div>}
 
                   <button 
@@ -3199,7 +3396,7 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 2. DERİN CANLI ANALİTİK, KAYNAK TAKİBİ & KURUCU ADMİN KASA MODALI */}
+        {/* 2. KALICI CANLI ANALİTİK, ÇOK BOYUTLU KAYNAK & ADMİN PANELİ */}
         <AnimatePresence>
           {isAdminModalOpen && isContractOwner && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
@@ -3227,6 +3424,16 @@ export default function PlatformPage() {
                     <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><Eye className="w-3.5 h-3.5 text-sky-400" /> Toplam Ziyaretçi</span>
                     <span className="text-base font-black text-sky-300">{analytics.totalVisitors}</span>
                   </div>
+
+                  <div className="p-3 bg-slate-950 border border-emerald-900/60 rounded-2xl">
+                    <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" /> Anlık Canlı (5dk)</span>
+                    <span className="text-base font-black text-emerald-400">{analytics.activeVisitorsNow}</span>
+                  </div>
+
+                  <div className="p-3 bg-slate-950 border border-indigo-900/60 rounded-2xl">
+                    <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><RotateCcw className="w-3.5 h-3.5 text-indigo-400" /> Geri Dönen Ziyaretçi</span>
+                    <span className="text-base font-black text-indigo-300">{analytics.returningVisitors}</span>
+                  </div>
                   
                   <div className="p-3 bg-slate-950 border border-emerald-900/60 rounded-2xl">
                     <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><Laptop className="w-3.5 h-3.5 text-emerald-400" /> Cüzdanı Olanlar</span>
@@ -3246,6 +3453,11 @@ export default function PlatformPage() {
                   <div className="p-3 bg-slate-950 border border-indigo-900/60 rounded-2xl">
                     <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><UserCheck className="w-3.5 h-3.5 text-indigo-400" /> Bağlanan Cüzdan</span>
                     <span className="text-base font-black text-indigo-300">{analytics.connectedWalletsCount}</span>
+                  </div>
+
+                  <div className="p-3 bg-slate-950 border border-purple-900/60 rounded-2xl">
+                    <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><Gift className="w-3.5 h-3.5 text-purple-400" /> Hoş Geldin Bonusu Alan</span>
+                    <span className="text-base font-black text-purple-300">{analytics.totalWelcomeBonusesClaimed}</span>
                   </div>
 
                   <div className="p-3 bg-slate-950 border border-purple-900/60 rounded-2xl">
@@ -3269,22 +3481,22 @@ export default function PlatformPage() {
                   </div>
                 </div>
 
-                {/* CANLI TRAFİK KAYNAKLARI (KAMPANYA / TWEET ANALİZİ) */}
+                {/* CANLI TRAFİK KAYNAKLARI (KAMPANYA / TWEET / TELEGRAM ANALİZİ) */}
                 <div className="p-3.5 bg-slate-950 border border-slate-800 rounded-2xl space-y-2">
                   <div className="flex items-center justify-between text-xs font-bold text-slate-200">
                     <span className="flex items-center gap-1.5"><Compass className="w-4 h-4 text-amber-400" /> Trafik Kaynakları Analizi</span>
-                    <span className="text-[10px] text-slate-400 font-normal">Link Formatı: ?src=etiket_adi</span>
+                    <span className="text-[10px] text-slate-400 font-normal">Format: ?src=kanal_hesap_post</span>
                   </div>
 
                   {Object.keys(analytics.trafficSources).length === 0 ? (
                     <div className="text-[11px] text-slate-500 italic py-1">Henüz kayıtlı kaynak verisi bulunmuyor.</div>
                   ) : (
-                    <div className="space-y-1.5 pt-1">
+                    <div className="space-y-1.5 pt-1 max-h-40 overflow-y-auto pr-1">
                       {Object.entries(analytics.trafficSources).map(([srcName, count]) => (
                         <div key={srcName} className="flex items-center justify-between p-2 bg-slate-900 border border-slate-800 rounded-xl text-xs">
-                          <div className="flex items-center gap-2 font-mono text-indigo-300">
+                          <div className="flex items-center gap-2 font-mono text-indigo-300 truncate max-w-[280px]">
                             <Link2 className="w-3.5 h-3.5 text-slate-500" />
-                            <span>{srcName}</span>
+                            <span className="truncate">{srcName}</span>
                           </div>
                           <div className="flex items-center gap-1.5 font-bold">
                             <span className="text-white">{count}</span>
@@ -3294,6 +3506,29 @@ export default function PlatformPage() {
                       ))}
                     </div>
                   )}
+                </div>
+
+                {/* CÜZDAN TÜRLERİ DAĞILIMI */}
+                <div className="p-3.5 bg-slate-950 border border-slate-800 rounded-2xl space-y-2">
+                  <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5"><Wallet className="w-4 h-4 text-purple-400" /> Bağlanan Cüzdan Türleri</span>
+                  <div className="grid grid-cols-4 gap-2 text-center pt-1">
+                    <div className="p-2 bg-slate-900 border border-slate-800 rounded-xl">
+                      <span className="text-[10px] text-slate-400 block">MetaMask</span>
+                      <span className="text-xs font-bold text-orange-400">{analytics.walletTypes.metamask || 0}</span>
+                    </div>
+                    <div className="p-2 bg-slate-900 border border-slate-800 rounded-xl">
+                      <span className="text-[10px] text-slate-400 block">Binance</span>
+                      <span className="text-xs font-bold text-amber-400">{analytics.walletTypes.binance || 0}</span>
+                    </div>
+                    <div className="p-2 bg-slate-900 border border-slate-800 rounded-xl">
+                      <span className="text-[10px] text-slate-400 block">OKX</span>
+                      <span className="text-xs font-bold text-slate-200">{analytics.walletTypes.okx || 0}</span>
+                    </div>
+                    <div className="p-2 bg-slate-900 border border-slate-800 rounded-xl">
+                      <span className="text-[10px] text-slate-400 block">Diğer</span>
+                      <span className="text-xs font-bold text-purple-400">{analytics.walletTypes.other || 0}</span>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-2 pt-2 border-t border-slate-800">
