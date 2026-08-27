@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server';
 
-// Sunucu tarafı derin kullanıcı davranış, huni ve kaynak takip deposu
-let analyticsData = {
+interface ActiveSession {
+  lastSeen: number;
+  source: string;
+}
+
+let analyticsState = {
   totalVisitors: 0,
+  returningVisitors: 0,
   visitorsWithWalletExtension: 0,
   visitorsWithoutWallet: 0,
   clickedConnectWalletCount: 0,
@@ -12,26 +17,44 @@ let analyticsData = {
   totalBetVolumeUSDT: 0.0,
   totalHouseEdgeUSDT: 0.0,
   totalFreeSpinsClaimed: 0,
+  totalWelcomeBonusesClaimed: 0,
   trafficSources: {} as Record<string, number>,
+  walletTypes: {
+    metamask: 0,
+    binance: 0,
+    okx: 0,
+    other: 0
+  },
+  activeSessions: {} as Record<string, ActiveSession>,
   lastUpdated: Date.now()
 };
 
 export async function GET() {
   try {
+    const now = Date.now();
+    const activeThreshold = now - 5 * 60 * 1000;
+    const activeVisitorsCount = Object.values(analyticsState.activeSessions).filter(
+      (s) => s.lastSeen > activeThreshold
+    ).length;
+
     return NextResponse.json({
       success: true,
-      totalVisitors: analyticsData.totalVisitors,
-      visitorsWithWalletExtension: analyticsData.visitorsWithWalletExtension,
-      visitorsWithoutWallet: analyticsData.visitorsWithoutWallet,
-      clickedConnectWalletCount: analyticsData.clickedConnectWalletCount,
-      connectedWalletsCount: analyticsData.uniqueWalletsConnected.size,
-      clickedPlayGameCount: analyticsData.clickedPlayGameCount,
-      totalGamesPlayed: analyticsData.totalGamesPlayed,
-      totalBetVolumeUSDT: +analyticsData.totalBetVolumeUSDT.toFixed(2),
-      totalHouseEdgeUSDT: +analyticsData.totalHouseEdgeUSDT.toFixed(2),
-      totalFreeSpinsClaimed: analyticsData.totalFreeSpinsClaimed,
-      trafficSources: analyticsData.trafficSources,
-      lastUpdated: analyticsData.lastUpdated
+      totalVisitors: analyticsState.totalVisitors,
+      activeVisitorsNow: Math.max(activeVisitorsCount, 1),
+      returningVisitors: analyticsState.returningVisitors,
+      visitorsWithWalletExtension: analyticsState.visitorsWithWalletExtension,
+      visitorsWithoutWallet: analyticsState.visitorsWithoutWallet,
+      clickedConnectWalletCount: analyticsState.clickedConnectWalletCount,
+      connectedWalletsCount: analyticsState.uniqueWalletsConnected.size,
+      clickedPlayGameCount: analyticsState.clickedPlayGameCount,
+      totalGamesPlayed: analyticsState.totalGamesPlayed,
+      totalBetVolumeUSDT: +analyticsState.totalBetVolumeUSDT.toFixed(2),
+      totalHouseEdgeUSDT: +analyticsState.totalHouseEdgeUSDT.toFixed(2),
+      totalFreeSpinsClaimed: analyticsState.totalFreeSpinsClaimed,
+      totalWelcomeBonusesClaimed: analyticsState.totalWelcomeBonusesClaimed,
+      trafficSources: analyticsState.trafficSources,
+      walletTypes: analyticsState.walletTypes,
+      lastUpdated: analyticsState.lastUpdated
     });
   } catch (error: any) {
     return NextResponse.json({ error: 'İstatistikler okunamadı.' }, { status: 500 });
@@ -41,37 +64,69 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { eventType, hasWallet, walletAddress, betAmount, source } = body;
+    const { 
+      eventType, 
+      sessionId,
+      isReturning, 
+      hasWallet, 
+      walletType,
+      walletAddress, 
+      betAmount, 
+      source,
+      clientSyncStats
+    } = body;
 
-    analyticsData.lastUpdated = Date.now();
+    analyticsState.lastUpdated = Date.now();
+
+    if (clientSyncStats) {
+      if (clientSyncStats.totalVisitors > analyticsState.totalVisitors) {
+        analyticsState.totalVisitors = clientSyncStats.totalVisitors;
+      }
+    }
+
+    if (sessionId) {
+      analyticsState.activeSessions[sessionId] = {
+        lastSeen: Date.now(),
+        source: source || 'Direct/Organik'
+      };
+    }
 
     if (eventType === 'VISIT') {
-      analyticsData.totalVisitors += 1;
+      analyticsState.totalVisitors += 1;
+      if (isReturning) {
+        analyticsState.returningVisitors += 1;
+      }
       if (hasWallet) {
-        analyticsData.visitorsWithWalletExtension += 1;
+        analyticsState.visitorsWithWalletExtension += 1;
       } else {
-        analyticsData.visitorsWithoutWallet += 1;
+        analyticsState.visitorsWithoutWallet += 1;
       }
 
-      // Kaynak Takibi (?src=binance vb.)
-      const cleanSource = source ? String(source).replace(/[^a-zA-Z0-9_-]/g, '').substring(0, 30) : 'Direct/Organik';
-      analyticsData.trafficSources[cleanSource] = (analyticsData.trafficSources[cleanSource] || 0) + 1;
+      const cleanSource = source ? String(source).replace(/[^a-zA-Z0-9_-]/g, '').substring(0, 40) : 'Direct/Organik';
+      analyticsState.trafficSources[cleanSource] = (analyticsState.trafficSources[cleanSource] || 0) + 1;
 
     } else if (eventType === 'CLICK_CONNECT_WALLET') {
-      analyticsData.clickedConnectWalletCount += 1;
-    } else if (eventType === 'CONNECT_WALLET' && walletAddress) {
-      analyticsData.uniqueWalletsConnected.add(walletAddress.toLowerCase());
+      analyticsState.clickedConnectWalletCount += 1;
+    } else if (eventType === 'CONNECT_WALLET') {
+      if (walletAddress) {
+        analyticsState.uniqueWalletsConnected.add(walletAddress.toLowerCase());
+      }
+      if (walletType && (walletType in analyticsState.walletTypes)) {
+        analyticsState.walletTypes[walletType as keyof typeof analyticsState.walletTypes] += 1;
+      }
+    } else if (eventType === 'CLAIM_WELCOME_BONUS') {
+      analyticsState.totalWelcomeBonusesClaimed += 1;
     } else if (eventType === 'CLICK_PLAY_GAME') {
-      analyticsData.clickedPlayGameCount += 1;
+      analyticsState.clickedPlayGameCount += 1;
     } else if (eventType === 'GAME_PLAY') {
-      analyticsData.totalGamesPlayed += 1;
+      analyticsState.totalGamesPlayed += 1;
       const bet = parseFloat(betAmount || '0');
       if (!isNaN(bet) && bet > 0) {
-        analyticsData.totalBetVolumeUSDT += bet;
-        analyticsData.totalHouseEdgeUSDT += bet * 0.03;
+        analyticsState.totalBetVolumeUSDT += bet;
+        analyticsState.totalHouseEdgeUSDT += bet * 0.03;
       }
     } else if (eventType === 'SPIN_CLAIMED') {
-      analyticsData.totalFreeSpinsClaimed += 1;
+      analyticsState.totalFreeSpinsClaimed += 1;
     }
 
     return NextResponse.json({ success: true });
