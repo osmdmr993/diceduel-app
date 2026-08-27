@@ -13,7 +13,7 @@ import {
   MessageCircle, Info, ChevronDown, Loader2, Clock, Lock, Unlock, ExternalLink, 
   Volume2, VolumeX, Crown, AlertTriangle, Medal, Bomb, Gem, Play, ShieldAlert, Timer, Users,
   BarChart3, Eye, UserCheck, HelpCircle, RefreshCw, MousePointerClick, Smartphone, Laptop,
-  Compass, Link2, Sparkle, Zap, Radio
+  Compass, Link2, Sparkle, Zap, Radio, Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -1112,7 +1112,7 @@ export default function PlatformPage() {
   const [securityAlertMsg, setSecurityAlertMsg] = useState<string | null>(null);
 
   const [balance, setBalance] = useState<number>(0.0);
-  const [bonusBalance, setBonusBalance] = useState<number>(0.0); // 3 USDT Kilitli Oyun Bonusu
+  const [bonusBalance, setBonusBalance] = useState<number>(0.0);
   const [walletUSDT, setWalletUSDT] = useState<number>(0.0);
   const [walletBNB, setWalletBNB] = useState<number>(0.0);
   const [betInput, setBetInput] = useState<string>('1.0');
@@ -1180,7 +1180,7 @@ export default function PlatformPage() {
   // KALICI CANLI ANALİTİK STATE
   const [analytics, setAnalytics] = useState<AnalyticsState>({
     totalVisitors: 0,
-    activeVisitorsNow: 1,
+    activeVisitorsNow: 0,
     returningVisitors: 0,
     visitorsWithWalletExtension: 0,
     visitorsWithoutWallet: 0,
@@ -1225,22 +1225,21 @@ export default function PlatformPage() {
     return ADMIN_WHITELIST.includes(cleanAccount);
   }, [account]);
 
-  // TOPLAM KULLANILABİLİR BAKİYE (GERÇEK + BONUS)
   const totalPlayableBalance = useMemo(() => {
     return +(balance + bonusBalance).toFixed(2);
   }, [balance, bonusBalance]);
 
-  // DERİN ANALİTİK TETİKLEME MOTORU
+  // DERİN ANALİTİK TETİKLEME MOTORU (ADMİN KALKANI & TEKİL OTURUM KORUMASI)
   const trackAnalyticsEvent = async (
     eventType: 'VISIT' | 'CLICK_CONNECT_WALLET' | 'CONNECT_WALLET' | 'CLAIM_WELCOME_BONUS' | 'CLICK_PLAY_GAME' | 'GAME_PLAY' | 'SPIN_CLAIMED', 
     payload?: { hasWallet?: boolean; walletType?: string; walletAddress?: string; betAmount?: number; source?: string; isReturning?: boolean }
   ) => {
-    try {
-      let localTotalVis = 0;
-      if (typeof window !== 'undefined') {
-        localTotalVis = parseInt(localStorage.getItem('dd_perm_total_visitors') || '0', 10);
-      }
+    // ADMİN İŞLEMLERİNİ ANALİTİĞE SAYDIRMA (FİLTRE)
+    if (isContractOwner || (payload?.walletAddress && ADMIN_WHITELIST.includes(payload.walletAddress.toLowerCase()))) {
+      return;
+    }
 
+    try {
       await fetch('/api/analytics', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1253,7 +1252,7 @@ export default function PlatformPage() {
           walletAddress: payload?.walletAddress,
           betAmount: payload?.betAmount,
           source: payload?.source,
-          clientSyncStats: { totalVisitors: localTotalVis }
+          isAdmin: isContractOwner
         })
       });
     } catch (e) {}
@@ -1267,8 +1266,8 @@ export default function PlatformPage() {
       const data = await res.json();
       if (data.success) {
         setAnalytics({
-          totalVisitors: data.totalVisitors,
-          activeVisitorsNow: data.activeVisitorsNow || 1,
+          totalVisitors: data.totalVisitors || 0,
+          activeVisitorsNow: data.activeVisitorsNow || 0,
           returningVisitors: data.returningVisitors || 0,
           visitorsWithWalletExtension: data.visitorsWithWalletExtension || 0,
           visitorsWithoutWallet: data.visitorsWithoutWallet || 0,
@@ -1285,6 +1284,28 @@ export default function PlatformPage() {
         });
       }
     } catch (e) {}
+    setIsLoadingAnalytics(false);
+  };
+
+  const handleResetAnalytics = async () => {
+    if (!isContractOwner) return;
+    if (!confirm('Tüm analitik ve ziyaretçi verilerini sıfırlamak istediğinize emin misiniz?')) return;
+
+    try {
+      setIsLoadingAnalytics(true);
+      const res = await fetch('/api/analytics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resetData: true, isAdmin: true })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('İstatistikler başarıyla sıfırlandı!');
+        fetchLiveAnalytics();
+      }
+    } catch (e) {
+      alert('Sıfırlama işlemi başarısız oldu.');
+    }
     setIsLoadingAnalytics(false);
   };
 
@@ -1349,7 +1370,6 @@ export default function PlatformPage() {
     }
   };
 
-  // BAHİS DÜŞME MOTORU (Önce bonustan, yetmezse gerçek bakiyeden harcar)
   const deductBetFromBalances = (amount: number): boolean => {
     if (amount > totalPlayableBalance) return false;
     
@@ -1524,7 +1544,6 @@ export default function PlatformPage() {
         }
       }
 
-      // HOŞ GELDİN BONUSU (3.00 USDT) İLK BAĞLANTIDA TANIMLANIR
       const welcomeClaimed = localStorage.getItem(`dd_welcome_claimed_${userAddress.toLowerCase()}`);
       if (!welcomeClaimed && currentBonus === 0.0) {
         currentBonus = WELCOME_BONUS_AMOUNT;
@@ -1636,10 +1655,12 @@ export default function PlatformPage() {
         localStorage.setItem('dd_has_visited', 'true');
       }
 
-      const currentLocalVis = parseInt(localStorage.getItem('dd_perm_total_visitors') || '0', 10) + 1;
-      localStorage.setItem('dd_perm_total_visitors', currentLocalVis.toString());
-
-      trackAnalyticsEvent('VISIT', { hasWallet: hasWeb3, source: sourceTag, isReturning: isReturningVisitor });
+      // AYNI OTURUMDA SAYFA YENİLEME SPAMINI ENGELLE (Session Lock)
+      const sessionCounted = sessionStorage.getItem('dd_session_counted');
+      if (!sessionCounted) {
+        sessionStorage.setItem('dd_session_counted', 'true');
+        trackAnalyticsEvent('VISIT', { hasWallet: hasWeb3, source: sourceTag, isReturning: isReturningVisitor });
+      }
 
       const savedLang = localStorage.getItem('dd_lang');
       if (savedLang && TRANSLATIONS[savedLang]) setLang(savedLang);
@@ -1683,7 +1704,6 @@ export default function PlatformPage() {
               setAccount(accounts[0]);
               setIsDemoWallet(false);
               syncBlockchainBalances(accounts[0]);
-              trackAnalyticsEvent('CONNECT_WALLET', { walletAddress: accounts[0] });
             }
           } catch (e) {}
         }
@@ -3352,12 +3372,21 @@ export default function PlatformPage() {
                 
                 <div className="flex items-center justify-between pr-8">
                   <h3 className="font-bold text-base text-amber-300 flex items-center gap-2"><Crown className="w-5 h-5 text-amber-400" /> {t.adminPanelTitle}</h3>
-                  <button 
-                    onClick={fetchLiveAnalytics}
-                    className="p-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-xl transition flex items-center gap-1 text-[10px] font-bold"
-                  >
-                    <RefreshCw className={`w-3.5 h-3.5 ${isLoadingAnalytics ? 'animate-spin' : ''}`} /> Yenile
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={handleResetAnalytics}
+                      className="p-1.5 bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 rounded-xl transition flex items-center gap-1 text-[10px] font-bold active:scale-95"
+                      title="Verileri Sıfırla"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-rose-400" /> Sıfırla
+                    </button>
+                    <button 
+                      onClick={fetchLiveAnalytics}
+                      className="p-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-xl transition flex items-center gap-1 text-[10px] font-bold active:scale-95"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${isLoadingAnalytics ? 'animate-spin' : ''}`} /> Yenile
+                    </button>
+                  </div>
                 </div>
                   
                 <div className="p-3 bg-amber-950/30 border border-amber-800/40 rounded-2xl text-xs space-y-1 text-slate-300">
@@ -3368,7 +3397,7 @@ export default function PlatformPage() {
                 {/* DERİN KULLANICI DAVRANIŞ & HUNİ GÖSTERGELERİ */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                   <div className="p-3 bg-slate-950 border border-slate-800 rounded-2xl">
-                    <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><Eye className="w-3.5 h-3.5 text-sky-400" /> Toplam Ziyaretçi</span>
+                    <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center gap-1"><Eye className="w-3.5 h-3.5 text-sky-400" /> Tekil Ziyaretçi</span>
                     <span className="text-base font-black text-sky-300">{analytics.totalVisitors}</span>
                   </div>
 
@@ -3559,7 +3588,7 @@ export default function PlatformPage() {
                 <div className="space-y-2 pt-2 border-t border-slate-800">
                   <label className="text-[11px] text-slate-300 font-bold block">{t.joinPoolLabel}</label>
                   <div className="flex gap-2">
-                    <input type="number" value={stakeInput} onChange={(e) => setStakeInput(e.target.value)} className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-1.5 text-xs font-bold text-white focus:outline-none" />
+                    <input type="number" value={stakeInput} onChange={(e) => setStakeInput(e.target.value)} className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs font-bold text-white focus:outline-none" />
                     <button onClick={handleStakeAdd} className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition">{t.becomePartnerBtn}</button>
                   </div>
                 </div>
@@ -3569,7 +3598,7 @@ export default function PlatformPage() {
           )}
         </AnimatePresence>
 
-        {/* 4. SSS / FAQ Modalı (7 DİLDE HOŞ GELDİN BONUSU DAHİL) */}
+        {/* 4. SSS / FAQ Modalı */}
         <AnimatePresence>
           {isFaqModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
